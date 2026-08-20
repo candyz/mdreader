@@ -1,0 +1,14 @@
+pyproject.toml
+src/mdreader/__init__.py
+src/mdreader/__main__.py
+src/mdreader/app.py
+src/mdreader.egg-info/PKG-INFO
+src/mdreader.egg-info/SOURCES.txt
+src/mdreader.egg-info/dependency_links.txt
+src/mdreader.egg-info/entry_points.txt
+src/mdreader.egg-info/requires.txt
+src/mdreader.egg-info/top_level.txt
+src/mdreader/renderer/__init__.py
+src/mdreader/renderer/mermaid.py
+src/mdreader/widgets/__init__.py
+src/mdreader/widgets/markdown_view.py
