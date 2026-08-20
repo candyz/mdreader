@@ -2,9 +2,11 @@
 from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Header, Footer
-from textual.containers import Container
+from textual.widgets import Header, Footer, Input, Label
+from textual.containers import Container, Vertical
+from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
+from mdreader.utils.file_watcher import FileWatcher
 
 
 class MDReaderApp(App):
@@ -12,6 +14,19 @@ class MDReaderApp(App):
 
     TITLE = "mdreader"
     SUB_TITLE = "Terminal Markdown Viewer"
+
+    THEME_LIST = [
+        "textual-dark",
+        "textual-light",
+        "tokyo-night",
+        "monokai",
+        "solarized-dark",
+        "solarized-light",
+        "catppuccin-frappe",
+        "catppuccin-latte",
+        "dracula",
+        "nord",
+    ]
 
     CSS = """
     Screen {
@@ -28,26 +43,57 @@ class MDReaderApp(App):
         width: 100%;
         height: 100%;
     }
+
+    #search-bar {
+        dock: bottom;
+        height: auto;
+        padding: 0 1;
+        background: $panel;
+        display: none;
+        border-top: solid $primary;
+    }
+
+    #search-bar.-visible {
+        display: block;
+    }
+
+    #search-input {
+        width: 100%;
+    }
     """
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True),
-        Binding("escape", "quit", "Quit", show=False),
+        Binding("escape", "handle_escape", "Cancel/Back", show=False),
+        Binding("t", "toggle_theme", "Theme", show=True),
+        Binding("tab", "toggle_toc", "TOC", show=True),
+        Binding("slash", "open_search", "Search", show=True),
         Binding("j", "scroll_down", "Down", show=False),
         Binding("k", "scroll_up", "Up", show=False),
+        Binding("r", "reload_file", "Reload", show=False),
     ]
+
+    search_visible = reactive(False)
 
     def __init__(
         self,
         content: str = "",
         filepath: Path | str | None = None,
         max_width: int | None = None,
+        watch: bool = False,
+        theme: str | None = None,
+        show_toc: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.content = content
         self.filepath = Path(filepath) if filepath else None
         self.max_width = max_width
+        self.watch = watch
+        self.show_toc = show_toc
+        self._custom_theme = theme
+        self._theme_index = 0
+        self._watcher: FileWatcher | None = None
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -58,9 +104,12 @@ class MDReaderApp(App):
             with Container(id="reader-box"):
                 yield MarkdownViewerWidget(
                     raw_markdown=self.content,
+                    show_toc=self.show_toc,
                     max_width=self.max_width,
                     id="viewer",
                 )
+        with Vertical(id="search-bar"):
+            yield Input(placeholder="Type to search in document... (Enter to confirm, Esc to dismiss)", id="search-input")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -68,10 +117,88 @@ class MDReaderApp(App):
             reader_box = self.query_one("#reader-box")
             reader_box.styles.max_width = self.max_width
 
+        if self._custom_theme:
+            if self._custom_theme in self.available_themes:
+                self.theme = self._custom_theme
+        
+        # Start file watcher if watch mode is enabled
+        if self.watch and self.filepath and self.filepath.exists():
+            self._watcher = FileWatcher(
+                filepath=self.filepath,
+                on_modified=self._on_file_changed,
+            )
+            self._watcher.start()
+
+    def on_unmount(self) -> None:
+        if self._watcher:
+            self._watcher.stop()
+            self._watcher = None
+
+    def _on_file_changed(self) -> None:
+        """Invoked in background thread by FileWatcher."""
+        self.call_from_thread(self.action_reload_file)
+
+    def action_reload_file(self) -> None:
+        """Reload file content from disk and update viewer."""
+        if self.filepath and self.filepath.exists():
+            try:
+                new_content = self.filepath.read_text(encoding="utf-8")
+                viewer = self.query_one("#viewer", MarkdownViewerWidget)
+                viewer.update_content(new_content)
+                self.notify("Document reloaded", title="Auto-Reload", timeout=2)
+            except Exception as e:
+                self.notify(f"Reload failed: {e}", title="Error", severity="error")
+
+    def action_toggle_toc(self) -> None:
+        """Toggle Table of Contents sidebar."""
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.toggle_toc()
+
+    def action_toggle_theme(self) -> None:
+        """Cycle through available color themes."""
+        # Find next valid theme
+        valid_themes = [t for t in self.THEME_LIST if t in self.available_themes]
+        if not valid_themes:
+            return
+        self._theme_index = (self._theme_index + 1) % len(valid_themes)
+        new_theme = valid_themes[self._theme_index]
+        self.theme = new_theme
+        self.notify(f"Theme switched to: {new_theme}", timeout=1.5)
+
+    def action_open_search(self) -> None:
+        """Open in-document search bar."""
+        search_bar = self.query_one("#search-bar")
+        search_bar.add_class("-visible")
+        search_input = self.query_one("#search-input", Input)
+        search_input.value = ""
+        search_input.focus()
+        self.search_visible = True
+
+    def action_handle_escape(self) -> None:
+        """Escape handles closing search bar or quitting."""
+        if self.search_visible:
+            search_bar = self.query_one("#search-bar")
+            search_bar.remove_class("-visible")
+            viewer = self.query_one("#viewer", MarkdownViewerWidget)
+            viewer.focus()
+            self.search_visible = False
+        else:
+            self.exit()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle search submission."""
+        query = event.value.strip()
+        if query:
+            # Dismiss search bar and notify
+            self.action_handle_escape()
+            self.notify(f"Searching for: '{query}'", timeout=2)
+        else:
+            self.action_handle_escape()
+
     def action_scroll_down(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
-        viewer.scroll_relative(y=3)
+        viewer.scroll_relative_custom(3)
 
     def action_scroll_up(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
-        viewer.scroll_relative(y=-3)
+        viewer.scroll_relative_custom(-3)

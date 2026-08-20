@@ -1,5 +1,5 @@
-"""Markdown viewer widget module."""
-from textual.widgets import Markdown
+"""Markdown viewer widget module with Mermaid preprocessing & TOC support."""
+from textual.widgets import MarkdownViewer
 from textual.containers import VerticalScroll
 from mdreader.renderer.mermaid import preprocess_mermaid
 
@@ -11,24 +11,44 @@ class MarkdownViewerWidget(VerticalScroll):
     MarkdownViewerWidget {
         width: 100%;
         height: 100%;
-        padding: 1 2;
+    }
+
+    MarkdownViewerWidget > MarkdownViewer {
+        width: 100%;
+        height: 100%;
     }
     """
 
-    def __init__(self, raw_markdown: str = "", max_width: int | None = None, **kwargs):
+    def __init__(
+        self,
+        raw_markdown: str = "",
+        show_toc: bool = True,
+        max_width: int | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.raw_markdown = raw_markdown
+        self.show_toc = show_toc
         self.max_width = max_width
-        self.markdown_widget = Markdown()
+        processed_md = preprocess_mermaid(raw_markdown) if raw_markdown else ""
+        self.viewer = MarkdownViewer(
+            markdown=processed_md,
+            show_table_of_contents=show_toc,
+        )
 
     def compose(self):
-        yield self.markdown_widget
-
-    def on_mount(self) -> None:
-        self.update_content(self.raw_markdown)
+        yield self.viewer
 
     def update_content(self, markdown_text: str) -> None:
-        """Process mermaid blocks and update the underlying Textual Markdown widget."""
+        """Process mermaid blocks and update the underlying MarkdownViewer."""
         self.raw_markdown = markdown_text
         processed_md = preprocess_mermaid(markdown_text)
-        self.markdown_widget.update(processed_md)
+        self.viewer.document.update(processed_md)
+
+    def toggle_toc(self) -> None:
+        """Toggle Table of Contents sidebar visibility."""
+        self.viewer.show_table_of_contents = not self.viewer.show_table_of_contents
+
+    def scroll_relative_custom(self, dy: int) -> None:
+        """Scroll document up or down."""
+        self.viewer.scroll_relative(y=dy)

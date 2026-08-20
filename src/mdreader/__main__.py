@@ -25,10 +25,26 @@ def parse_args() -> argparse.Namespace:
         version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
+        "-w", "--watch",
+        action="store_true",
+        help="Watch mode: auto-reload when file changes on disk",
+    )
+    parser.add_argument(
         "--width",
         type=int,
         default=None,
         help="Cap content max width (in columns)",
+    )
+    parser.add_argument(
+        "-t", "--theme",
+        type=str,
+        default=None,
+        help="Set color theme (e.g. textual-dark, textual-light, tokyo-night, monokai, solarized-dark, nord)",
+    )
+    parser.add_argument(
+        "--no-toc",
+        action="store_true",
+        help="Hide Table of Contents sidebar by default",
     )
     parser.add_argument(
         "--inline",
@@ -76,6 +92,9 @@ def main() -> None:
         content=content,
         filepath=filepath,
         max_width=args.width,
+        watch=args.watch,
+        theme=args.theme,
+        show_toc=not args.no_toc,
     )
     app.run()
 
