@@ -75,9 +75,13 @@ def main() -> None:
         if not sys.stdin.isatty():
             content = sys.stdin.read()
         else:
-            print("Error: No file specified and no input from stdin.", file=sys.stderr)
-            print("Usage: mdreader <filename.md>", file=sys.stderr)
-            sys.exit(1)
+            # If launched interactively without file arg, find markdown files
+            md_files = list(Path(".").glob("*.md"))
+            if md_files:
+                filepath = md_files[0]
+                content = filepath.read_text(encoding="utf-8")
+            else:
+                content = "# Welcome to mdreader\n\nNo markdown file specified. Press `o` to open the file picker or `q` to quit."
 
     if args.inline:
         # Non-interactive stdout rendering using rich

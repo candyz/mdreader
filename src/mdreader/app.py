@@ -67,6 +67,7 @@ class MDReaderApp(App):
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("tab", "toggle_toc", "TOC", show=True),
+        Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
         Binding("j", "scroll_down", "Down", show=False),
         Binding("k", "scroll_up", "Up", show=False),
@@ -194,6 +195,39 @@ class MDReaderApp(App):
             self.notify(f"Searching for: '{query}'", timeout=2)
         else:
             self.action_handle_escape()
+
+    def action_open_file_picker(self) -> None:
+        """Open fuzzy file picker modal."""
+        from mdreader.widgets.file_picker import FilePickerScreen
+        self.push_screen(FilePickerScreen(), self._on_file_selected)
+
+    def _on_file_selected(self, selected_path: Path | None) -> None:
+        """Callback when file is selected from modal."""
+        if selected_path and selected_path.is_file():
+            self.open_file(selected_path)
+
+    def open_file(self, filepath: Path) -> None:
+        """Switch current viewer to a new file."""
+        try:
+            new_content = filepath.read_text(encoding="utf-8")
+            self.filepath = filepath
+            self.SUB_TITLE = str(filepath.name)
+            self.title = "mdreader"
+            viewer = self.query_one("#viewer", MarkdownViewerWidget)
+            viewer.update_content(new_content)
+            
+            # Restart file watcher on new file if in watch mode
+            if self.watch:
+                if self._watcher:
+                    self._watcher.stop()
+                self._watcher = FileWatcher(
+                    filepath=self.filepath,
+                    on_modified=self._on_file_changed,
+                )
+                self._watcher.start()
+            self.notify(f"Opened: {filepath.name}", timeout=1.5)
+        except Exception as e:
+            self.notify(f"Failed to open file: {e}", title="Error", severity="error")
 
     def action_scroll_down(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
