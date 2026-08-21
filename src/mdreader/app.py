@@ -69,8 +69,8 @@ class MDReaderApp(App):
         Binding("tab", "toggle_toc", "TOC", show=True),
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
-        Binding("j", "scroll_down", "Down", show=False),
-        Binding("k", "scroll_up", "Up", show=False),
+        Binding("j", "page_down", "Page Down", show=False),
+        Binding("k", "page_up", "Page Up", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
 
@@ -228,6 +228,14 @@ class MDReaderApp(App):
             self.notify(f"Opened: {filepath.name}", timeout=1.5)
         except Exception as e:
             self.notify(f"Failed to open file: {e}", title="Error", severity="error")
+
+    def action_page_down(self) -> None:
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.page_down()
+
+    def action_page_up(self) -> None:
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.page_up()
 
     def action_scroll_down(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)

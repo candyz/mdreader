@@ -69,7 +69,7 @@ cat test.md | mdreader
 | `Tab` | Toggle Table of Contents (TOC) sidebar |
 | `t` | Switch Color Theme (Dark, Light, Tokyo Night, Monokai, Solarized, Nord, etc.) |
 | `/` | Open Search bar |
-| `j` / `Down` | Scroll down |
-| `k` / `Up` | Scroll up |
-| `Page Up` / `Page Down` | Page scrolling |
+| `j` / `Page Down` | Scroll Page Down (下一頁) |
+| `k` / `Page Up` | Scroll Page Up (上一頁) |
+| `Down` / `Up` | Line by line scroll (逐行捲動) |
 | `Mouse wheel` | Scroll |

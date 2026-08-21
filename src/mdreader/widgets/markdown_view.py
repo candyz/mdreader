@@ -52,3 +52,11 @@ class MarkdownViewerWidget(VerticalScroll):
     def scroll_relative_custom(self, dy: int) -> None:
         """Scroll document up or down."""
         self.viewer.scroll_relative(y=dy)
+
+    def page_down(self) -> None:
+        """Scroll down by one page."""
+        self.viewer.action_page_down()
+
+    def page_up(self) -> None:
+        """Scroll up by one page."""
+        self.viewer.action_page_up()
