@@ -73,5 +73,6 @@ cat test.md | mdreader
 | `k` / `Page Down` | **Scroll Page Down (下一頁)** |
 | `gg` / `Home` | **Jump to Top (回到文件最上方)** |
 | `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
-| `Down` / `Up` | Line by line scroll (逐行捲動) |
+| `Down` / `Up` | Line by line scroll (逐行垂直捲動) |
+| `Left` / `Right` | Horizontal scroll for wide content/code (水平向左/右捲動) |
 | `Mouse wheel` | Scroll (滑鼠滾動) |

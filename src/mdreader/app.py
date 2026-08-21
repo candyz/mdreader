@@ -73,6 +73,8 @@ class MDReaderApp(App):
         Binding("k", "page_down", "Page Down", show=False),
         Binding("up", "scroll_up", "Up", show=False),
         Binding("down", "scroll_down", "Down", show=False),
+        Binding("left", "scroll_left", "Left", show=False),
+        Binding("right", "scroll_right", "Right", show=False),
         Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
@@ -294,3 +296,11 @@ class MDReaderApp(App):
     def action_scroll_up(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
         viewer.scroll_relative_custom(-3)
+
+    def action_scroll_right(self) -> None:
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_horizontal(8)
+
+    def action_scroll_left(self) -> None:
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_horizontal(-8)
