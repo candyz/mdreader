@@ -8,7 +8,7 @@
 
 | 項目 | 最低需求 | 推薦環境 |
 | :--- | :--- | :--- |
-| **作業系統** | macOS 12+ / Linux (Ubuntu, Debian, Arch, CentOS 等) | macOS (Apple Silicon / Intel) 或 Ubuntu 22.04+ |
+| **作業系統** | macOS 12+ / Linux (Ubuntu, Debian, Arch, Rocky, RHEL, CentOS 等) | macOS (Apple Silicon / Intel) 或 Ubuntu 22.04+ / Rocky Linux 9+ |
 | **Python 版本** | Python 3.9+ | Python 3.10 ~ 3.14 |
 | **終端環境** | 支援 UTF-8 / ANSI 256 色 | iTerm2, WezTerm, Ghostty, Alacritty, Kitty 或標準 Terminal |
 
@@ -61,13 +61,41 @@ mdreader --version
 ### 3. Linux (Arch Linux / Manjaro) 安裝步驟
 
 ```bash
-sudo pacman -S python python-pip python-pipx
+sudo pacman -S python python-pip python-pipx xclip wl-clipboard
 pipx ensurepath
 source ~/.bashrc
 
 git clone https://github.com/candyz0416/mdreader.git
 cd mdreader
 pipx install .
+```
+
+### 4. Linux (Rocky Linux / AlmaLinux / RHEL / CentOS Stream) 安裝步驟
+
+```bash
+# 1. 啟用 EPEL 與 CRB 套件庫（提供 pipx 與 xclip 等工具）
+sudo dnf install -y epel-release
+sudo dnf config-manager --set-enabled crb   # Rocky 9+ / AlmaLinux 9+
+
+# 2. 安裝 Python 3, pip, pipx 及剪貼簿工具
+sudo dnf install -y python3 python3-pip pipx xclip wl-clipboard
+
+# 若系統預設 Python 版本低於 3.9，可安裝較新版本：
+# sudo dnf install -y python3.11 python3.11-pip
+# 並使用 python3.11 -m pipx 替代 pipx 指令
+
+pipx ensurepath
+source ~/.bashrc
+
+# 3. 複製專案
+git clone https://github.com/candyz0416/mdreader.git
+cd mdreader
+
+# 4. 透過 pipx 部署安裝
+pipx install .
+
+# 5. 驗證安裝成功
+mdreader --version
 ```
 
 ---
