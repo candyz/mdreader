@@ -118,6 +118,7 @@ class FilePickerScreen(ModalScreen[Path | None]):
         self._update_file_list(event.value)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        event.stop()
         option_list = self.query_one("#file-list", OptionList)
         if option_list.highlighted is not None:
             option = option_list.get_option_at_index(option_list.highlighted)
@@ -133,6 +134,7 @@ class FilePickerScreen(ModalScreen[Path | None]):
         self.dismiss(None)
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        event.stop()
         if event.option.id:
             self.dismiss(Path(event.option.id))
 

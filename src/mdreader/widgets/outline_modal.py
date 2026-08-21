@@ -89,6 +89,7 @@ class OutlineModalScreen(ModalScreen[str | None]):
         self._update_list(event.value)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        event.stop()
         option_list = self.query_one("#outline-list", OptionList)
         if option_list.highlighted is not None:
             option = option_list.get_option_at_index(option_list.highlighted)
@@ -103,6 +104,7 @@ class OutlineModalScreen(ModalScreen[str | None]):
         self.dismiss(None)
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        event.stop()
         if event.option.id:
             self.dismiss(event.option.id)
 

@@ -207,13 +207,14 @@ class MDReaderApp(App):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle search submission."""
-        query = event.value.strip()
-        if query:
-            # Dismiss search bar and notify
-            self.action_handle_escape()
-            self.notify(f"Searching for: '{query}'", timeout=2)
-        else:
-            self.action_handle_escape()
+        if event.input.id == "search-input":
+            query = event.value.strip()
+            if query:
+                # Dismiss search bar and notify
+                self.action_handle_escape()
+                self.notify(f"Searching for: '{query}'", timeout=2)
+            else:
+                self.action_handle_escape()
 
     def action_open_file_picker(self) -> None:
         """Open fuzzy file picker modal."""
