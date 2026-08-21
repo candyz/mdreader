@@ -351,7 +351,8 @@ class MDReaderApp(App):
     def action_open_file_picker(self) -> None:
         """Open fuzzy file picker modal."""
         from mdreader.widgets.file_picker import FilePickerScreen
-        self.push_screen(FilePickerScreen(), self._on_file_selected)
+        start_dir = self.filepath.parent if self.filepath and self.filepath.exists() else Path.cwd()
+        self.push_screen(FilePickerScreen(start_dir=start_dir), self._on_file_selected)
 
     def _on_file_selected(self, selected_path: Path | None) -> None:
         """Callback when file is selected from modal."""

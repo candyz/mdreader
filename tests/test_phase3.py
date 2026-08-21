@@ -30,7 +30,8 @@ def test_file_picker_scan(tmp_path: Path):
     (tmp_path / "sub" / "ignored.txt").write_text("ignore", encoding="utf-8")
 
     screen = FilePickerScreen(start_dir=tmp_path)
-    filenames = [p.name for p in screen.all_files]
-    assert "doc1.md" in filenames
-    assert "doc2.markdown" in filenames
-    assert "ignored.txt" not in filenames
+    screen._scan_directory()
+    item_labels = [label for label, item_type, path in screen.items]
+    assert any("doc1.md" in l for l in item_labels)
+    assert any("sub/" in l for l in item_labels)
+    assert not any("ignored.txt" in l for l in item_labels)
