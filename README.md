@@ -78,6 +78,8 @@ cat test.md | mdreader
 | `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
 | `Down` / `Up` | Line by line scroll (逐行垂直捲動) |
 | `Left` / `Right` | Horizontal scroll for wide content/code (水平向左/右捲動) |
+| `Mouse Drag` | **選取文字 (Select Text)**：框選文字時自動複製到系統剪貼簿 |
+| `y` / `c` / `Ctrl+C` | **手動複製已選取文字 (Copy Selection)** |
 | `-` | **收窄閱讀版面寬度 (Narrow column width)**（最窄 40 欄） |
 | `=` / `+` | **拓寬閱讀版面寬度 (Widen column width)**（至 100% 滿版） |
 | `Cmd +` / `Cmd -` | **縮放終端字型大小 (Terminal Font Zoom)**（由終端模擬器控制） |

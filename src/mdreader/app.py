@@ -24,6 +24,9 @@ class ClockLabel(Label):
 class MDReaderApp(App):
     """Interactive TUI Markdown Reader Application."""
 
+    ALLOW_SELECT = True
+    ENABLE_SELECT_AUTO_SCROLL = True
+
     TITLE = "mdreader"
     SUB_TITLE = "Terminal Markdown Viewer"
 
@@ -103,6 +106,10 @@ class MDReaderApp(App):
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("v", "edit_in_editor", "Edit (Vim)", show=True),
         Binding("slash", "open_search", "Search", show=True),
+        Binding("y", "copy_selected_text", "Yank / Copy", show=False),
+        Binding("c", "copy_selected_text", "Copy", show=False),
+        Binding("ctrl+c", "copy_selected_text", "Copy", show=False),
+        Binding("ctrl+y", "copy_selected_text", "Yank", show=False),
         Binding("n", "search_next", "Next match", show=False),
         Binding("N", "search_prev", "Prev match", show=False),
         Binding("j", "page_up", "Page Up", show=False),
@@ -460,3 +467,57 @@ class MDReaderApp(App):
         reader_box.styles.max_width = new_val
         self.max_width = new_val
         self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
+
+    def copy_to_system_clipboard(self, text: str) -> bool:
+        """Copy text to macOS/Linux system clipboard using native tools or OSC52."""
+        import subprocess
+        # 1. macOS pbcopy
+        try:
+            proc = subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=False)
+            if proc.returncode == 0:
+                return True
+        except Exception:
+            pass
+        # 2. Linux xclip
+        try:
+            proc = subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode("utf-8"), check=False)
+            if proc.returncode == 0:
+                return True
+        except Exception:
+            pass
+        # 3. Linux wl-copy
+        try:
+            proc = subprocess.run(["wl-copy"], input=text.encode("utf-8"), check=False)
+            if proc.returncode == 0:
+                return True
+        except Exception:
+            pass
+        # 4. Textual built-in copy (OSC 52)
+        try:
+            self.copy_to_clipboard(text)
+            return True
+        except Exception:
+            pass
+        return False
+
+    def action_copy_selected_text(self) -> None:
+        """Copy current mouse-selected text to system clipboard (y / c / Ctrl+C)."""
+        selected_text = self.screen.get_selected_text()
+        if not selected_text:
+            self.notify("請先用滑鼠框選欲複製的文字", title="剪貼簿", timeout=1.5)
+            return
+
+        success = self.copy_to_system_clipboard(selected_text)
+        preview = selected_text[:40].replace("\n", " ") + ("..." if len(selected_text) > 40 else "")
+        if success:
+            self.notify(f"已複製到剪貼簿：\n「{preview}」", title="複製成功", timeout=2.0)
+        else:
+            self.notify("無法寫入系統剪貼簿", title="複製失敗", severity="error", timeout=2.0)
+
+    def on_text_selected(self, event) -> None:
+        """Automatically copy when text is selected with mouse and notify."""
+        selected_text = self.screen.get_selected_text()
+        if selected_text and selected_text.strip():
+            self.copy_to_system_clipboard(selected_text)
+            preview = selected_text[:30].replace("\n", " ") + ("..." if len(selected_text) > 30 else "")
+            self.notify(f"已自動複製：\n「{preview}」", title="剪貼簿", timeout=1.5)
