@@ -104,25 +104,43 @@ class MarkdownViewerWidget(MarkdownViewer):
             pass
 
     def search_text(self, query: str) -> list[object]:
-        """Search all blocks containing query string (case-insensitive)."""
+        """Search all blocks/elements containing query string (case-insensitive, deep traversal)."""
         q = query.strip().lower()
         if not q:
             return []
-        
+
+        def get_all_node_text(node: object) -> str:
+            pieces = []
+            if hasattr(node, "_content") and node._content is not None:
+                pieces.append(str(node._content))
+            if hasattr(node, "_inline_token") and node._inline_token and node._inline_token.content:
+                pieces.append(str(node._inline_token.content))
+            if hasattr(node, "text") and node.text:
+                pieces.append(str(node.text))
+            if hasattr(node, "renderable") and node.renderable:
+                pieces.append(str(node.renderable))
+            for child in getattr(node, "children", []):
+                pieces.append(get_all_node_text(child))
+            return " ".join(pieces)
+
         matches = []
         for block in self.document.children:
-            text = ""
-            if hasattr(block, "_content"):
-                text = str(block._content)
-            elif hasattr(block, "_inline_token") and block._inline_token and block._inline_token.content:
-                text = block._inline_token.content
-            elif hasattr(block, "text"):
-                text = str(block.text)
+            # Check if block has children with granular targets (like list items in MarkdownBulletList / MarkdownOrderedList)
+            if hasattr(block, "children") and block.children:
+                sub_matched = False
+                for sub in block.children:
+                    sub_text = get_all_node_text(sub)
+                    if q in sub_text.lower():
+                        matches.append(sub)
+                        sub_matched = True
+                if not sub_matched:
+                    block_text = get_all_node_text(block)
+                    if q in block_text.lower():
+                        matches.append(block)
             else:
-                text = str(block)
-
-            if q in text.lower():
-                matches.append(block)
+                block_text = get_all_node_text(block)
+                if q in block_text.lower():
+                    matches.append(block)
         return matches
 
     def scroll_to_block(self, block: object) -> None:
@@ -136,7 +154,12 @@ class MarkdownViewerWidget(MarkdownViewer):
             pass
 
     def clear_highlights(self) -> None:
-        """Remove highlight class from all blocks in the document."""
+        """Remove highlight class from all elements in the document."""
+        def clear_node(node: object) -> None:
+            if hasattr(node, "remove_class"):
+                node.remove_class("-search-match-active")
+            for child in getattr(node, "children", []):
+                clear_node(child)
+
         for block in self.document.children:
-            if hasattr(block, "remove_class"):
-                block.remove_class("-search-match-active")
+            clear_node(block)
