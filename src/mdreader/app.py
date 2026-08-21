@@ -106,6 +106,7 @@ class MDReaderApp(App):
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("v", "edit_in_editor", "Edit (Vim)", show=True),
         Binding("slash", "open_search", "Search", show=True),
+        Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
         Binding("y", "copy_selected_text", "Yank / Copy", show=False),
         Binding("c", "copy_selected_text", "Copy", show=False),
         Binding("ctrl+c", "copy_selected_text", "Copy", show=False),
@@ -150,6 +151,7 @@ class MDReaderApp(App):
         self._search_query: str = ""
         self._search_matches: list[object] = []
         self._search_match_index: int = -1
+        self._mouse_tracking_enabled: bool = True
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -588,3 +590,17 @@ class MDReaderApp(App):
                 self.perform_search(selected_text.strip())
             else:
                 self.action_open_search()
+
+    def action_toggle_mouse_mode(self) -> None:
+        """Toggle mouse tracking mode (m key). When disabled, terminal native selection is restored."""
+        self._mouse_tracking_enabled = not self._mouse_tracking_enabled
+        driver = self._driver
+        if driver:
+            if self._mouse_tracking_enabled:
+                if hasattr(driver, "_enable_mouse_support"):
+                    driver._enable_mouse_support()
+                self.notify("滑鼠模式：已開啟 (TUI 滾輪與框選)\n💡 提示：按 m 可切換為終端原生模式", title="滑鼠模式 (m)", timeout=2.0)
+            else:
+                if hasattr(driver, "_disable_mouse_support"):
+                    driver._disable_mouse_support()
+                self.notify("滑鼠模式：已關閉 (恢復終端機原生反白與複製)\n💡 提示：現在可直接用滑鼠隨意反白文字", title="滑鼠模式 (m)", timeout=2.5)
