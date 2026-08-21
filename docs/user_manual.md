@@ -35,7 +35,7 @@ mdreader --watch docs/deployment_guide.md
 | 快捷鍵 | 功能說明 |
 | :--- | :--- |
 | **`q`** / **`Esc`** | 退出 mdreader 閱讀器 / 關閉目前浮動視窗 |
-| **`Tab`** | **切換大綱模式 (TOC Outline)**：開啟/關閉章節目錄選單，選擇章節跳轉 |
+| **`Tab`** | **開啟大綱模式 (TOC Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | **`j`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
 | **`k`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
 | **`gg`** / **`Home`** | **回到文件最上方 (Jump to Top)** |

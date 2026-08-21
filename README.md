@@ -65,7 +65,7 @@ cat test.md | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
-| `Tab` | Toggle Outline / Table of Contents (大綱模式 / 章節選單) |
+| `Tab` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | `o` | Open Fuzzy File Picker modal (檔案選擇器) |
 | `t` | Switch Color Theme (切換色彩主題) |
 | `/` | Open Search bar (文件搜尋) |

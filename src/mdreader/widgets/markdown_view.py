@@ -52,3 +52,36 @@ class MarkdownViewerWidget(MarkdownViewer):
     def page_up(self) -> None:
         """Scroll up by one page."""
         self.action_page_up()
+
+    def get_headings(self) -> list[tuple[int, str, str]]:
+        """Extract all markdown headings as (level, title, block_id)."""
+        headings = []
+        for block in self.document.children:
+            type_name = type(block).__name__
+            if type_name.startswith("MarkdownH"):
+                try:
+                    level = int(type_name.replace("MarkdownH", ""))
+                except ValueError:
+                    level = 1
+                
+                title = ""
+                if hasattr(block, "_inline_token") and block._inline_token and block._inline_token.content:
+                    title = block._inline_token.content
+                elif hasattr(block, "_content"):
+                    title = str(block._content)
+                else:
+                    title = str(block)
+                
+                block_id = block.id or ""
+                if title.strip() and block_id:
+                    headings.append((level, title.strip(), block_id))
+        return headings
+
+    def scroll_to_heading_id(self, block_id: str) -> None:
+        """Scroll document directly to the heading block matching block_id."""
+        from textual.widgets._markdown import MarkdownBlock
+        try:
+            block = self.document.query_one(f"#{block_id}", MarkdownBlock)
+            self.scroll_to_widget(block, top=True)
+        except Exception:
+            pass

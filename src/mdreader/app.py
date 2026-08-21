@@ -158,9 +158,21 @@ class MDReaderApp(App):
                 self.notify(f"Reload failed: {e}", title="Error", severity="error")
 
     def action_toggle_toc(self) -> None:
-        """Toggle Table of Contents sidebar."""
+        """Open full outline modal for chapter browsing and jumping."""
+        from mdreader.widgets.outline_modal import OutlineModalScreen
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
-        viewer.toggle_toc()
+        headings = viewer.get_headings()
+        if not headings:
+            self.notify("No headings found in document", title="Outline", timeout=1.5)
+            return
+        self.push_screen(OutlineModalScreen(headings), self._on_outline_selected)
+
+    def _on_outline_selected(self, target_block_id: str | None) -> None:
+        """Callback when a heading is selected from Outline modal."""
+        if target_block_id:
+            viewer = self.query_one("#viewer", MarkdownViewerWidget)
+            viewer.scroll_to_heading_id(target_block_id)
+            viewer.document.focus()
 
     def action_toggle_theme(self) -> None:
         """Cycle through available color themes."""
