@@ -118,6 +118,13 @@ class OutlineModalScreen(ModalScreen[str | None]):
         if event.option.id:
             self.dismiss(event.option.id)
 
+    def on_key(self, event) -> None:
+        """Handle raw key events to ensure immediate response to tab and escape."""
+        if event.key in ("tab", "escape"):
+            event.stop()
+            event.prevent_default()
+            self.dismiss(None)
+
     def action_dismiss_modal(self) -> None:
         """Dismiss outline modal without selection."""
         self.dismiss(None)

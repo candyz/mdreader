@@ -169,10 +169,10 @@ class MDReaderApp(App):
 
     def _on_outline_selected(self, target_block_id: str | None) -> None:
         """Callback when a heading is selected from Outline modal."""
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
         if target_block_id:
-            viewer = self.query_one("#viewer", MarkdownViewerWidget)
             viewer.scroll_to_heading_id(target_block_id)
-            viewer.document.focus()
+        viewer.document.focus()
 
     def action_toggle_theme(self) -> None:
         """Cycle through available color themes."""
