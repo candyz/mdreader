@@ -48,8 +48,9 @@ mdreader --watch docs/deployment_guide.md
 | **`/`** | **開啟文件內搜尋欄**（輸入 `/關鍵字` 後按 Enter 立即開始搜尋） |
 | **`n`** | **跳至下一處搜尋結果 (Next Match)** |
 | **`N`** | **跳至上一處搜尋結果 (Previous Match)** |
-| **`-`** | **縮小文字 / 閱讀寬度 (Zoom Out / Narrow)** |
-| **`=`** / **`+`** | **放大文字 / 閱讀寬度 (Zoom In / Widen)** |
+| **`-`** | **收窄閱讀版面寬度 (Narrow column width)**（每次 -10 欄，最窄 40 欄） |
+| **`=`** / **`+`** | **拓寬閱讀版面寬度 (Widen column width)**（每次 +10 欄，直至 100% 滿版） |
+| **`Cmd +`** / **`Cmd -`** | **縮放終端字型大小 (Terminal Font Zoom)**（由終端模擬器控制原生字級） |
 | **滑鼠滾輪** | 自由滾動內容 |
 
 ---

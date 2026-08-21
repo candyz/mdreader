@@ -425,22 +425,13 @@ class MDReaderApp(App):
         viewer.scroll_horizontal(-8)
 
     def action_zoom_in(self) -> None:
-        """Enlarge reading text area width (= / +)."""
+        """Enlarge reading column width (= / +). Use Cmd +/- for terminal font size."""
         reader_box = self.query_one("#reader-box")
         current_width = reader_box.styles.max_width
         screen_width = self.size.width
 
-        # Trigger terminal font resize via OSC if available
-        import sys
-        try:
-            sys.stdout.write("\033]50;#+1\007")
-            sys.stdout.flush()
-        except Exception:
-            pass
-
         if current_width is None:
-            # Already full width
-            self.notify("Reader width: Full width (100%)", title="Zoom (+)", timeout=1.5)
+            self.notify("版面寬度：滿版 (100%)\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
             return
 
         current_val = current_width.value if hasattr(current_width, "value") else int(current_width)
@@ -448,25 +439,17 @@ class MDReaderApp(App):
         if new_val >= screen_width:
             reader_box.styles.max_width = None
             self.max_width = None
-            self.notify("Reader width: Full width (100%)", title="Zoom (+)", timeout=1.5)
+            self.notify("版面寬度：滿版 (100%)\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
         else:
             reader_box.styles.max_width = new_val
             self.max_width = new_val
-            self.notify(f"Reader width: {new_val} cols", title="Zoom (+)", timeout=1.5)
+            self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
 
     def action_zoom_out(self) -> None:
-        """Narrow reading text area width (-)."""
+        """Narrow reading column width (-). Use Cmd +/- for terminal font size."""
         reader_box = self.query_one("#reader-box")
         current_width = reader_box.styles.max_width
         screen_width = self.size.width
-
-        # Trigger terminal font resize via OSC if available
-        import sys
-        try:
-            sys.stdout.write("\033]50;#-1\007")
-            sys.stdout.flush()
-        except Exception:
-            pass
 
         if current_width is None:
             current_val = screen_width
@@ -476,4 +459,4 @@ class MDReaderApp(App):
         new_val = max(40, current_val - 10)
         reader_box.styles.max_width = new_val
         self.max_width = new_val
-        self.notify(f"Reader width: {new_val} cols", title="Zoom (-)", timeout=1.5)
+        self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
