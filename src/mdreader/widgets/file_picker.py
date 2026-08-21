@@ -1,7 +1,7 @@
 """Fuzzy Markdown File Picker modal / widget."""
 from __future__ import annotations
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
@@ -10,7 +10,7 @@ from textual.widgets.option_list import Option
 from textual.binding import Binding
 
 
-class FilePickerScreen(ModalScreen[Path | None]):
+class FilePickerScreen(ModalScreen[Optional[Path]]):
     """Modal screen for fuzzy searching and picking markdown files in current directory tree."""
 
     BINDINGS = [

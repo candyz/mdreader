@@ -1,12 +1,13 @@
 """Right-click context menu modal screen for mdreader."""
 from __future__ import annotations
+from typing import Optional
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import OptionList
 from textual.binding import Binding
 
 
-class ContextMenuModal(ModalScreen[str | None]):
+class ContextMenuModal(ModalScreen[Optional[str]]):
     """Floating context menu on mouse right-click."""
 
     DEFAULT_CSS = """

@@ -1,6 +1,6 @@
 """Outline / Table of Contents Modal Screen."""
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
@@ -11,7 +11,7 @@ from textual.widgets.option_list import Option
 from textual.binding import Binding
 
 
-class OutlineModalScreen(ModalScreen[str | None]):
+class OutlineModalScreen(ModalScreen[Optional[str]]):
     """Modal screen displaying document outline (TOC) with quick navigation and search."""
 
     BINDINGS = [
