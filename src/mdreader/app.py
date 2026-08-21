@@ -469,41 +469,52 @@ class MDReaderApp(App):
         self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
 
     def copy_to_system_clipboard(self, text: str) -> bool:
-        """Copy text to macOS/Linux system clipboard using native tools or OSC52."""
+        """Copy text to macOS/Linux system clipboard using native tools and OSC 52."""
         import subprocess
-        # 1. macOS pbcopy
+        success = False
+
+        # 1. macOS pbcopy (native system clipboard)
         try:
-            proc = subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=False)
-            if proc.returncode == 0:
-                return True
+            p = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE, close_fds=True)
+            p.communicate(input=text.encode("utf-8"))
+            if p.returncode == 0:
+                success = True
         except Exception:
             pass
+
         # 2. Linux xclip
-        try:
-            proc = subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode("utf-8"), check=False)
-            if proc.returncode == 0:
-                return True
-        except Exception:
-            pass
+        if not success:
+            try:
+                p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, close_fds=True)
+                p.communicate(input=text.encode("utf-8"))
+                if p.returncode == 0:
+                    success = True
+            except Exception:
+                pass
+
         # 3. Linux wl-copy
-        try:
-            proc = subprocess.run(["wl-copy"], input=text.encode("utf-8"), check=False)
-            if proc.returncode == 0:
-                return True
-        except Exception:
-            pass
-        # 4. Textual built-in copy (OSC 52)
+        if not success:
+            try:
+                p = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, close_fds=True)
+                p.communicate(input=text.encode("utf-8"))
+                if p.returncode == 0:
+                    success = True
+            except Exception:
+                pass
+
+        # 4. Textual built-in copy (OSC 52 escape code to terminal emulator)
         try:
             self.copy_to_clipboard(text)
-            return True
+            success = True
         except Exception:
             pass
-        return False
+
+        return success
 
     def action_copy_selected_text(self) -> None:
         """Copy current mouse-selected text to system clipboard (y / c / Ctrl+C)."""
         selected_text = self.screen.get_selected_text()
-        if not selected_text:
+        if not selected_text or not selected_text.strip():
             self.notify("請先用滑鼠框選欲複製的文字", title="剪貼簿", timeout=1.5)
             return
 
