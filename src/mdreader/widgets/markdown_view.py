@@ -1,19 +1,13 @@
 """Markdown viewer widget module with Mermaid preprocessing & TOC support."""
 from textual.widgets import MarkdownViewer
-from textual.containers import VerticalScroll
 from mdreader.renderer.mermaid import preprocess_mermaid
 
 
-class MarkdownViewerWidget(VerticalScroll):
-    """Scrollable Markdown viewer widget with Mermaid preprocessing."""
+class MarkdownViewerWidget(MarkdownViewer):
+    """Integrated Markdown viewer widget with Mermaid preprocessing and TOC support."""
 
     DEFAULT_CSS = """
     MarkdownViewerWidget {
-        width: 100%;
-        height: 100%;
-    }
-
-    MarkdownViewerWidget > MarkdownViewer {
         width: 100%;
         height: 100%;
     }
@@ -23,48 +17,46 @@ class MarkdownViewerWidget(VerticalScroll):
         self,
         raw_markdown: str = "",
         show_toc: bool = False,
-        max_width: int | None = None,
-        **kwargs,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
     ):
-        super().__init__(**kwargs)
         self.raw_markdown = raw_markdown
-        self.show_toc = show_toc
-        self.max_width = max_width
         processed_md = preprocess_mermaid(raw_markdown) if raw_markdown else ""
-        self.viewer = MarkdownViewer(
+        super().__init__(
             markdown=processed_md,
             show_table_of_contents=show_toc,
+            name=name,
+            id=id,
+            classes=classes,
         )
 
-    def compose(self):
-        yield self.viewer
-
     def update_content(self, markdown_text: str) -> None:
-        """Process mermaid blocks and update the underlying MarkdownViewer."""
+        """Process mermaid blocks and update the document."""
         self.raw_markdown = markdown_text
         processed_md = preprocess_mermaid(markdown_text)
-        self.viewer.document.update(processed_md)
+        self.document.update(processed_md)
 
     def toggle_toc(self) -> None:
         """Toggle Table of Contents sidebar visibility."""
-        self.viewer.show_table_of_contents = not self.viewer.show_table_of_contents
+        self.show_table_of_contents = not self.show_table_of_contents
 
     def scroll_relative_custom(self, dy: int) -> None:
         """Scroll document up or down."""
-        self.viewer.scroll_relative(y=dy)
+        self.scroll_relative(y=dy)
 
     def page_down(self) -> None:
         """Scroll down by one page."""
-        self.viewer.action_page_down()
+        self.action_page_down()
 
     def page_up(self) -> None:
         """Scroll up by one page."""
-        self.viewer.action_page_up()
+        self.action_page_up()
 
     def scroll_home(self) -> None:
         """Scroll to the top of the document (gg / Home)."""
-        self.viewer.action_scroll_home()
+        self.action_scroll_home()
 
     def scroll_end(self) -> None:
         """Scroll to the bottom of the document (G / End)."""
-        self.viewer.action_scroll_end()
+        self.action_scroll_end()

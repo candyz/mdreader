@@ -66,11 +66,13 @@ class MDReaderApp(App):
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
         Binding("t", "toggle_theme", "Theme", show=True),
-        Binding("tab", "toggle_toc", "Outline (大綱)", show=True),
+        Binding("tab", "toggle_toc", "Outline (大綱)", show=True, priority=True),
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
         Binding("j", "page_up", "Page Up", show=False),
         Binding("k", "page_down", "Page Down", show=False),
+        Binding("up", "scroll_up", "Up", show=False),
+        Binding("down", "scroll_down", "Down", show=False),
         Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
@@ -108,7 +110,6 @@ class MDReaderApp(App):
                 yield MarkdownViewerWidget(
                     raw_markdown=self.content,
                     show_toc=self.show_toc,
-                    max_width=self.max_width,
                     id="viewer",
                 )
         with Vertical(id="search-bar"):
@@ -124,6 +125,10 @@ class MDReaderApp(App):
             if self._custom_theme in self.available_themes:
                 self.theme = self._custom_theme
         
+        # Ensure focus is on markdown document for immediate keyboard response
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.document.focus()
+
         # Start file watcher if watch mode is enabled
         if self.watch and self.filepath and self.filepath.exists():
             self._watcher = FileWatcher(
