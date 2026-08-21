@@ -29,9 +29,17 @@ def test_file_picker_scan(tmp_path: Path):
     (tmp_path / "sub" / "doc2.markdown").write_text("# Doc 2", encoding="utf-8")
     (tmp_path / "sub" / "ignored.txt").write_text("ignore", encoding="utf-8")
 
-    screen = FilePickerScreen(start_dir=tmp_path)
+    # Default: only md / html files
+    screen = FilePickerScreen(start_dir=tmp_path, show_all_files=False)
     screen._scan_directory()
     item_labels = [label for label, item_type, path in screen.items]
     assert any("doc1.md" in l for l in item_labels)
     assert any("sub/" in l for l in item_labels)
     assert not any("ignored.txt" in l for l in item_labels)
+
+    # Show all files: includes .txt and other plain text
+    screen_all = FilePickerScreen(start_dir=tmp_path / "sub", show_all_files=True)
+    screen_all._scan_directory()
+    item_labels_all = [label for label, item_type, path in screen_all.items]
+    assert any("doc2.markdown" in l for l in item_labels_all)
+    assert any("ignored.txt" in l for l in item_labels_all)
