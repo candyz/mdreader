@@ -60,3 +60,11 @@ class MarkdownViewerWidget(VerticalScroll):
     def page_up(self) -> None:
         """Scroll up by one page."""
         self.viewer.action_page_up()
+
+    def scroll_home(self) -> None:
+        """Scroll to the top of the document (gg / Home)."""
+        self.viewer.action_scroll_home()
+
+    def scroll_end(self) -> None:
+        """Scroll to the bottom of the document (G / End)."""
+        self.viewer.action_scroll_end()

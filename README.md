@@ -66,10 +66,12 @@ cat test.md | mdreader
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
 | `Tab` | Toggle Outline / Table of Contents (大綱模式 / 章節選單) |
-| `o` | Open Fuzzy File Picker modal |
-| `t` | Switch Color Theme (Dark, Light, Tokyo Night, Monokai, Solarized, Nord, etc.) |
-| `/` | Open Search bar |
-| `j` / `Page Down` | Scroll Page Down (下一頁) |
-| `k` / `Page Up` | Scroll Page Up (上一頁) |
+| `o` | Open Fuzzy File Picker modal (檔案選擇器) |
+| `t` | Switch Color Theme (切換色彩主題) |
+| `/` | Open Search bar (文件搜尋) |
+| `j` / `Page Up` | **Scroll Page Up (上一頁)** |
+| `k` / `Page Down` | **Scroll Page Down (下一頁)** |
+| `gg` / `Home` | **Jump to Top (回到文件最上方)** |
+| `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
 | `Down` / `Up` | Line by line scroll (逐行捲動) |
-| `Mouse wheel` | Scroll |
+| `Mouse wheel` | Scroll (滑鼠滾動) |

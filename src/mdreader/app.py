@@ -69,8 +69,9 @@ class MDReaderApp(App):
         Binding("tab", "toggle_toc", "Outline (大綱)", show=True),
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
-        Binding("j", "page_down", "Page Down", show=False),
-        Binding("k", "page_up", "Page Up", show=False),
+        Binding("j", "page_up", "Page Up", show=False),
+        Binding("k", "page_down", "Page Down", show=False),
+        Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
 
@@ -95,6 +96,7 @@ class MDReaderApp(App):
         self._custom_theme = theme
         self._theme_index = 0
         self._watcher: FileWatcher | None = None
+        self._last_g_press_time: float = 0.0
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -229,6 +231,26 @@ class MDReaderApp(App):
         except Exception as e:
             self.notify(f"Failed to open file: {e}", title="Error", severity="error")
 
+    def on_key(self, event) -> None:
+        """Handle raw key sequences like 'gg' for scrolling to top."""
+        if self.search_visible:
+            return
+
+        import time
+        now = time.time()
+
+        if event.character == "g":
+            if now - self._last_g_press_time <= 0.5:
+                self.action_scroll_home()
+                self._last_g_press_time = 0.0
+            else:
+                self._last_g_press_time = now
+        elif event.character == "G":
+            self.action_scroll_end()
+            self._last_g_press_time = 0.0
+        else:
+            self._last_g_press_time = 0.0
+
     def action_page_down(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
         viewer.page_down()
@@ -236,6 +258,16 @@ class MDReaderApp(App):
     def action_page_up(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
         viewer.page_up()
+
+    def action_scroll_home(self) -> None:
+        """Scroll to the top of the document (gg)."""
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_home()
+
+    def action_scroll_end(self) -> None:
+        """Scroll to the bottom of the document (G)."""
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_end()
 
     def action_scroll_down(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)

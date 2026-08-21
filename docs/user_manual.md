@@ -36,8 +36,10 @@ mdreader --watch docs/deployment_guide.md
 | :--- | :--- |
 | **`q`** / **`Esc`** | 退出 mdreader 閱讀器 / 關閉目前浮動視窗 |
 | **`Tab`** | **切換大綱模式 (TOC Outline)**：開啟/關閉章節目錄選單，選擇章節跳轉 |
-| **`j`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
-| **`k`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
+| **`j`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
+| **`k`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
+| **`gg`** / **`Home`** | **回到文件最上方 (Jump to Top)** |
+| **`G`** / **`End`** | **跳至文件最下方 (Jump to Bottom)** |
 | **`↓`** / **`↑`** | 逐行平滑向上 / 向下捲動 |
 | **`o`** | **開啟模糊檔案選擇器 (File Picker)**，隨時切換不同文件 |
 | **`t`** | **循環切換主題色彩**（深色/淺色/Tokyo Night/Monokai 等） |
