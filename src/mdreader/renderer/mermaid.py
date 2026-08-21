@@ -5,6 +5,36 @@ import termaid
 
 logger = logging.getLogger(__name__)
 
+# Monkey-patch termaid stadium (pill/rounded) node rendering to fix border alignment issue
+try:
+    import termaid.renderer.shapes as _shapes
+
+    def _aligned_draw_stadium(canvas, x: int, y: int, width: int, height: int, label: str, cs, style: str = "") -> None:
+        """Draw a properly aligned stadium shape using clean rounded box corners."""
+        # Top border
+        canvas.put(y, x, cs.round_top_left, style=style)
+        for c in range(x + 1, x + width - 1):
+            canvas.put(y, c, cs.horizontal, style=style)
+        canvas.put(y, x + width - 1, cs.round_top_right, style=style)
+
+        # Bottom border
+        canvas.put(y + height - 1, x, cs.round_bottom_left, style=style)
+        for c in range(x + 1, x + width - 1):
+            canvas.put(y + height - 1, c, cs.horizontal, style=style)
+        canvas.put(y + height - 1, x + width - 1, cs.round_bottom_right, style=style)
+
+        # Side borders
+        for r in range(y + 1, y + height - 1):
+            canvas.put(r, x, cs.vertical, style=style)
+            canvas.put(r, x + width - 1, cs.vertical, style=style)
+
+        _shapes._draw_label(canvas, x, y, width, height, label, style=style)
+
+    _shapes.draw_stadium = _aligned_draw_stadium
+    _shapes.SHAPE_RENDERERS[_shapes.NodeShape.STADIUM] = _aligned_draw_stadium
+except Exception as _patch_err:
+    logger.debug("Could not patch termaid stadium renderer: %s", _patch_err)
+
 # Regular expression matching ```mermaid ... ``` code blocks
 MERMAID_BLOCK_PATTERN = re.compile(r"```mermaid[ \t]*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
