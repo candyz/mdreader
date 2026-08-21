@@ -6,10 +6,18 @@ from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
 from textual.widgets import Input, OptionList, Label, Button
 from textual.widgets.option_list import Option
+from textual.binding import Binding
 
 
 class FilePickerScreen(ModalScreen[Path | None]):
     """Modal screen for fuzzy searching and picking markdown files in current directory tree."""
+
+    BINDINGS = [
+        Binding("tab", "dismiss_modal", "Dismiss", priority=True),
+        Binding("escape", "dismiss_modal", "Dismiss", priority=True),
+        Binding("up", "move_up", "Up", priority=True, show=False),
+        Binding("down", "move_down", "Down", priority=True, show=False),
+    ]
 
     CSS = """
     FilePickerScreen {
@@ -138,13 +146,14 @@ class FilePickerScreen(ModalScreen[Path | None]):
         if event.option.id:
             self.dismiss(Path(event.option.id))
 
-    def key_escape(self) -> None:
+    def action_dismiss_modal(self) -> None:
+        """Dismiss file picker modal."""
         self.dismiss(None)
 
-    def key_down(self) -> None:
-        option_list = self.query_one("#file-list", OptionList)
-        option_list.action_cursor_down()
+    def action_move_down(self) -> None:
+        """Move down in file list."""
+        self.query_one("#file-list", OptionList).action_cursor_down()
 
-    def key_up(self) -> None:
-        option_list = self.query_one("#file-list", OptionList)
-        option_list.action_cursor_up()
+    def action_move_up(self) -> None:
+        """Move up in file list."""
+        self.query_one("#file-list", OptionList).action_cursor_up()

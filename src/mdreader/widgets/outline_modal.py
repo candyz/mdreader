@@ -7,8 +7,18 @@ from textual.widgets import OptionList, Label, Input
 from textual.widgets.option_list import Option
 
 
+from textual.binding import Binding
+
+
 class OutlineModalScreen(ModalScreen[str | None]):
     """Modal screen displaying document outline (TOC) with quick navigation and search."""
+
+    BINDINGS = [
+        Binding("tab", "dismiss_modal", "Dismiss", priority=True),
+        Binding("escape", "dismiss_modal", "Dismiss", priority=True),
+        Binding("up", "move_up", "Up", priority=True, show=False),
+        Binding("down", "move_down", "Down", priority=True, show=False),
+    ]
 
     CSS = """
     OutlineModalScreen {
@@ -108,14 +118,14 @@ class OutlineModalScreen(ModalScreen[str | None]):
         if event.option.id:
             self.dismiss(event.option.id)
 
-    def key_escape(self) -> None:
+    def action_dismiss_modal(self) -> None:
+        """Dismiss outline modal without selection."""
         self.dismiss(None)
 
-    def key_tab(self) -> None:
-        self.dismiss(None)
-
-    def key_down(self) -> None:
+    def action_move_down(self) -> None:
+        """Move cursor down in outline list."""
         self.query_one("#outline-list", OptionList).action_cursor_down()
 
-    def key_up(self) -> None:
+    def action_move_up(self) -> None:
+        """Move cursor up in outline list."""
         self.query_one("#outline-list", OptionList).action_cursor_up()
