@@ -482,27 +482,53 @@ class MDReaderApp(App):
         except Exception:
             pass
 
-        # 2. Linux xclip
-        if not success:
-            try:
-                p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, close_fds=True)
-                p.communicate(input=text.encode("utf-8"))
-                if p.returncode == 0:
-                    success = True
-            except Exception:
-                pass
-
-        # 3. Linux wl-copy
+        # 2. Linux Wayland (wl-copy to both clipboard and primary selection)
         if not success:
             try:
                 p = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, close_fds=True)
                 p.communicate(input=text.encode("utf-8"))
                 if p.returncode == 0:
                     success = True
+                    # Also write to primary selection for middle-click paste
+                    subprocess.Popen(["wl-copy", "--primary"], stdin=subprocess.PIPE, close_fds=True).communicate(input=text.encode("utf-8"))
             except Exception:
                 pass
 
-        # 4. Textual built-in copy (OSC 52 escape code to terminal emulator)
+        # 3. Linux X11 (xclip to both CLIPBOARD and PRIMARY selections)
+        if not success:
+            try:
+                # Write to standard clipboard (Ctrl+V)
+                p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, close_fds=True)
+                p.communicate(input=text.encode("utf-8"))
+                if p.returncode == 0:
+                    success = True
+                    # Also write to primary selection (mouse middle-click / highlight paste)
+                    subprocess.Popen(["xclip", "-selection", "primary"], stdin=subprocess.PIPE, close_fds=True).communicate(input=text.encode("utf-8"))
+            except Exception:
+                pass
+
+        # 4. Linux X11 (xsel fallback)
+        if not success:
+            try:
+                p = subprocess.Popen(["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE, close_fds=True)
+                p.communicate(input=text.encode("utf-8"))
+                if p.returncode == 0:
+                    success = True
+                    subprocess.Popen(["xsel", "--primary", "--input"], stdin=subprocess.PIPE, close_fds=True).communicate(input=text.encode("utf-8"))
+            except Exception:
+                pass
+
+        # 5. Linux GNOME / GPaste fallback
+        if not success:
+            try:
+                p = subprocess.Popen(["gpaste-client", "add"], stdin=subprocess.PIPE, close_fds=True)
+                p.communicate(input=text.encode("utf-8"))
+                if p.returncode == 0:
+                    success = True
+            except Exception:
+                pass
+
+        # 6. Textual built-in copy (OSC 52 escape code to terminal emulator)
         try:
             self.copy_to_clipboard(text)
             success = True

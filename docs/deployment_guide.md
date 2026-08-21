@@ -39,9 +39,9 @@ mdreader --version
 ### 2. Linux (Ubuntu / Debian) 安裝步驟
 
 ```bash
-# 1. 更新系統並安裝 python3, venv, pipx
+# 1. 更新系統並安裝 python3, venv, pipx 及剪貼簿工具 (xclip / wl-clipboard)
 sudo apt update
-sudo apt install -y python3 python3-pip python3-venv pipx
+sudo apt install -y python3 python3-pip python3-venv pipx xclip wl-clipboard
 pipx ensurepath
 
 # 套用 PATH 變更

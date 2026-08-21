@@ -124,3 +124,10 @@ mdreader 會自動掃描 Markdown 中的 ```` ```mermaid ```` 區塊並透過 AS
    - 請確認終端機字型支援 Nerd Fonts 或標準全形/半形等寬字型（如 JetBrains Mono、FiraCode 或 macOS SF Mono）。
 2. **終端機色彩顯示異常**：
    - 請確認環境變數 `export COLORTERM=truecolor` 或終端機已啟用 24-bit True Color 支援。
+3. **Linux / GNOME Terminal 剪貼簿無法貼上問題**：
+   - Linux X11/Wayland 桌面環境仰賴系統剪貼簿工具。若在純乾淨的 Linux 環境下無法貼上，請安裝剪貼簿工具：
+     - Ubuntu / Debian: `sudo apt install xclip` 或 `sudo apt install wl-clipboard` (Wayland)
+     - Arch / Manjaro: `sudo pacman -S xclip wl-clipboard`
+   - 此外，Linux 下支援兩種貼上模式：
+     - **滑鼠滾輪中鍵點擊 (Middle-Click)**：直接貼上剛框選的文字 (Primary Selection)。
+     - **`Ctrl + Shift + V`**（終端機貼上）或 **`Ctrl + V`**（瀏覽器貼上）：貼上 Clipboard 內容。
