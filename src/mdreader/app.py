@@ -110,6 +110,9 @@ class MDReaderApp(App):
         Binding("down", "scroll_down", "Down", show=False),
         Binding("left", "scroll_left", "Left", show=False),
         Binding("right", "scroll_right", "Right", show=False),
+        Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
+        Binding("equals", "zoom_in", "Zoom In (=)", show=False),
+        Binding("plus", "zoom_in", "Zoom In (+)", show=False),
         Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
@@ -417,3 +420,57 @@ class MDReaderApp(App):
     def action_scroll_left(self) -> None:
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
         viewer.scroll_horizontal(-8)
+
+    def action_zoom_in(self) -> None:
+        """Enlarge reading text area width (= / +)."""
+        reader_box = self.query_one("#reader-box")
+        current_width = reader_box.styles.max_width
+        screen_width = self.size.width
+
+        # Trigger terminal font resize via OSC if available
+        import sys
+        try:
+            sys.stdout.write("\033]50;#+1\007")
+            sys.stdout.flush()
+        except Exception:
+            pass
+
+        if current_width is None:
+            # Already full width
+            self.notify("Reader width: Full width (100%)", title="Zoom (+)", timeout=1.5)
+            return
+
+        current_val = current_width.value if hasattr(current_width, "value") else int(current_width)
+        new_val = current_val + 10
+        if new_val >= screen_width:
+            reader_box.styles.max_width = None
+            self.max_width = None
+            self.notify("Reader width: Full width (100%)", title="Zoom (+)", timeout=1.5)
+        else:
+            reader_box.styles.max_width = new_val
+            self.max_width = new_val
+            self.notify(f"Reader width: {new_val} cols", title="Zoom (+)", timeout=1.5)
+
+    def action_zoom_out(self) -> None:
+        """Narrow reading text area width (-)."""
+        reader_box = self.query_one("#reader-box")
+        current_width = reader_box.styles.max_width
+        screen_width = self.size.width
+
+        # Trigger terminal font resize via OSC if available
+        import sys
+        try:
+            sys.stdout.write("\033]50;#-1\007")
+            sys.stdout.flush()
+        except Exception:
+            pass
+
+        if current_width is None:
+            current_val = screen_width
+        else:
+            current_val = current_width.value if hasattr(current_width, "value") else int(current_width)
+
+        new_val = max(40, current_val - 10)
+        reader_box.styles.max_width = new_val
+        self.max_width = new_val
+        self.notify(f"Reader width: {new_val} cols", title="Zoom (-)", timeout=1.5)

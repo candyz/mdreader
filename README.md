@@ -78,4 +78,6 @@ cat test.md | mdreader
 | `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
 | `Down` / `Up` | Line by line scroll (逐行垂直捲動) |
 | `Left` / `Right` | Horizontal scroll for wide content/code (水平向左/右捲動) |
+| `-` | **縮小文字 / 閱讀寬度 (Zoom Out / Narrow)** |
+| `=` / `+` | **放大文字 / 閱讀寬度 (Zoom In / Widen)** |
 | `Mouse wheel` | Scroll (滑鼠滾動) |

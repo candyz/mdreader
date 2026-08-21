@@ -48,6 +48,8 @@ mdreader --watch docs/deployment_guide.md
 | **`/`** | **開啟文件內搜尋欄**（輸入 `/關鍵字` 後按 Enter 立即開始搜尋） |
 | **`n`** | **跳至下一處搜尋結果 (Next Match)** |
 | **`N`** | **跳至上一處搜尋結果 (Previous Match)** |
+| **`-`** | **縮小文字 / 閱讀寬度 (Zoom Out / Narrow)** |
+| **`=`** / **`+`** | **放大文字 / 閱讀寬度 (Zoom In / Widen)** |
 | **滑鼠滾輪** | 自由滾動內容 |
 
 ---
