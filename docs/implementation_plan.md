@@ -253,13 +253,16 @@ mdreader --version
 ---
 
 ## 八、驗收標準
-
-以 [test.md](file:///Users/candyz/AI/agy/mdreader/test.md) 作為驗收測試檔案：
-
-- [ ] 標題（`#` ~ `######`）正確渲染為不同大小/樣式
-- [ ] 表格正確對齊顯示
-- [ ] Code block 有語法高亮（SQL, scheme, bash）
-- [ ] **Mermaid `graph TD` 流程圖正確轉為 ASCII art 顯示**
-- [ ] 上下捲動流暢
-- [ ] `q` / `Esc` 可正常退出
-- [ ] 不會因任何 mermaid 語法而 crash
+ 
+ 以 [test.md](file:///Users/candyz/AI/agy/mdreader/test.md) 作為驗收測試檔案：
+ 
+ - [x] 標題（`#` ~ `######`）正確渲染為不同大小/樣式
+ - [x] 表格正確對齊顯示
+ - [x] Code block 有語法高亮（SQL, scheme, bash）
+ - [x] **Mermaid `graph TD` 流程圖正確轉為 ASCII art 顯示**
+ - [x] 上下與水平左右捲動流暢（`↑`/`↓`/`←`/`→`/`j`/`k`/`gg`/`G`）
+ - [x] `Tab` 開啟專屬大綱瀏覽視窗 (Outline Modal)，選擇後跳轉
+ - [x] `/` Vim 風格全文搜尋與 `n` / `N` 跳轉
+ - [x] `v` 呼叫外部編輯器 (`$EDITOR` / `vim`) 並在退出後自動重載
+ - [x] `q` / `Esc` 可正常退出
+ - [x] 不會因任何 mermaid 語法而 crash

@@ -52,6 +52,14 @@ mdreader --watch docs/deployment_guide.md
 
 ---
 
+## 📝 外部編輯器整合 (Edit with Vim)
+
+在閱讀 Markdown 文件時，隨時可按 **`v`** 鍵直接調用終端編輯器修改文件：
+- **環境變數支援**：優先讀取系統 `$EDITOR` 或 `$VISUAL`（預設為 `vim`，找不到時依序 fallback 至 `vi` / `nano`）。
+- **無縫暫停與恢復**：mdreader 會自動暫停 TUI 畫面並進入編輯器，待編輯完成存檔退出（如 `:wq`）後，自動恢復並**即時重新載入最新內容（包含 Mermaid 圖表重新渲染）**。
+
+---
+
 ## ⚙️ 進階指令參數與使用場景
 
 ### 1. 指定介面色彩主題 (`-t` / `--theme`)
