@@ -100,6 +100,7 @@ class MDReaderApp(App):
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("tab", "toggle_toc", "Outline (大綱)", show=True, priority=True),
         Binding("o", "open_file_picker", "Open File", show=True),
+        Binding("v", "edit_in_editor", "Edit (Vim)", show=True),
         Binding("slash", "open_search", "Search", show=True),
         Binding("n", "search_next", "Next match", show=False),
         Binding("N", "search_prev", "Prev match", show=False),
@@ -196,6 +197,36 @@ class MDReaderApp(App):
                 self.notify("Document reloaded", title="Auto-Reload", timeout=2)
             except Exception as e:
                 self.notify(f"Reload failed: {e}", title="Error", severity="error")
+
+    def action_edit_in_editor(self) -> None:
+        """Open current file in external editor ($EDITOR or vim) and reload upon exit."""
+        import os
+        import shutil
+        import subprocess
+
+        # If reading from stdin without filepath, prompt or notify
+        if not self.filepath:
+            self.notify("Cannot edit stdin/streamed content directly (no file path)", title="Edit", severity="warning")
+            return
+
+        editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vim"
+        editor_path = shutil.which(editor) or shutil.which("vim") or shutil.which("vi") or shutil.which("nano")
+        if not editor_path:
+            self.notify(f"Editor '{editor}' not found in PATH", title="Error", severity="error")
+            return
+
+        try:
+            with self.suspend():
+                subprocess.run([editor_path, str(self.filepath.resolve())])
+            
+            # Reload file content after returning from editor
+            if self.filepath.exists():
+                new_content = self.filepath.read_text(encoding="utf-8")
+                viewer = self.query_one("#viewer", MarkdownViewerWidget)
+                viewer.update_content(new_content)
+                self.notify(f"Reloaded after editing: {self.filepath.name}", title="Edit", timeout=2)
+        except Exception as e:
+            self.notify(f"Error opening editor: {e}", title="Error", severity="error")
 
     def action_toggle_toc(self) -> None:
         """Open full outline modal for chapter browsing and jumping."""

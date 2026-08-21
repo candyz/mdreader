@@ -67,6 +67,7 @@ cat test.md | mdreader
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
 | `Tab` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | `o` | Open Fuzzy File Picker modal (檔案選擇器) |
+| `v` | **開啟外部編輯器 (Edit in Vim / $EDITOR)**：離開編輯後自動重載 |
 | `t` | Switch Color Theme (切換色彩主題) |
 | `/` | **開啟搜尋欄 (Search)**：輸入 `/keyword` 後按 Enter 開始搜尋 |
 | `n` | **Jump to Next Search Match (跳至下一處搜尋結果)** |
