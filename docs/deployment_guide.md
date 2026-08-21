@@ -26,7 +26,7 @@ brew install pipx
 pipx ensurepath
 
 # 2. 複製專案庫 (或從遠端 Git 下載)
-git clone https://github.com/candyz0416/mdreader.git
+git clone https://github.com/candyz/mdreader.git
 cd mdreader
 
 # 3. 使用 pipx 進行本地安裝
@@ -48,7 +48,7 @@ pipx ensurepath
 source ~/.bashrc
 
 # 2. 複製專案
-git clone https://github.com/candyz0416/mdreader.git
+git clone https://github.com/candyz/mdreader.git
 cd mdreader
 
 # 3. 透過 pipx 部署安裝
@@ -65,7 +65,7 @@ sudo pacman -S python python-pip python-pipx xclip wl-clipboard
 pipx ensurepath
 source ~/.bashrc
 
-git clone https://github.com/candyz0416/mdreader.git
+git clone https://github.com/candyz/mdreader.git
 cd mdreader
 pipx install .
 ```
@@ -88,7 +88,7 @@ pipx ensurepath
 source ~/.bashrc
 
 # 3. 複製專案
-git clone https://github.com/candyz0416/mdreader.git
+git clone https://github.com/candyz/mdreader.git
 cd mdreader
 
 # 4. 透過 pipx 部署安裝

@@ -21,7 +21,7 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 
 ```bash
 # Clone the repository
-git clone https://github.com/candyz0416/mdreader.git
+git clone https://github.com/candyz/mdreader.git
 cd mdreader
 
 # Install using pip
