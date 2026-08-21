@@ -56,23 +56,6 @@ class MDReaderApp(App):
         height: 100%;
     }
 
-    #search-bar {
-        dock: bottom;
-        height: auto;
-        padding: 0 1;
-        background: $panel;
-        display: none;
-        border-top: solid $primary;
-    }
-
-    #search-bar.-visible {
-        display: block;
-    }
-
-    #search-input {
-        width: 100%;
-    }
-
     #footer-bar {
         dock: bottom;
         height: 1;
@@ -83,6 +66,24 @@ class MDReaderApp(App):
     #footer-bar > Footer {
         width: 1fr;
         dock: none;
+    }
+
+    #footer-bar > Input {
+        width: 1fr;
+        height: 1;
+        border: none;
+        padding: 0 1;
+        background: $surface;
+        color: $text;
+        display: none;
+    }
+
+    #footer-bar > Input.-visible {
+        display: block;
+    }
+
+    #footer-bar.-searching > Footer {
+        display: none;
     }
 
     #clock-label {
@@ -154,10 +155,9 @@ class MDReaderApp(App):
                     show_toc=self.show_toc,
                     id="viewer",
                 )
-        with Vertical(id="search-bar"):
-            yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
         with Horizontal(id="footer-bar"):
             yield Footer()
+            yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
             yield ClockLabel(id="clock-label")
 
     def on_mount(self) -> None:
@@ -260,21 +260,24 @@ class MDReaderApp(App):
         self.notify(f"Theme switched to: {new_theme}", timeout=1.5)
 
     def action_open_search(self) -> None:
-        """Open in-document search bar."""
-        search_bar = self.query_one("#search-bar")
-        search_bar.add_class("-visible")
+        """Open in-document search input in bottom footer bar."""
+        footer_bar = self.query_one("#footer-bar")
+        footer_bar.add_class("-searching")
         search_input = self.query_one("#search-input", Input)
+        search_input.add_class("-visible")
         search_input.value = ""
         search_input.focus()
         self.search_visible = True
 
     def action_handle_escape(self) -> None:
-        """Escape handles closing search bar or quitting."""
+        """Escape handles closing search input or quitting."""
         if self.search_visible:
-            search_bar = self.query_one("#search-bar")
-            search_bar.remove_class("-visible")
+            footer_bar = self.query_one("#footer-bar")
+            footer_bar.remove_class("-searching")
+            search_input = self.query_one("#search-input", Input)
+            search_input.remove_class("-visible")
             viewer = self.query_one("#viewer", MarkdownViewerWidget)
-            viewer.focus()
+            viewer.document.focus()
             self.search_visible = False
         else:
             self.exit()

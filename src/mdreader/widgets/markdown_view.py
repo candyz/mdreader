@@ -11,6 +11,11 @@ class MarkdownViewerWidget(MarkdownViewer):
         width: 100%;
         height: 100%;
     }
+    .-search-match-active {
+        background: #d19a66 35%;
+        border-left: thick $accent;
+        text-style: bold;
+    }
     """
 
     def __init__(
@@ -121,8 +126,17 @@ class MarkdownViewerWidget(MarkdownViewer):
         return matches
 
     def scroll_to_block(self, block: object) -> None:
-        """Scroll document to center or top of matching block widget."""
+        """Scroll document to center or top of matching block widget and highlight it."""
         try:
+            self.clear_highlights()
+            if hasattr(block, "add_class"):
+                block.add_class("-search-match-active")
             self.scroll_to_widget(block, top=True)
         except Exception:
             pass
+
+    def clear_highlights(self) -> None:
+        """Remove highlight class from all blocks in the document."""
+        for block in self.document.children:
+            if hasattr(block, "remove_class"):
+                block.remove_class("-search-match-active")
