@@ -68,7 +68,9 @@ cat test.md | mdreader
 | `Tab` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | `o` | Open Fuzzy File Picker modal (檔案選擇器) |
 | `t` | Switch Color Theme (切換色彩主題) |
-| `/` | Open Search bar (文件搜尋) |
+| `/` | **開啟搜尋欄 (Search)**：輸入 `/keyword` 後按 Enter 開始搜尋 |
+| `n` | **Jump to Next Search Match (跳至下一處搜尋結果)** |
+| `N` | **Jump to Previous Search Match (跳至上一處搜尋結果)** |
 | `j` / `Page Up` | **Scroll Page Up (上一頁)** |
 | `k` / `Page Down` | **Scroll Page Down (下一頁)** |
 | `gg` / `Home` | **Jump to Top (回到文件最上方)** |

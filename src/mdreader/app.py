@@ -101,6 +101,8 @@ class MDReaderApp(App):
         Binding("tab", "toggle_toc", "Outline (大綱)", show=True, priority=True),
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
+        Binding("n", "search_next", "Next match", show=False),
+        Binding("N", "search_prev", "Prev match", show=False),
         Binding("j", "page_up", "Page Up", show=False),
         Binding("k", "page_down", "Page Down", show=False),
         Binding("up", "scroll_up", "Up", show=False),
@@ -133,6 +135,9 @@ class MDReaderApp(App):
         self._theme_index = 0
         self._watcher: FileWatcher | None = None
         self._last_g_press_time: float = 0.0
+        self._search_query: str = ""
+        self._search_matches: list[object] = []
+        self._search_match_index: int = -1
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -146,7 +151,7 @@ class MDReaderApp(App):
                     id="viewer",
                 )
         with Vertical(id="search-bar"):
-            yield Input(placeholder="Type to search in document... (Enter to confirm, Esc to dismiss)", id="search-input")
+            yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
         with Horizontal(id="footer-bar"):
             yield Footer()
             yield ClockLabel(id="clock-label")
@@ -241,15 +246,59 @@ class MDReaderApp(App):
             self.exit()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle search submission."""
+        """Handle search submission (Vim-style /+keyword)."""
         if event.input.id == "search-input":
             query = event.value.strip()
+            self.action_handle_escape()
             if query:
-                # Dismiss search bar and notify
-                self.action_handle_escape()
-                self.notify(f"Searching for: '{query}'", timeout=2)
+                self.perform_search(query)
+
+    def perform_search(self, query: str) -> None:
+        """Perform search in markdown content and jump to first match."""
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        matches = viewer.search_text(query)
+        self._search_query = query
+        self._search_matches = matches
+        if not matches:
+            self._search_match_index = -1
+            self.notify(f"Pattern not found: {query}", title="Search", severity="warning", timeout=2)
+            return
+
+        self._search_match_index = 0
+        viewer.scroll_to_block(matches[0])
+        self.notify(f"[{1}/{len(matches)}] '{query}' (n: next, N: prev)", title="Search", timeout=2)
+
+    def action_search_next(self) -> None:
+        """Jump to next search match (n)."""
+        if not self._search_matches:
+            if self._search_query:
+                self.perform_search(self._search_query)
             else:
-                self.action_handle_escape()
+                self.notify("No previous search pattern", title="Search", timeout=1.5)
+            return
+        
+        self._search_match_index = (self._search_match_index + 1) % len(self._search_matches)
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_to_block(self._search_matches[self._search_match_index])
+        idx = self._search_match_index + 1
+        total = len(self._search_matches)
+        self.notify(f"[{idx}/{total}] '{self._search_query}'", title="Search", timeout=1.5)
+
+    def action_search_prev(self) -> None:
+        """Jump to previous search match (N)."""
+        if not self._search_matches:
+            if self._search_query:
+                self.perform_search(self._search_query)
+            else:
+                self.notify("No previous search pattern", title="Search", timeout=1.5)
+            return
+        
+        self._search_match_index = (self._search_match_index - 1) % len(self._search_matches)
+        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer.scroll_to_block(self._search_matches[self._search_match_index])
+        idx = self._search_match_index + 1
+        total = len(self._search_matches)
+        self.notify(f"[{idx}/{total}] '{self._search_query}'", title="Search", timeout=1.5)
 
     def action_open_file_picker(self) -> None:
         """Open fuzzy file picker modal."""

@@ -97,3 +97,32 @@ class MarkdownViewerWidget(MarkdownViewer):
             self.scroll_to_widget(block, top=True)
         except Exception:
             pass
+
+    def search_text(self, query: str) -> list[object]:
+        """Search all blocks containing query string (case-insensitive)."""
+        q = query.strip().lower()
+        if not q:
+            return []
+        
+        matches = []
+        for block in self.document.children:
+            text = ""
+            if hasattr(block, "_content"):
+                text = str(block._content)
+            elif hasattr(block, "_inline_token") and block._inline_token and block._inline_token.content:
+                text = block._inline_token.content
+            elif hasattr(block, "text"):
+                text = str(block.text)
+            else:
+                text = str(block)
+
+            if q in text.lower():
+                matches.append(block)
+        return matches
+
+    def scroll_to_block(self, block: object) -> None:
+        """Scroll document to center or top of matching block widget."""
+        try:
+            self.scroll_to_widget(block, top=True)
+        except Exception:
+            pass
