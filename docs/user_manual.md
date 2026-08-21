@@ -49,6 +49,7 @@ mdreader --watch docs/deployment_guide.md
 | **`n`** | **跳至下一處搜尋結果 (Next Match)** |
 | **`N`** | **跳至上一處搜尋結果 (Previous Match)** |
 | **`滑鼠拖曳`** | **自由選取文字 (Mouse Select Text)**：放開滑鼠時自動複製選取文字到系統剪貼簿 |
+| **`滑鼠右鍵`** | **開啟浮動選單 (Right-Click Context Menu)**：點擊彈出選單選擇 Copy / Search / Select All |
 | **`y`** / **`c`** / **`Ctrl+C`** | **手動複製目前選取的文字 (Copy to Clipboard)** |
 | **`-`** | **收窄閱讀版面寬度 (Narrow column width)**（每次 -10 欄，最窄 40 欄） |
 | **`=`** / **`+`** | **拓寬閱讀版面寬度 (Widen column width)**（每次 +10 欄，直至 100% 滿版） |

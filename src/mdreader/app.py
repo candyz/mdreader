@@ -532,3 +532,33 @@ class MDReaderApp(App):
             self.copy_to_system_clipboard(selected_text)
             preview = selected_text[:30].replace("\n", " ") + ("..." if len(selected_text) > 30 else "")
             self.notify(f"已自動複製：\n「{preview}」", title="剪貼簿", timeout=1.5)
+
+    def on_mouse_down(self, event) -> None:
+        """Right-click opens floating context menu for Copy / Search / Select All."""
+        if event.button == 3:  # Right-click button
+            event.stop()
+            event.prevent_default()
+            from mdreader.widgets.context_menu import ContextMenuModal
+            selected_text = self.screen.get_selected_text()
+            has_selection = bool(selected_text and selected_text.strip())
+            self.push_screen(
+                ContextMenuModal(x=event.screen_x, y=event.screen_y, has_selection=has_selection),
+                self._on_context_menu_selected,
+            )
+
+    def _on_context_menu_selected(self, action: str | None) -> None:
+        """Handle option selected from right-click context menu."""
+        if not action:
+            return
+
+        if "Copy" in action:
+            self.action_copy_selected_text()
+        elif "Select All" in action:
+            self.screen.text_select_all()
+            self.notify("已全選文字 (可按 y 或右鍵複製)", title="全選", timeout=1.5)
+        elif "Search" in action:
+            selected_text = self.screen.get_selected_text()
+            if selected_text and selected_text.strip():
+                self.perform_search(selected_text.strip())
+            else:
+                self.action_open_search()
