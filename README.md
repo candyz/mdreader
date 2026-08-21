@@ -35,7 +35,7 @@ pip install -e .
 # 1. Open without arguments to browse and select Markdown files in current folder
 mdreader
 
-# 2. Preview a specific markdown file interactively (with TOC sidebar)
+# 2. Preview a specific markdown file interactively (full document view by default)
 mdreader README.md
 
 # 3. Preview test.md containing complex Mermaid flowchart
@@ -47,8 +47,8 @@ mdreader -w test.md
 # 5. Set specific theme on launch
 mdreader -t solarized-dark test.md
 
-# 6. Hide TOC sidebar on startup
-mdreader --no-toc test.md
+# 6. Show TOC outline sidebar on startup (default is hidden)
+mdreader --toc test.md
 
 # 7. Set maximum width (columns)
 mdreader --width 100 test.md
@@ -65,8 +65,8 @@ cat test.md | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
+| `Tab` | Toggle Outline / Table of Contents (大綱模式 / 章節選單) |
 | `o` | Open Fuzzy File Picker modal |
-| `Tab` | Toggle Table of Contents (TOC) sidebar |
 | `t` | Switch Color Theme (Dark, Light, Tokyo Night, Monokai, Solarized, Nord, etc.) |
 | `/` | Open Search bar |
 | `j` / `Page Down` | Scroll Page Down (下一頁) |

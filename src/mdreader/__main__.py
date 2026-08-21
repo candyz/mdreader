@@ -42,9 +42,9 @@ def parse_args() -> argparse.Namespace:
         help="Set color theme (e.g. textual-dark, textual-light, tokyo-night, monokai, solarized-dark, nord)",
     )
     parser.add_argument(
-        "--no-toc",
+        "--toc",
         action="store_true",
-        help="Hide Table of Contents sidebar by default",
+        help="Show Table of Contents outline sidebar on startup",
     )
     parser.add_argument(
         "--inline",
@@ -98,7 +98,7 @@ def main() -> None:
         max_width=args.width,
         watch=args.watch,
         theme=args.theme,
-        show_toc=not args.no_toc,
+        show_toc=args.toc,
     )
     app.run()
 

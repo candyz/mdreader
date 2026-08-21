@@ -66,7 +66,7 @@ class MDReaderApp(App):
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
         Binding("t", "toggle_theme", "Theme", show=True),
-        Binding("tab", "toggle_toc", "TOC", show=True),
+        Binding("tab", "toggle_toc", "Outline (大綱)", show=True),
         Binding("o", "open_file_picker", "Open File", show=True),
         Binding("slash", "open_search", "Search", show=True),
         Binding("j", "page_down", "Page Down", show=False),
@@ -83,7 +83,7 @@ class MDReaderApp(App):
         max_width: int | None = None,
         watch: bool = False,
         theme: str | None = None,
-        show_toc: bool = True,
+        show_toc: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)

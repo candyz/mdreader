@@ -35,10 +35,10 @@ mdreader --watch docs/deployment_guide.md
 | 快捷鍵 | 功能說明 |
 | :--- | :--- |
 | **`q`** / **`Esc`** | 退出 mdreader 閱讀器 / 關閉目前浮動視窗 |
+| **`Tab`** | **切換大綱模式 (TOC Outline)**：開啟/關閉章節目錄選單，選擇章節跳轉 |
 | **`j`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
 | **`k`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
 | **`↓`** / **`↑`** | 逐行平滑向上 / 向下捲動 |
-| **`Tab`** | **展開 / 收合 TOC 目錄側欄** |
 | **`o`** | **開啟模糊檔案選擇器 (File Picker)**，隨時切換不同文件 |
 | **`t`** | **循環切換主題色彩**（深色/淺色/Tokyo Night/Monokai 等） |
 | **`/`** | **開啟文件內搜尋欄**（輸入關鍵字後 Enter，或按 Esc 取消） |
@@ -63,10 +63,10 @@ mdreader -t textual-light README.md
 mdreader --width 100 README.md
 ```
 
-### 3. 預設隱藏目錄側欄 (`--no-toc`)
-若文件較短不需要目錄導航，可隱藏側欄以換取最大展示空間（進入後仍可按 `Tab` 呼叫）：
+### 3. 啟動時預設顯示大綱目錄側欄 (`--toc`)
+預設進入為滿版全文件閱讀模式；若希望啟動時立即開啟目錄導航側欄，可加上 `--toc`（進入後亦可隨時按 `Tab` 切換）：
 ```bash
-mdreader --no-toc README.md
+mdreader --toc README.md
 ```
 
 ### 4. 非互動輸出模式 (`--inline`)

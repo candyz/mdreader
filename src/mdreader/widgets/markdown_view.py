@@ -22,7 +22,7 @@ class MarkdownViewerWidget(VerticalScroll):
     def __init__(
         self,
         raw_markdown: str = "",
-        show_toc: bool = True,
+        show_toc: bool = False,
         max_width: int | None = None,
         **kwargs,
     ):
