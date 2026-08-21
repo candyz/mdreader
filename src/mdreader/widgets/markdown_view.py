@@ -17,6 +17,16 @@ class MarkdownViewerWidget(MarkdownViewer):
         border-left: thick $accent;
         text-style: bold;
     }
+    MarkdownBlock > .em {
+        text-style: italic;
+        color: $accent;
+    }
+    MarkdownBlock > .strong {
+        text-style: bold;
+    }
+    MarkdownBlock > .s {
+        text-style: strike;
+    }
     """
 
     def __init__(
