@@ -77,21 +77,22 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
                 # Filter out excluded directories in-place
                 dirs[:] = [d for d in dirs if d not in excluded_dirs and not d.startswith(".")]
                 for fname in filenames:
-                    if fname.endswith((".md", ".markdown")):
+                    if fname.endswith((".md", ".markdown", ".html", ".htm", ".xhtml")):
                         full_path = root / fname
                         files.append(full_path)
         except Exception:
             # Fallback to rglob if walk not supported on older python
-            for p in self.start_dir.rglob("*.md"):
-                if not any(part in excluded_dirs or part.startswith(".") for part in p.parts):
-                    files.append(p)
+            for ext in ("*.md", "*.markdown", "*.html", "*.htm", "*.xhtml"):
+                for p in self.start_dir.rglob(ext):
+                    if not any(part in excluded_dirs or part.startswith(".") for part in p.parts):
+                        files.append(p)
 
         self.all_files = sorted(files, key=lambda p: p.name.lower())
 
     def compose(self) -> ComposeResult:
         with Vertical(id="picker-dialog"):
             with Horizontal(id="picker-header"):
-                yield Label("📂 Select a Markdown File to Open", id="picker-title")
+                yield Label("📂 Select a Markdown / HTML File to Open", id="picker-title")
             yield Input(
                 value=self.initial_query,
                 placeholder="Type to filter files by name... (↑/↓ to navigate, Enter to select, Esc to cancel)",

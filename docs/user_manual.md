@@ -6,24 +6,28 @@
 
 ## 🎯 快速開始 (Quick Start)
 
-### 1. 開啟 Markdown 檔案
+### 1. 開啟 Markdown 或 HTML 檔案
 ```bash
-# 開啟指定文件
+# 開啟 Markdown 文件
 mdreader README.md
 mdreader docs/implementation_plan.md
+
+# 開啟 HTML 網頁文件（自動轉譯並保留大綱與排版）
+mdreader index.html
+mdreader docs/api_reference.html
 ```
 
 ### 2. 無參數啟動（自動模糊搜尋檔案）
-若沒有提供參數，mdreader 會自動搜尋當前目錄與子目錄下的所有 `.md` 檔案供您選擇：
+若沒有提供參數，mdreader 會自動搜尋當前目錄與子目錄下的所有 `.md` 與 `.html` 檔案供您選擇：
 ```bash
 mdreader
 ```
 
 ### 3. 熱重載監聽模式 (Watch Mode)
-在撰寫文件或筆記時，搭配編輯器開啟 watch 模式，每次存檔時終端畫面會即時自動更新：
+在撰寫文件、網頁或筆記時，搭配編輯器開啟 watch 模式，每次存檔時終端畫面會即時自動更新：
 ```bash
 mdreader -w README.md
-mdreader --watch docs/deployment_guide.md
+mdreader --watch index.html
 ```
 
 ---

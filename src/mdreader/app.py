@@ -163,6 +163,7 @@ class MDReaderApp(App):
                 yield MarkdownViewerWidget(
                     raw_markdown=self.content,
                     show_toc=self.show_toc,
+                    filename=str(self.filepath.name) if self.filepath else None,
                     id="viewer",
                 )
         with Horizontal(id="footer-bar"):
@@ -206,7 +207,7 @@ class MDReaderApp(App):
             try:
                 new_content = self.filepath.read_text(encoding="utf-8")
                 viewer = self.query_one("#viewer", MarkdownViewerWidget)
-                viewer.update_content(new_content)
+                viewer.update_content(new_content, str(self.filepath.name))
                 self.notify("Document reloaded", title="Auto-Reload", timeout=2)
             except Exception as e:
                 self.notify(f"Reload failed: {e}", title="Error", severity="error")
@@ -236,7 +237,7 @@ class MDReaderApp(App):
             if self.filepath.exists():
                 new_content = self.filepath.read_text(encoding="utf-8")
                 viewer = self.query_one("#viewer", MarkdownViewerWidget)
-                viewer.update_content(new_content)
+                viewer.update_content(new_content, str(self.filepath.name))
                 self.notify(f"Reloaded after editing: {self.filepath.name}", title="Edit", timeout=2)
         except Exception as e:
             self.notify(f"Error opening editor: {e}", title="Error", severity="error")

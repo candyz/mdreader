@@ -2,10 +2,11 @@
 from __future__ import annotations
 from textual.widgets import MarkdownViewer
 from mdreader.renderer.mermaid import preprocess_mermaid
+from mdreader.renderer.html import html_to_markdown, is_html_content
 
 
 class MarkdownViewerWidget(MarkdownViewer):
-    """Integrated Markdown viewer widget with Mermaid preprocessing and TOC support."""
+    """Integrated Markdown/HTML viewer widget with Mermaid preprocessing and TOC support."""
 
     DEFAULT_CSS = """
     MarkdownViewerWidget {
@@ -41,12 +42,14 @@ class MarkdownViewerWidget(MarkdownViewer):
         self,
         raw_markdown: str = "",
         show_toc: bool = False,
+        filename: str | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ):
         self.raw_markdown = raw_markdown
-        processed_md = preprocess_mermaid(raw_markdown) if raw_markdown else ""
+        self.filename = filename
+        processed_md = self._preprocess(raw_markdown, filename) if raw_markdown else ""
         super().__init__(
             markdown=processed_md,
             show_table_of_contents=show_toc,
@@ -55,10 +58,19 @@ class MarkdownViewerWidget(MarkdownViewer):
             classes=classes,
         )
 
-    def update_content(self, markdown_text: str) -> None:
-        """Process mermaid blocks and update the document."""
+    def _preprocess(self, text: str, filename: str | None = None) -> str:
+        """Auto convert HTML to Markdown if needed, then preprocess Mermaid diagrams."""
+        content = text
+        if is_html_content(content, filename):
+            content = html_to_markdown(content)
+        return preprocess_mermaid(content)
+
+    def update_content(self, markdown_text: str, filename: str | None = None) -> None:
+        """Process HTML/Mermaid blocks and update the document."""
         self.raw_markdown = markdown_text
-        processed_md = preprocess_mermaid(markdown_text)
+        if filename:
+            self.filename = filename
+        processed_md = self._preprocess(markdown_text, self.filename)
         self.document.update(processed_md)
 
     def toggle_toc(self) -> None:

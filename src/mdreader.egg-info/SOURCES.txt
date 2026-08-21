@@ -11,6 +11,7 @@ src/mdreader.egg-info/requires.txt
 src/mdreader.egg-info/top_level.txt
 src/mdreader/renderer/__init__.py
 src/mdreader/renderer/graphics.py
+src/mdreader/renderer/html.py
 src/mdreader/renderer/mermaid.py
 src/mdreader/utils/__init__.py
 src/mdreader/utils/file_watcher.py

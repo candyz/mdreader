@@ -5,6 +5,7 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 ## Features
 
 - 📑 **Rich Markdown Rendering**: Headers, tables, lists, quotes, styled code blocks.
+- 🌐 **HTML Document Support**: Native rendering for `.html` / `.htm` web documents and piped HTML with tables, headings, code, and lists.
 - 📊 **Mermaid Flowchart Support**: Automatically renders ```` ```mermaid ```` diagrams as ASCII/Unicode art inline without crashing.
 - 📑 **Interactive Table of Contents (TOC)**: Automatically extracts document headings into a clickable / keyboard-navigable sidebar (`Tab` to toggle).
 - 📂 **Fuzzy File Picker**: Interactive modal file selector with instant filtering (`o` key in TUI or launch `mdreader` without arguments).
