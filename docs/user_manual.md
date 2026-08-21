@@ -1,6 +1,6 @@
 # 📖 mdreader 使用者操作手冊 (User Manual)
 
-**mdreader** 是一款專為 Terminal / CLI 開發者設計的 Markdown 檔案閱讀器，具備現代化 TUI 介面，並原生支援 **Mermaid 流程圖轉 ASCII 視覺化渲染**，徹底解決傳統工具（如 leaf）遇到 mermaid 語法會崩潰報錯的問題。
+**mdreader** 是一款專為 Terminal / CLI 開發者設計的 Markdown 檔案閱讀器，具備現代化純淨全螢幕 TUI 介面（移除頂部無效標題列以最大化閱讀空間，時間顯示於底端列最右側），並原生支援 **Mermaid 流程圖轉 ASCII 視覺化渲染**，徹底解決傳統工具（如 leaf）遇到 mermaid 語法會崩潰報錯的問題。
 
 ---
 

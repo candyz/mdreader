@@ -12,7 +12,7 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 - 🎨 **Multi-Theme Support**: Built-in dark/light/retro color themes (`t` to switch in-app or `-t` flag).
 - 🔍 **In-document Search Bar**: Quick search overlay triggered with `/`.
 - 🖼️ **Terminal Graphics Protocol Ready**: iTerm2 / Kitty inline image protocol integration.
-- ⚡ **Interactive TUI**: Smooth scrolling, custom width (`--width`), vim keybindings (`j`/`k`/`q`/`Esc`).
+- ⚡ **Interactive TUI**: Maximized reading screen (clean viewport with clock in bottom bar), smooth scrolling, custom width (`--width`), vim keybindings (`j`/`k`/`gg`/`G`/`q`/`Esc`).
 - 📟 **Inline Mode**: Pipe directly to terminal with ANSI colors via `--inline`.
 - 🔌 **Stdin Pipe**: Supports piping directly from CLI tools (e.g. `cat file.md | mdreader` or AI tools).
 

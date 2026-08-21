@@ -1,12 +1,24 @@
 """Textual Application for Markdown Reader."""
+import time
 from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Header, Footer, Input, Label
-from textual.containers import Container, Vertical
+from textual.widgets import Footer, Input, Label
+from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.utils.file_watcher import FileWatcher
+
+
+class ClockLabel(Label):
+    """Real-time clock display widget."""
+
+    def on_mount(self) -> None:
+        self.update_time()
+        self.set_interval(1.0, self.update_time)
+
+    def update_time(self) -> None:
+        self.update(time.strftime("%X"))
 
 
 class MDReaderApp(App):
@@ -60,6 +72,26 @@ class MDReaderApp(App):
     #search-input {
         width: 100%;
     }
+
+    #footer-bar {
+        dock: bottom;
+        height: 1;
+        width: 100%;
+        background: $footer-background;
+    }
+
+    #footer-bar > Footer {
+        width: 1fr;
+        dock: none;
+    }
+
+    #clock-label {
+        width: auto;
+        padding: 0 1;
+        background: $footer-key-background;
+        color: $footer-key-foreground;
+        text-style: bold;
+    }
     """
 
     BINDINGS = [
@@ -106,7 +138,6 @@ class MDReaderApp(App):
             self.SUB_TITLE = str(self.filepath.name)
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
         with Container(id="main-container"):
             with Container(id="reader-box"):
                 yield MarkdownViewerWidget(
@@ -116,7 +147,9 @@ class MDReaderApp(App):
                 )
         with Vertical(id="search-bar"):
             yield Input(placeholder="Type to search in document... (Enter to confirm, Esc to dismiss)", id="search-input")
-        yield Footer()
+        with Horizontal(id="footer-bar"):
+            yield Footer()
+            yield ClockLabel(id="clock-label")
 
     def on_mount(self) -> None:
         if self.max_width:
