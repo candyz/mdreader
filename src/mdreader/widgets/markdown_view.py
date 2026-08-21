@@ -1,4 +1,5 @@
 """Markdown viewer widget module with Mermaid preprocessing & TOC support."""
+from __future__ import annotations
 from textual.widgets import MarkdownViewer
 from mdreader.renderer.mermaid import preprocess_mermaid
 

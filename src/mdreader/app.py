@@ -1,4 +1,5 @@
 """Textual Application for Markdown Reader."""
+from __future__ import annotations
 import time
 from pathlib import Path
 from textual.app import App, ComposeResult

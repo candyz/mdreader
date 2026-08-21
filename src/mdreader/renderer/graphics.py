@@ -1,4 +1,5 @@
 """Terminal Graphics Protocol Helper (iTerm2, Kitty, Sixel detection and image generation)."""
+from __future__ import annotations
 import os
 import sys
 import base64

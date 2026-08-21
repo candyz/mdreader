@@ -1,4 +1,5 @@
 """Outline / Table of Contents Modal Screen."""
+from __future__ import annotations
 from typing import List, Tuple
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal

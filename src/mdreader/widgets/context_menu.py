@@ -1,4 +1,5 @@
 """Right-click context menu modal screen for mdreader."""
+from __future__ import annotations
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import OptionList

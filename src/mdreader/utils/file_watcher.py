@@ -1,4 +1,5 @@
 """File watcher utility for hot-reloading markdown files."""
+from __future__ import annotations
 import time
 from pathlib import Path
 from typing import Callable
