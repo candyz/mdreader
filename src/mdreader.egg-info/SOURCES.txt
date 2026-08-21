@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 src/mdreader/__init__.py
 src/mdreader/__main__.py
@@ -9,6 +10,15 @@ src/mdreader.egg-info/entry_points.txt
 src/mdreader.egg-info/requires.txt
 src/mdreader.egg-info/top_level.txt
 src/mdreader/renderer/__init__.py
+src/mdreader/renderer/graphics.py
 src/mdreader/renderer/mermaid.py
+src/mdreader/utils/__init__.py
+src/mdreader/utils/file_watcher.py
 src/mdreader/widgets/__init__.py
+src/mdreader/widgets/context_menu.py
+src/mdreader/widgets/file_picker.py
 src/mdreader/widgets/markdown_view.py
+src/mdreader/widgets/outline_modal.py
+tests/test_file_watcher.py
+tests/test_phase3.py
+tests/test_renderer.py

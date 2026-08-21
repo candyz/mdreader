@@ -17,23 +17,15 @@ class MarkdownViewerWidget(MarkdownViewer):
         border-left: thick $accent;
         text-style: bold;
     }
-    MarkdownBlock .em {
+    MarkdownBlock > .em {
         text-style: italic;
         color: $accent;
     }
-    MarkdownBlock .strong {
+    MarkdownBlock > .strong {
         text-style: bold;
     }
-    MarkdownBlock .s {
+    MarkdownBlock > .s {
         text-style: strike;
-    }
-    MarkdownBlockQuote {
-        text-style: italic;
-        color: $text-muted;
-        border-left: thick $accent 60%;
-        background: $boost;
-        padding: 0 1;
-        margin: 1 0;
     }
     """
 
