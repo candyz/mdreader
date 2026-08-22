@@ -27,6 +27,88 @@ def format_file_size(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024 * 1024):.1f}G"
 
 
+class HelpModal(ModalScreen[None]):
+    """Modal screen displaying all available shortcuts in Commander mode (More / ?)."""
+
+    BINDINGS = [
+        Binding("escape", "dismiss_help", "Close", priority=True),
+        Binding("enter", "dismiss_help", "Close", priority=True),
+        Binding("q", "dismiss_help", "Close", priority=True),
+        Binding("question_mark", "dismiss_help", "Close", priority=True),
+    ]
+
+    CSS = """
+    HelpModal {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.75);
+    }
+    #help-dialog {
+        width: 68;
+        height: auto;
+        background: $surface;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    #help-title {
+        text-style: bold;
+        color: $accent;
+        margin-bottom: 1;
+        text-align: center;
+    }
+    .help-row {
+        height: 1;
+        margin-bottom: 0;
+    }
+    .help-key {
+        width: 22;
+        text-style: bold;
+        color: $warning;
+    }
+    .help-desc {
+        width: 1fr;
+        color: $text;
+    }
+    #help-close-btn {
+        margin-top: 1;
+        width: 100%;
+    }
+    """
+
+    SHORTCUTS = [
+        ("Tab", "Switch active pane (Left ↔ Right)"),
+        ("Insert / Space", "Toggle multi-selection (⭐)"),
+        ("Enter / F3", "View / open file in Reader or enter dir"),
+        ("F4", "Edit current file in Vim / $EDITOR"),
+        ("F5", "Copy selected item(s) to target directory"),
+        ("F6", "Rename or Move item(s) to target directory"),
+        ("F7", "Create new directory (Mkdir)"),
+        ("F8", "Delete selected item(s) or directory"),
+        ("Ctrl+A", "Toggle hidden dotfiles (.vimrc, etc.)"),
+        ("r", "Reload / Refresh directory panes"),
+        ("? / F1", "Show this Keybindings Help (More...)"),
+        ("Ctrl+O / Esc / q", "Return to Markdown Reader Mode"),
+        ("F10", "Quit mdreader application"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="help-dialog"):
+            yield Label("⌨️ Midnight Commander Keybindings (Help)", id="help-title")
+            for key, desc in self.SHORTCUTS:
+                with Horizontal(classes="help-row"):
+                    yield Label(key, classes="help-key")
+                    yield Label(desc, classes="help-desc")
+            yield Button("Close (Esc / Enter / ?)", variant="primary", id="help-close-btn")
+
+    def on_mount(self) -> None:
+        self.query_one("#help-close-btn", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(None)
+
+    def action_dismiss_help(self) -> None:
+        self.dismiss(None)
+
+
 class PromptModal(ModalScreen[Optional[str]]):
     """Modal screen for single-line text input (Mkdir, Rename, Target path)."""
 
@@ -312,14 +394,11 @@ class PaneWidget(Vertical):
         else:
             self.selected_paths.add(path)
 
-        # Update prompt in OptionList
         cur_idx = opt_list.highlighted
         if cur_idx is not None:
             label, item_type, _ = item
             new_prompt = f"⭐ {label}" if path in self.selected_paths else f"  {label}"
-            # Recreate option
             opt_list.replace_option_prompt_at_index(cur_idx, new_prompt)
-            # Advance cursor down like classic MC
             if cur_idx + 1 < len(self.items):
                 opt_list.highlighted = cur_idx + 1
         
@@ -339,11 +418,11 @@ class PaneWidget(Vertical):
 
 
 class CommanderScreen(ModalScreen[Optional[Path]]):
-    """Full-screen Midnight Commander-style dual pane file manager with Phase 3 batch operations."""
+    """Full-screen Midnight Commander-style dual pane file manager with responsive shortcuts bar."""
 
     BINDINGS = [
-        Binding("tab", "switch_pane", "Switch Pane", priority=True),
-        Binding("insert", "toggle_select", "Select (Ins/Space)", priority=True),
+        Binding("tab", "switch_pane", "Switch", priority=True),
+        Binding("insert", "toggle_select", "Select", priority=True),
         Binding("space", "toggle_select", "Select", show=False, priority=True),
         Binding("f3", "view_file", "View", priority=True),
         Binding("f4", "edit_file", "Edit", priority=True),
@@ -351,7 +430,9 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         Binding("f6", "move_file", "Ren/Mov", priority=True),
         Binding("f7", "mkdir_folder", "Mkdir", priority=True),
         Binding("f8", "delete_file", "Del", priority=True),
-        Binding("ctrl+a", "toggle_all", "Hidden", priority=True),
+        Binding("question_mark", "show_help", "More...", priority=True),
+        Binding("f1", "show_help", "Help", show=False, priority=True),
+        Binding("ctrl+a", "toggle_all", "Hidden", show=False, priority=True),
         Binding("ctrl+o", "toggle_mode", "Reader", priority=True),
         Binding("f10", "quit_app", "Quit", priority=True),
         Binding("escape", "toggle_mode", "Back/Reader", priority=True, show=False),
@@ -495,6 +576,10 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
             event.stop()
             event.prevent_default()
             self.action_toggle_select()
+        elif event.key in ("question_mark", "f1"):
+            event.stop()
+            event.prevent_default()
+            self.action_show_help()
 
     def action_switch_pane(self) -> None:
         """Switch active pane between Left and Right (Tab)."""
@@ -505,6 +590,10 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         """Toggle select on highlighted item (Insert / Space)."""
         active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
         active_pane.toggle_select_highlighted()
+
+    def action_show_help(self) -> None:
+        """Show full shortcuts help modal (More... / ? / F1)."""
+        self.app.push_screen(HelpModal())
 
     def action_toggle_all(self) -> None:
         """Toggle showing hidden files."""
