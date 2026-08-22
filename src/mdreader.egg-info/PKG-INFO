@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mdreader
-Version: 0.9.3
+Version: 0.9.4
 Summary: Terminal Markdown reader with Mermaid flowchart rendering support
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown

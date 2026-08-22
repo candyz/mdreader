@@ -342,20 +342,20 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
     """Full-screen Midnight Commander-style dual pane file manager with Phase 3 batch operations."""
 
     BINDINGS = [
-        Binding("tab", "switch_pane", "Switch Pane (Tab)", priority=True),
+        Binding("tab", "switch_pane", "Switch Pane", priority=True),
         Binding("insert", "toggle_select", "Select (Ins/Space)", priority=True),
         Binding("space", "toggle_select", "Select", show=False, priority=True),
-        Binding("f3", "view_file", "F3 View", priority=True),
-        Binding("f4", "edit_file", "F4 Edit", priority=True),
-        Binding("f5", "copy_file", "F5 Copy", priority=True),
-        Binding("f6", "move_file", "F6 Ren/Mov", priority=True),
-        Binding("f7", "mkdir_folder", "F7 Mkdir", priority=True),
-        Binding("f8", "delete_file", "F8 Delete", priority=True),
-        Binding("ctrl+o", "toggle_mode", "Reader (^O)", priority=True),
-        Binding("f10", "quit_app", "F10 Quit", priority=True),
-        Binding("escape", "toggle_mode", "Back/Reader", priority=True),
+        Binding("f3", "view_file", "View", priority=True),
+        Binding("f4", "edit_file", "Edit", priority=True),
+        Binding("f5", "copy_file", "Copy", priority=True),
+        Binding("f6", "move_file", "Ren/Mov", priority=True),
+        Binding("f7", "mkdir_folder", "Mkdir", priority=True),
+        Binding("f8", "delete_file", "Del", priority=True),
+        Binding("ctrl+a", "toggle_all", "Hidden", priority=True),
+        Binding("ctrl+o", "toggle_mode", "Reader", priority=True),
+        Binding("f10", "quit_app", "Quit", priority=True),
+        Binding("escape", "toggle_mode", "Back/Reader", priority=True, show=False),
         Binding("q", "toggle_mode", "Back/Reader", show=False),
-        Binding("ctrl+a", "toggle_all", "Toggle Hidden", priority=True),
         Binding("r", "refresh_both", "Reload", show=False),
     ]
 

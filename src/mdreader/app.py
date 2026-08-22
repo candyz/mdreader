@@ -101,14 +101,14 @@ class MDReaderApp(App):
     """
 
     BINDINGS = [
+        Binding("o", "open_file_picker", "Open file", show=True),
+        Binding("O", "toggle_toc", "Outline", show=True),
+        Binding("ctrl+o", "open_commander", "Commander", show=True),
+        Binding("v", "edit_in_editor", "Edit", show=True),
+        Binding("t", "toggle_theme", "Theme", show=True),
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
-        Binding("t", "toggle_theme", "Theme", show=True),
-        Binding("O", "toggle_toc", "Outline", show=True),
-        Binding("o", "open_file_picker", "Open File", show=True),
-        Binding("ctrl+o", "open_commander", "Commander", show=True),
-        Binding("v", "edit_in_editor", "Edit (Vim)", show=True),
-        Binding("slash", "open_search", "Search", show=True),
+        Binding("slash", "open_search", "Search", show=False),
         Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
         Binding("y", "copy_selected_text", "Yank / Copy", show=False),
         Binding("c", "copy_selected_text", "Copy", show=False),
