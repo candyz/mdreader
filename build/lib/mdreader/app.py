@@ -106,6 +106,8 @@ class MDReaderApp(App):
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("tab", "toggle_toc", "Outline (大綱)", show=True, priority=True),
         Binding("o", "open_file_picker", "Open File", show=True),
+        Binding("f9", "open_commander", "Commander (F9)", show=True),
+        Binding("ctrl+o", "open_commander", "Commander", show=False),
         Binding("v", "edit_in_editor", "Edit (Vim)", show=True),
         Binding("slash", "open_search", "Search", show=True),
         Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
@@ -366,6 +368,11 @@ class MDReaderApp(App):
         from mdreader.widgets.file_picker import FilePickerScreen
         start_dir = self.filepath.parent if self.filepath and self.filepath.exists() else Path.cwd()
         self.push_screen(FilePickerScreen(start_dir=start_dir), self._on_file_selected)
+
+    def action_open_commander(self) -> None:
+        """Toggle Midnight Commander-style dual pane file manager mode (F9 / Ctrl+O)."""
+        from mdreader.widgets.commander import CommanderScreen
+        self.push_screen(CommanderScreen(current_path=self.filepath), self._on_file_selected)
 
     def _on_file_selected(self, selected_path: Path | None) -> None:
         """Callback when file is selected from modal."""

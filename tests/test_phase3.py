@@ -49,3 +49,23 @@ def test_file_picker_scan(tmp_path: Path):
     assert any("ignored.txt" in l for l in item_labels_all)
     assert any(".vimrc" in l for l in item_labels_all)
     assert any(".config/" in l for l in item_labels_all)
+
+
+def test_commander_screen(tmp_path: Path):
+    from mdreader.widgets.commander import CommanderScreen, PaneWidget
+
+    (tmp_path / "file1.md").write_text("# Hello", encoding="utf-8")
+    (tmp_path / "script.py").write_text("print('test')", encoding="utf-8")
+    (tmp_path / "folder").mkdir()
+
+    pane = PaneWidget("test-pane", start_dir=tmp_path, show_all=True)
+    pane.scan()
+    items = pane.items
+    assert any("file1.md" in i[0] for i in items)
+    assert any("script.py" in i[0] for i in items)
+    assert any("folder/" in i[0] for i in items)
+
+    screen = CommanderScreen(current_path=tmp_path / "file1.md", show_all=True)
+    assert screen.active_pane_id == "left-pane"
+    screen.action_switch_pane()
+    assert screen.active_pane_id == "right-pane"
