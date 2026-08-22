@@ -6,7 +6,7 @@ from textual.widgets._markdown import MarkdownTable, MarkdownTableContent, Markd
 from textual.css.scalar import Scalar
 from rich.cells import cell_len
 from mdreader.renderer.mermaid import preprocess_mermaid
-from mdreader.renderer.html import html_to_markdown, is_html_content, is_markdown_file
+from mdreader.renderer.html import html_to_markdown, is_html_content, is_markdown_file, detect_code_language
 
 
 # Monkey-patch Textual's MarkdownTable.compose so each column width is computed
@@ -94,13 +94,14 @@ class MarkdownViewerWidget(MarkdownViewer):
         )
 
     def _preprocess(self, text: str, filename: str | None = None) -> str:
-        """Auto convert HTML to Markdown if needed, format non-md/html plain text files, then preprocess Mermaid diagrams."""
+        """Auto convert HTML to Markdown if needed, format code/plain text files with syntax highlighting, then preprocess Mermaid diagrams."""
         content = text
         if is_html_content(content, filename):
             content = html_to_markdown(content)
         elif filename and not is_markdown_file(filename):
-            # Treat plain text files (e.g. .txt, .py, .sh, .json, .log, etc.) as verbatim plain text
-            content = f"```text\n{content}\n```"
+            # Treat code & plain text files (e.g. .c, .h, .js, .css, .sh, .py, etc.) as syntax-highlighted code blocks
+            lang = detect_code_language(filename)
+            content = f"```{lang}\n{content}\n```"
         return preprocess_mermaid(content)
 
     def update_content(self, markdown_text: str, filename: str | None = None) -> None:

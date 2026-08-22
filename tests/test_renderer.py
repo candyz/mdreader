@@ -97,15 +97,57 @@ def test_is_markdown_file():
     assert is_markdown_file(None) is False
 
 
-def test_plain_text_preprocessing():
+def test_detect_code_language():
+    from mdreader.renderer.html import detect_code_language
+
+    assert detect_code_language("main.c") == "c"
+    assert detect_code_language("header.h") == "c"
+    assert detect_code_language("app.js") == "javascript"
+    assert detect_code_language("style.css") == "css"
+    assert detect_code_language("deploy.sh") == "bash"
+    assert detect_code_language("script.py") == "python"
+    assert detect_code_language("Makefile") == "makefile"
+    assert detect_code_language("Dockerfile") == "dockerfile"
+    assert detect_code_language("notes.txt") == "text"
+
+
+def test_code_and_plain_text_preprocessing():
     from mdreader.widgets.markdown_view import MarkdownViewerWidget
 
     widget = MarkdownViewerWidget()
-    txt_content = "def foo():\n    return 42\n"
-    res = widget._preprocess(txt_content, filename="script.py")
-    assert res.startswith("```text\n")
-    assert "def foo():" in res
-    assert res.endswith("\n```")
+    
+    # Python file should be highlighted as python
+    py_content = "def foo():\n    return 42\n"
+    res_py = widget._preprocess(py_content, filename="script.py")
+    assert res_py.startswith("```python\n")
+    assert "def foo():" in res_py
+    assert res_py.endswith("\n```")
+
+    # C file should be highlighted as c
+    c_content = '#include <stdio.h>\nint main() { return 0; }'
+    res_c = widget._preprocess(c_content, filename="main.c")
+    assert res_c.startswith("```c\n")
+    assert "#include <stdio.h>" in res_c
+
+    # Header file (.h) should be highlighted as c
+    h_content = '#ifndef HEADER_H\n#define HEADER_H\n#endif'
+    res_h = widget._preprocess(h_content, filename="header.h")
+    assert res_h.startswith("```c\n")
+
+    # JS file should be highlighted as javascript
+    js_content = 'console.log("hello");'
+    res_js = widget._preprocess(js_content, filename="app.js")
+    assert res_js.startswith("```javascript\n")
+
+    # CSS file should be highlighted as css
+    css_content = 'body { background: #000; }'
+    res_css = widget._preprocess(css_content, filename="style.css")
+    assert res_css.startswith("```css\n")
+
+    # Shell script should be highlighted as bash
+    sh_content = '#!/bin/bash\necho "test"'
+    res_sh = widget._preprocess(sh_content, filename="build.sh")
+    assert res_sh.startswith("```bash\n")
 
     # Markdown file should not be wrapped into code fence
     md_content = "# Header\nHello world"

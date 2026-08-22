@@ -193,6 +193,77 @@ def is_markdown_file(filename: str | None = None) -> bool:
     return fn.endswith((".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdwn", ".mdtxt", ".mdtext"))
 
 
+def detect_code_language(filename: str | None = None) -> str:
+    """Detect appropriate programming language alias for syntax highlighting like Vim."""
+    if not filename:
+        return "text"
+    
+    # Common extension mappings for fast & accurate lexer selection
+    ext_map = {
+        ".c": "c",
+        ".h": "c",
+        ".cpp": "cpp",
+        ".hpp": "cpp",
+        ".cc": "cpp",
+        ".cxx": "cpp",
+        ".js": "javascript",
+        ".jsx": "jsx",
+        ".mjs": "javascript",
+        ".cjs": "javascript",
+        ".ts": "typescript",
+        ".tsx": "tsx",
+        ".css": "css",
+        ".scss": "scss",
+        ".sass": "sass",
+        ".less": "less",
+        ".sh": "bash",
+        ".bash": "bash",
+        ".zsh": "zsh",
+        ".py": "python",
+        ".pyw": "python",
+        ".rb": "ruby",
+        ".go": "go",
+        ".rs": "rust",
+        ".java": "java",
+        ".kt": "kotlin",
+        ".swift": "swift",
+        ".php": "php",
+        ".sql": "sql",
+        ".json": "json",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".toml": "toml",
+        ".xml": "xml",
+        ".lua": "lua",
+        ".vim": "vim",
+        ".ini": "ini",
+        ".conf": "ini",
+    }
+    
+    import os
+    fname = os.path.basename(filename).lower()
+    root, ext = os.path.splitext(fname)
+    if ext in ext_map:
+        return ext_map[ext]
+    
+    if fname in ("makefile", "gnumakefile"):
+        return "makefile"
+    if fname in ("dockerfile", "containerfile"):
+        return "dockerfile"
+    if fname.startswith((".bash", ".zsh", ".profile")):
+        return "bash"
+    
+    try:
+        from pygments.lexers import get_lexer_for_filename, ClassNotFound
+        lexer = get_lexer_for_filename(filename)
+        if lexer.aliases:
+            return lexer.aliases[0]
+    except Exception:
+        pass
+    
+    return "text"
+
+
 def is_html_content(text: str, filename: str | None = None) -> bool:
     """Check if content or filename indicates HTML format."""
     if filename:
