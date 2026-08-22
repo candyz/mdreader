@@ -69,3 +69,15 @@ def test_commander_screen(tmp_path: Path):
     assert screen.active_pane_id == "left-pane"
     screen.action_switch_pane()
     assert screen.active_pane_id == "right-pane"
+
+
+def test_commander_modals():
+    from mdreader.widgets.commander import PromptModal, ConfirmModal
+
+    prompt = PromptModal(title="Test Prompt", initial_value="default_val")
+    assert prompt.prompt_title == "Test Prompt"
+    assert prompt.initial_value == "default_val"
+
+    confirm = ConfirmModal(title="Delete Confirm", message="Delete file?")
+    assert confirm.confirm_title == "Delete Confirm"
+    assert confirm.confirm_msg == "Delete file?"

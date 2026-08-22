@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.screen import Screen, ModalScreen
-from textual.widgets import OptionList, Label, Footer
+from textual.widgets import OptionList, Label, Footer, Input, Button
 from textual.widgets.option_list import Option
 from textual.binding import Binding
 from textual import events
@@ -25,6 +25,144 @@ def format_file_size(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024):.1f}M"
     else:
         return f"{size_bytes / (1024 * 1024 * 1024):.1f}G"
+
+
+class PromptModal(ModalScreen[Optional[str]]):
+    """Modal screen for single-line text input (Mkdir, Rename, Target path)."""
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel", priority=True),
+    ]
+
+    CSS = """
+    PromptModal {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.7);
+    }
+    #prompt-dialog {
+        width: 60;
+        height: auto;
+        background: $surface;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    #prompt-title {
+        text-style: bold;
+        color: $accent;
+        margin-bottom: 1;
+    }
+    #prompt-input {
+        width: 100%;
+        margin-bottom: 1;
+    }
+    #prompt-buttons {
+        width: 100%;
+        height: 3;
+        align: right middle;
+    }
+    #prompt-buttons Button {
+        margin-left: 1;
+    }
+    """
+
+    def __init__(self, title: str, initial_value: str = "", placeholder: str = ""):
+        super().__init__()
+        self.prompt_title = title
+        self.initial_value = initial_value
+        self.placeholder = placeholder
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="prompt-dialog"):
+            yield Label(self.prompt_title, id="prompt-title")
+            yield Input(value=self.initial_value, placeholder=self.placeholder, id="prompt-input")
+            with Horizontal(id="prompt-buttons"):
+                yield Button("Cancel (Esc)", variant="default", id="btn-cancel")
+                yield Button("OK (Enter)", variant="primary", id="btn-ok")
+
+    def on_mount(self) -> None:
+        self.query_one("#prompt-input", Input).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        val = event.value.strip()
+        self.dismiss(val if val else None)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-ok":
+            val = self.query_one("#prompt-input", Input).value.strip()
+            self.dismiss(val if val else None)
+        else:
+            self.dismiss(None)
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
+class ConfirmModal(ModalScreen[bool]):
+    """Modal screen for confirming destructive operations (Delete, Overwrite)."""
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel", priority=True),
+        Binding("y", "confirm", "Yes", priority=True),
+        Binding("n", "cancel", "No", priority=True),
+    ]
+
+    CSS = """
+    ConfirmModal {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.7);
+    }
+    #confirm-dialog {
+        width: 60;
+        height: auto;
+        background: $surface;
+        border: thick $error;
+        padding: 1 2;
+    }
+    #confirm-title {
+        text-style: bold;
+        color: $error;
+        margin-bottom: 1;
+    }
+    #confirm-msg {
+        margin-bottom: 1;
+    }
+    #confirm-buttons {
+        width: 100%;
+        height: 3;
+        align: right middle;
+    }
+    #confirm-buttons Button {
+        margin-left: 1;
+    }
+    """
+
+    def __init__(self, title: str, message: str):
+        super().__init__()
+        self.confirm_title = title
+        self.confirm_msg = message
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="confirm-dialog"):
+            yield Label(self.confirm_title, id="confirm-title")
+            yield Label(self.confirm_msg, id="confirm-msg")
+            with Horizontal(id="confirm-buttons"):
+                yield Button("Cancel (Esc/n)", variant="default", id="btn-cancel")
+                yield Button("Delete (y/Enter)", variant="error", id="btn-yes")
+
+    def on_mount(self) -> None:
+        self.query_one("#btn-cancel", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-yes":
+            self.dismiss(True)
+        else:
+            self.dismiss(False)
+
+    def action_confirm(self) -> None:
+        self.dismiss(True)
+
+    def action_cancel(self) -> None:
+        self.dismiss(False)
 
 
 class PaneWidget(Vertical):
@@ -135,12 +273,16 @@ class PaneWidget(Vertical):
 
 
 class CommanderScreen(ModalScreen[Optional[Path]]):
-    """Full-screen Midnight Commander-style dual pane file manager."""
+    """Full-screen Midnight Commander-style dual pane file manager with Phase 2 operations."""
 
     BINDINGS = [
         Binding("tab", "switch_pane", "Switch Pane (Tab)", priority=True),
         Binding("f3", "view_file", "F3 View", priority=True),
         Binding("f4", "edit_file", "F4 Edit", priority=True),
+        Binding("f5", "copy_file", "F5 Copy", priority=True),
+        Binding("f6", "move_file", "F6 Ren/Mov", priority=True),
+        Binding("f7", "mkdir_folder", "F7 Mkdir", priority=True),
+        Binding("f8", "delete_file", "F8 Delete", priority=True),
         Binding("ctrl+o", "toggle_mode", "Reader (^O)", priority=True),
         Binding("f10", "quit_app", "F10 Quit", priority=True),
         Binding("escape", "toggle_mode", "Back/Reader", priority=True),
@@ -348,6 +490,130 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
             self.notify(f"Edited: {file_path.name}", timeout=1.5)
         except Exception as e:
             self.notify(f"Error opening editor: {e}", title="Error", severity="error")
+
+    # ==================== Phase 2: File Operations (F5, F6, F7, F8) ====================
+
+    def _get_other_pane(self) -> PaneWidget:
+        other_id = "right-pane" if self.active_pane_id == "left-pane" else "left-pane"
+        return self.query_one(f"#{other_id}", PaneWidget)
+
+    def action_copy_file(self) -> None:
+        """Copy file or directory to target (F5)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        other_pane = self._get_other_pane()
+        item = active_pane.get_highlighted_item()
+        if not item or item[1] not in ("file", "dir"):
+            self.notify("Please select a file or folder to copy", severity="warning")
+            return
+
+        src_path = item[2]
+        dest_default = str(other_pane.current_dir / src_path.name)
+        prompt = PromptModal(
+            title=f"Copy '{src_path.name}' to:",
+            initial_value=dest_default,
+            placeholder="Destination path...",
+        )
+
+        def _do_copy(dest_str: str | None) -> None:
+            if not dest_str:
+                return
+            dest = Path(dest_str).expanduser().resolve()
+            try:
+                if src_path.is_dir():
+                    if dest.exists():
+                        dest = dest / src_path.name
+                    shutil.copytree(src_path, dest, dirs_exist_ok=True)
+                else:
+                    if dest.is_dir():
+                        dest = dest / src_path.name
+                    shutil.copy2(src_path, dest)
+                self.action_refresh_both()
+                self.notify(f"Copied: {src_path.name} → {dest}", title="F5 Copy", timeout=2)
+            except Exception as e:
+                self.notify(f"Copy failed: {e}", title="Error", severity="error", timeout=3)
+
+        self.app.push_screen(prompt, _do_copy)
+
+    def action_move_file(self) -> None:
+        """Rename or move file/directory (F6)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        other_pane = self._get_other_pane()
+        item = active_pane.get_highlighted_item()
+        if not item or item[1] not in ("file", "dir"):
+            self.notify("Please select a file or folder to move/rename", severity="warning")
+            return
+
+        src_path = item[2]
+        dest_default = str(other_pane.current_dir / src_path.name)
+        prompt = PromptModal(
+            title=f"Rename / Move '{src_path.name}' to:",
+            initial_value=dest_default,
+            placeholder="Target path...",
+        )
+
+        def _do_move(dest_str: str | None) -> None:
+            if not dest_str:
+                return
+            dest = Path(dest_str).expanduser().resolve()
+            try:
+                shutil.move(str(src_path), str(dest))
+                self.action_refresh_both()
+                self.notify(f"Moved: {src_path.name} → {dest}", title="F6 Move", timeout=2)
+            except Exception as e:
+                self.notify(f"Move failed: {e}", title="Error", severity="error", timeout=3)
+
+        self.app.push_screen(prompt, _do_move)
+
+    def action_mkdir_folder(self) -> None:
+        """Create new directory in active pane (F7)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        prompt = PromptModal(
+            title=f"Create new directory in {active_pane.current_dir.name}:",
+            placeholder="New directory name...",
+        )
+
+        def _do_mkdir(dir_name: str | None) -> None:
+            if not dir_name:
+                return
+            new_dir = active_pane.current_dir / dir_name
+            try:
+                new_dir.mkdir(parents=True, exist_ok=False)
+                active_pane.refresh_pane(target_filename=new_dir.name)
+                self.notify(f"Created directory: {dir_name}", title="F7 Mkdir", timeout=2)
+            except Exception as e:
+                self.notify(f"Mkdir failed: {e}", title="Error", severity="error", timeout=3)
+
+        self.app.push_screen(prompt, _do_mkdir)
+
+    def action_delete_file(self) -> None:
+        """Delete file or directory (F8)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        item = active_pane.get_highlighted_item()
+        if not item or item[1] not in ("file", "dir"):
+            self.notify("Please select a file or folder to delete", severity="warning")
+            return
+
+        target_path = item[2]
+        item_type_label = "Directory (and all contents)" if target_path.is_dir() else "File"
+        confirm_modal = ConfirmModal(
+            title="⚠️ Delete Confirmation",
+            message=f"Are you sure you want to permanently delete {item_type_label}:\n{target_path.name} ?",
+        )
+
+        def _do_delete(confirmed: bool | None) -> None:
+            if not confirmed:
+                return
+            try:
+                if target_path.is_dir():
+                    shutil.rmtree(target_path)
+                else:
+                    target_path.unlink()
+                self.action_refresh_both()
+                self.notify(f"Deleted: {target_path.name}", title="F8 Delete", timeout=2)
+            except Exception as e:
+                self.notify(f"Delete failed: {e}", title="Error", severity="error", timeout=3)
+
+        self.app.push_screen(confirm_modal, _do_delete)
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handle Enter key or double click on file list."""
