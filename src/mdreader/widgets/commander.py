@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Set
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.screen import Screen, ModalScreen
@@ -166,7 +166,7 @@ class ConfirmModal(ModalScreen[bool]):
 
 
 class PaneWidget(Vertical):
-    """A single directory pane (Left or Right) in Commander mode."""
+    """A single directory pane (Left or Right) in Commander mode with multi-selection support."""
 
     def __init__(self, pane_id: str, start_dir: Path, show_all: bool = True, **kwargs):
         super().__init__(id=pane_id, **kwargs)
@@ -176,6 +176,7 @@ class PaneWidget(Vertical):
             self.current_dir = self.current_dir.parent
         self.show_all = show_all
         self.items: List[Tuple[str, str, Path]] = []  # (label, type, path)
+        self.selected_paths: Set[Path] = set()
 
     def compose(self) -> ComposeResult:
         with Horizontal(classes="pane-header"):
@@ -185,7 +186,7 @@ class PaneWidget(Vertical):
             yield Label("", id=f"{self.pane_id}-info", classes="pane-info-label")
 
     def scan(self) -> None:
-        """Scan directory items."""
+        """Scan directory items and clean up orphaned selections."""
         items: List[Tuple[str, str, Path]] = []
         excluded_dirs = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
         supported_exts = (".md", ".markdown", ".html", ".htm", ".xhtml")
@@ -235,48 +236,115 @@ class PaneWidget(Vertical):
             items.append((f"⚠️ {e}", "error", self.current_dir))
 
         self.items = items
+        # Remove selections not in current dir
+        valid_paths = {p for _, _, p in self.items}
+        self.selected_paths = {p for p in self.selected_paths if p in valid_paths}
 
     def refresh_pane(self, target_filename: str | None = None) -> None:
-        """Scan directory and refresh option list."""
+        """Scan directory and refresh option list with selection indicators."""
         self.scan()
-        title_label = self.query_one(f"#{self.pane_id}-title", Label)
-        title_label.update(f"📂 {self.current_dir}")
+        try:
+            title_label = self.query_one(f"#{self.pane_id}-title", Label)
+            title_label.update(f"📂 {self.current_dir}")
 
-        opt_list = self.query_one(f"#{self.pane_id}-list", OptionList)
-        opt_list.clear_options()
+            opt_list = self.query_one(f"#{self.pane_id}-list", OptionList)
+            opt_list.clear_options()
 
-        target_idx = 0
-        for idx, (label, item_type, path) in enumerate(self.items):
-            opt_list.add_option(Option(prompt=label, id=f"{item_type}:{path}"))
-            if target_filename and path.name == target_filename:
-                target_idx = idx
+            target_idx = 0
+            for idx, (label, item_type, path) in enumerate(self.items):
+                if path in self.selected_paths:
+                    display_prompt = f"⭐ {label}"
+                else:
+                    display_prompt = f"  {label}"
+                
+                opt_list.add_option(Option(prompt=display_prompt, id=f"{item_type}:{path}"))
+                if target_filename and path.name == target_filename:
+                    target_idx = idx
 
-        if opt_list.option_count > 0:
-            opt_list.highlighted = target_idx
-        
-        self.update_info_bar()
+            if opt_list.option_count > 0:
+                opt_list.highlighted = target_idx
+            
+            self.update_info_bar()
+        except Exception:
+            pass
 
     def update_info_bar(self) -> None:
-        """Update bottom summary of the pane."""
-        info_label = self.query_one(f"#{self.pane_id}-info", Label)
-        total_items = len([i for i in self.items if i[1] in ("dir", "file")])
-        dirs_count = len([i for i in self.items if i[1] == "dir"])
-        files_count = len([i for i in self.items if i[1] == "file"])
-        info_label.update(f"{total_items} items ({dirs_count} dirs, {files_count} files)")
+        """Update bottom summary of the pane including selected count."""
+        try:
+            info_label = self.query_one(f"#{self.pane_id}-info", Label)
+            total_items = len([i for i in self.items if i[1] in ("dir", "file")])
+            dirs_count = len([i for i in self.items if i[1] == "dir"])
+            files_count = len([i for i in self.items if i[1] == "file"])
+            sel_count = len(self.selected_paths)
+            if sel_count > 0:
+                info_label.update(f"{total_items} items ({dirs_count} dirs, {files_count} files) | [bold yellow]{sel_count} selected[/]")
+            else:
+                info_label.update(f"{total_items} items ({dirs_count} dirs, {files_count} files)")
+        except Exception:
+            pass
 
     def get_highlighted_item(self) -> Optional[Tuple[str, str, Path]]:
-        """Get currently selected item in this pane."""
+        """Get currently highlighted item in this pane."""
         opt_list = self.query_one(f"#{self.pane_id}-list", OptionList)
         if opt_list.highlighted is not None and 0 <= opt_list.highlighted < len(self.items):
             return self.items[opt_list.highlighted]
         return None
 
+    def get_effective_targets(self) -> List[Path]:
+        """Get selected paths if any; otherwise return currently highlighted file/dir."""
+        if self.selected_paths:
+            return sorted(list(self.selected_paths))
+        item = self.get_highlighted_item()
+        if item and item[1] in ("file", "dir"):
+            return [item[2]]
+        return []
+
+    def toggle_select_highlighted(self) -> None:
+        """Toggle selection of current highlighted item and advance cursor down."""
+        opt_list = self.query_one(f"#{self.pane_id}-list", OptionList)
+        item = self.get_highlighted_item()
+        if not item or item[1] not in ("file", "dir"):
+            return
+
+        path = item[2]
+        if path in self.selected_paths:
+            self.selected_paths.remove(path)
+        else:
+            self.selected_paths.add(path)
+
+        # Update prompt in OptionList
+        cur_idx = opt_list.highlighted
+        if cur_idx is not None:
+            label, item_type, _ = item
+            new_prompt = f"⭐ {label}" if path in self.selected_paths else f"  {label}"
+            # Recreate option
+            opt_list.replace_option_prompt_at_index(cur_idx, new_prompt)
+            # Advance cursor down like classic MC
+            if cur_idx + 1 < len(self.items):
+                opt_list.highlighted = cur_idx + 1
+        
+        self.update_info_bar()
+
+    def select_all_items(self) -> None:
+        """Select all files and directories in this pane."""
+        for _, item_type, path in self.items:
+            if item_type in ("file", "dir"):
+                self.selected_paths.add(path)
+        self.refresh_pane()
+
+    def unselect_all_items(self) -> None:
+        """Unselect all items in this pane."""
+        self.selected_paths.clear()
+        self.refresh_pane()
+
 
 class CommanderScreen(ModalScreen[Optional[Path]]):
-    """Full-screen Midnight Commander-style dual pane file manager with Phase 2 operations."""
+    """Full-screen Midnight Commander-style dual pane file manager with Phase 3 batch operations."""
 
     BINDINGS = [
         Binding("tab", "switch_pane", "Switch Pane (Tab)", priority=True),
+        Binding("insert", "toggle_select", "Select (Ins/Space)", priority=True),
+        Binding("space", "toggle_select", "Select", show=False, priority=True),
         Binding("f3", "view_file", "F3 View", priority=True),
         Binding("f4", "edit_file", "F4 Edit", priority=True),
         Binding("f5", "copy_file", "F5 Copy", priority=True),
@@ -359,10 +427,18 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        start_left = current_path.parent if current_path and current_path.exists() else Path.cwd()
-        start_right = Path(get_config_value("commander_right_dir", str(Path.home()))).resolve()
-        if not start_right.exists() or not start_right.is_dir():
-            start_right = Path.cwd()
+        # Load remembered paths
+        saved_left = get_config_value("commander_left_dir")
+        if saved_left and Path(saved_left).is_dir():
+            start_left = Path(saved_left).resolve()
+        else:
+            start_left = current_path.parent if current_path and current_path.exists() else Path.cwd()
+
+        saved_right = get_config_value("commander_right_dir")
+        if saved_right and Path(saved_right).is_dir():
+            start_right = Path(saved_right).resolve()
+        else:
+            start_right = Path.home() if Path.home().is_dir() else Path.cwd()
         
         self.start_left = start_left
         self.start_right = start_right
@@ -415,11 +491,20 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
             event.stop()
             event.prevent_default()
             self.action_switch_pane()
+        elif event.key in ("insert", "space"):
+            event.stop()
+            event.prevent_default()
+            self.action_toggle_select()
 
     def action_switch_pane(self) -> None:
         """Switch active pane between Left and Right (Tab)."""
         self.active_pane_id = "right-pane" if self.active_pane_id == "left-pane" else "left-pane"
         self._update_active_pane_style()
+
+    def action_toggle_select(self) -> None:
+        """Toggle select on highlighted item (Insert / Space)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        active_pane.toggle_select_highlighted()
 
     def action_toggle_all(self) -> None:
         """Toggle showing hidden files."""
@@ -465,7 +550,9 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         elif item_type in ("parent_dir", "dir"):
             old_name = active_pane.current_dir.name
             active_pane.current_dir = path.resolve()
+            active_pane.selected_paths.clear()
             active_pane.refresh_pane(target_filename=old_name if item_type == "parent_dir" else None)
+            self._save_dirs()
 
     def action_edit_file(self) -> None:
         """Open highlighted file in editor (F4)."""
@@ -491,25 +578,31 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         except Exception as e:
             self.notify(f"Error opening editor: {e}", title="Error", severity="error")
 
-    # ==================== Phase 2: File Operations (F5, F6, F7, F8) ====================
+    # ==================== Phase 2 & 3: Batch File Operations (F5, F6, F7, F8) ====================
 
     def _get_other_pane(self) -> PaneWidget:
         other_id = "right-pane" if self.active_pane_id == "left-pane" else "left-pane"
         return self.query_one(f"#{other_id}", PaneWidget)
 
     def action_copy_file(self) -> None:
-        """Copy file or directory to target (F5)."""
+        """Copy selected file(s) or directory to target (F5)."""
         active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
         other_pane = self._get_other_pane()
-        item = active_pane.get_highlighted_item()
-        if not item or item[1] not in ("file", "dir"):
-            self.notify("Please select a file or folder to copy", severity="warning")
+        targets = active_pane.get_effective_targets()
+        if not targets:
+            self.notify("Please select file(s) or folder(s) to copy", severity="warning")
             return
 
-        src_path = item[2]
-        dest_default = str(other_pane.current_dir / src_path.name)
+        if len(targets) == 1:
+            src_path = targets[0]
+            dest_default = str(other_pane.current_dir / src_path.name)
+            title = f"Copy '{src_path.name}' to:"
+        else:
+            dest_default = str(other_pane.current_dir)
+            title = f"Copy {len(targets)} selected items to directory:"
+
         prompt = PromptModal(
-            title=f"Copy '{src_path.name}' to:",
+            title=title,
             initial_value=dest_default,
             placeholder="Destination path...",
         )
@@ -519,34 +612,46 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
                 return
             dest = Path(dest_str).expanduser().resolve()
             try:
-                if src_path.is_dir():
-                    if dest.exists():
-                        dest = dest / src_path.name
-                    shutil.copytree(src_path, dest, dirs_exist_ok=True)
-                else:
-                    if dest.is_dir():
-                        dest = dest / src_path.name
-                    shutil.copy2(src_path, dest)
+                copied_count = 0
+                for target in targets:
+                    if len(targets) == 1 and not dest.is_dir() and not dest.exists():
+                        target_dest = dest
+                    else:
+                        target_dest = dest / target.name if dest.is_dir() else dest
+                    
+                    if target.is_dir():
+                        shutil.copytree(target, target_dest, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(target, target_dest)
+                    copied_count += 1
+
+                active_pane.selected_paths.clear()
                 self.action_refresh_both()
-                self.notify(f"Copied: {src_path.name} → {dest}", title="F5 Copy", timeout=2)
+                self.notify(f"Successfully copied {copied_count} item(s)", title="F5 Copy", timeout=2)
             except Exception as e:
                 self.notify(f"Copy failed: {e}", title="Error", severity="error", timeout=3)
 
         self.app.push_screen(prompt, _do_copy)
 
     def action_move_file(self) -> None:
-        """Rename or move file/directory (F6)."""
+        """Rename or move selected file(s)/directory (F6)."""
         active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
         other_pane = self._get_other_pane()
-        item = active_pane.get_highlighted_item()
-        if not item or item[1] not in ("file", "dir"):
-            self.notify("Please select a file or folder to move/rename", severity="warning")
+        targets = active_pane.get_effective_targets()
+        if not targets:
+            self.notify("Please select file(s) or folder(s) to move/rename", severity="warning")
             return
 
-        src_path = item[2]
-        dest_default = str(other_pane.current_dir / src_path.name)
+        if len(targets) == 1:
+            src_path = targets[0]
+            dest_default = str(other_pane.current_dir / src_path.name)
+            title = f"Rename / Move '{src_path.name}' to:"
+        else:
+            dest_default = str(other_pane.current_dir)
+            title = f"Move {len(targets)} selected items to directory:"
+
         prompt = PromptModal(
-            title=f"Rename / Move '{src_path.name}' to:",
+            title=title,
             initial_value=dest_default,
             placeholder="Target path...",
         )
@@ -556,9 +661,18 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
                 return
             dest = Path(dest_str).expanduser().resolve()
             try:
-                shutil.move(str(src_path), str(dest))
+                moved_count = 0
+                for target in targets:
+                    if len(targets) == 1 and not dest.is_dir():
+                        target_dest = dest
+                    else:
+                        target_dest = dest / target.name if dest.is_dir() else dest
+                    shutil.move(str(target), str(target_dest))
+                    moved_count += 1
+
+                active_pane.selected_paths.clear()
                 self.action_refresh_both()
-                self.notify(f"Moved: {src_path.name} → {dest}", title="F6 Move", timeout=2)
+                self.notify(f"Successfully moved {moved_count} item(s)", title="F6 Move", timeout=2)
             except Exception as e:
                 self.notify(f"Move failed: {e}", title="Error", severity="error", timeout=3)
 
@@ -579,6 +693,7 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
             try:
                 new_dir.mkdir(parents=True, exist_ok=False)
                 active_pane.refresh_pane(target_filename=new_dir.name)
+                self._save_dirs()
                 self.notify(f"Created directory: {dir_name}", title="F7 Mkdir", timeout=2)
             except Exception as e:
                 self.notify(f"Mkdir failed: {e}", title="Error", severity="error", timeout=3)
@@ -586,30 +701,40 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         self.app.push_screen(prompt, _do_mkdir)
 
     def action_delete_file(self) -> None:
-        """Delete file or directory (F8)."""
+        """Delete selected file(s) or directory (F8)."""
         active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
-        item = active_pane.get_highlighted_item()
-        if not item or item[1] not in ("file", "dir"):
-            self.notify("Please select a file or folder to delete", severity="warning")
+        targets = active_pane.get_effective_targets()
+        if not targets:
+            self.notify("Please select file(s) or folder(s) to delete", severity="warning")
             return
 
-        target_path = item[2]
-        item_type_label = "Directory (and all contents)" if target_path.is_dir() else "File"
+        if len(targets) == 1:
+            target = targets[0]
+            item_type_label = "Directory (and contents)" if target.is_dir() else "File"
+            msg = f"Permanently delete {item_type_label}:\n{target.name} ?"
+        else:
+            msg = f"Permanently delete {len(targets)} selected items ?"
+
         confirm_modal = ConfirmModal(
             title="⚠️ Delete Confirmation",
-            message=f"Are you sure you want to permanently delete {item_type_label}:\n{target_path.name} ?",
+            message=msg,
         )
 
         def _do_delete(confirmed: bool | None) -> None:
             if not confirmed:
                 return
             try:
-                if target_path.is_dir():
-                    shutil.rmtree(target_path)
-                else:
-                    target_path.unlink()
+                deleted_count = 0
+                for target in targets:
+                    if target.is_dir():
+                        shutil.rmtree(target)
+                    else:
+                        target.unlink()
+                    deleted_count += 1
+
+                active_pane.selected_paths.clear()
                 self.action_refresh_both()
-                self.notify(f"Deleted: {target_path.name}", title="F8 Delete", timeout=2)
+                self.notify(f"Successfully deleted {deleted_count} item(s)", title="F8 Delete", timeout=2)
             except Exception as e:
                 self.notify(f"Delete failed: {e}", title="Error", severity="error", timeout=3)
 

@@ -81,3 +81,23 @@ def test_commander_modals():
     confirm = ConfirmModal(title="Delete Confirm", message="Delete file?")
     assert confirm.confirm_title == "Delete Confirm"
     assert confirm.confirm_msg == "Delete file?"
+
+
+def test_commander_multiselect(tmp_path: Path):
+    from mdreader.widgets.commander import PaneWidget
+
+    f1 = tmp_path / "a.txt"
+    f2 = tmp_path / "b.txt"
+    f1.write_text("a", encoding="utf-8")
+    f2.write_text("b", encoding="utf-8")
+
+    pane = PaneWidget("test-pane", start_dir=tmp_path, show_all=True)
+    pane.scan()
+    assert len(pane.selected_paths) == 0
+
+    pane.selected_paths.add(f1)
+    pane.selected_paths.add(f2)
+    assert len(pane.get_effective_targets()) == 2
+
+    pane.unselect_all_items()
+    assert len(pane.selected_paths) == 0
