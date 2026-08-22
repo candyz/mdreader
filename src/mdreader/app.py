@@ -369,7 +369,7 @@ class MDReaderApp(App):
             self.SUB_TITLE = str(filepath.name)
             self.title = "mdreader"
             viewer = self.query_one("#viewer", MarkdownViewerWidget)
-            viewer.update_content(new_content)
+            viewer.update_content(new_content, str(filepath.name))
             
             # Restart file watcher on new file if in watch mode
             if self.watch:
