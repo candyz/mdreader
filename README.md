@@ -9,17 +9,19 @@ An interactive terminal Markdown and HTML previewer with native **Mermaid flowch
 ## ✨ Features
 
 - 📑 **Rich Markdown Rendering**: Headers, tables, lists, blockquotes, styled code blocks with syntax highlighting.
+- 💻 **Vim-like Source Code & Dotfile Viewer**: Syntax-highlighted view for source files (`.c`, `.h`, `.js`, `.css`, `.sh`, `.py`, `.rs`, `.go`, `Makefile`, etc.) and configuration dotfiles (`.vimrc`, `.bashrc`, etc.).
 - 🌐 **Native HTML Document Support**: Zero-dependency rendering for `.html` / `.htm` web pages and piped HTML with tables, headings, code, and lists.
 - 📊 **Mermaid Flowchart Support**: Automatically renders ```` ```mermaid ```` diagrams as ASCII/Unicode art inline without crashing.
-- 📑 **Interactive Table of Contents (TOC Outline)**: Automatically extracts document headings into a searchable and keyboard-navigable outline modal (`Tab` to toggle).
-- 📂 **Fuzzy File Picker**: Interactive modal file selector with instant filtering (`o` key in TUI or launch `mdreader` without arguments).
+- 📁 **Midnight Commander Dual-Pane File Manager (`Ctrl+O`)**: Full-featured dual-pane browser with `Tab` switching, `Insert`/`Space` multi-selection, `F3` view, `F4` edit, `F5` copy, `F6` move/rename, `F7` mkdir, `F8` delete, `?` help, and independent path persistence.
+- 📑 **Interactive Table of Contents (TOC Outline)**: Automatically extracts document headings into a searchable and keyboard-navigable outline modal (`O` to toggle).
+- 📂 **Fuzzy File Picker**: Interactive modal file selector with instant filtering, hidden dotfile toggle (`Ctrl+A`), and directory remembrance (`o` key in TUI or launch `mdreader` without arguments).
 - 🔄 **Watch Mode**: Live hot-reloading on disk changes (`-w` / `--watch`).
-- 🎨 **Multi-Theme Support**: Built-in 10+ dark/light/retro color themes (`t` to switch in-app or `-t` flag).
+- 🎨 **Multi-Theme Support & Persistence**: Built-in 10+ color themes (`t` to cycle), automatically saved across sessions in `~/.config/mdreader/config.json`.
 - 🔍 **In-document Search Bar**: Vim-style search overlay (`/`) with instant keyword jumping (`n` / `N`) and active match highlighting.
 - 📝 **External Editor Integration**: Press `v` to edit with `$EDITOR` or `vim` and auto-reload upon exit.
 - 🖱️ **Mouse Text Selection & Clipboard Sync**: Seamlessly copy selected text to system clipboard (supports macOS `pbcopy`, Linux X11 `xclip`, Wayland `wl-copy`, and Textual OSC 52).
 - 🖲️ **Mouse Tracking Toggle**: Press `m` to toggle mouse tracking and restore native terminal text selection.
-- ⚡ **Interactive TUI**: Maximized reading screen (clean viewport with clock in bottom bar), smooth scrolling, custom width adjustment (`-`/`=`), vim keybindings (`j`/`k`/`gg`/`G`/`q`/`Esc`).
+- ⚡ **Interactive TUI**: Maximized reading screen (clean viewport with clock in bottom bar), smooth vertical & horizontal scrolling (`d`/`f`/`←`/`→`), custom width adjustment (`-`/`=`), vim keybindings (`j`/`k`/`gg`/`G`/`q`/`Esc`).
 - 📟 **Inline Mode**: Pipe directly to terminal standard output with ANSI colors via `--inline`.
 - 🔌 **Stdin Pipe**: Supports piping directly from CLI tools (e.g. `cat file.md | mdreader` or AI tools).
 

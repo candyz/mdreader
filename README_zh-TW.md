@@ -4,18 +4,22 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 
 ## Features
 
-- 📑 **Rich Markdown Rendering**: Headers, tables, lists, quotes, styled code blocks.
-- 🌐 **HTML Document Support**: Native rendering for `.html` / `.htm` web documents and piped HTML with tables, headings, code, and lists.
-- 📊 **Mermaid Flowchart Support**: Automatically renders ```` ```mermaid ```` diagrams as ASCII/Unicode art inline without crashing.
-- 📑 **Interactive Table of Contents (TOC)**: Automatically extracts document headings into a clickable / keyboard-navigable sidebar (`Tab` to toggle).
-- 📂 **Fuzzy File Picker**: Interactive modal file selector with instant filtering (`o` key in TUI or launch `mdreader` without arguments).
-- 🔄 **Watch Mode**: Live hot-reloading on disk changes (`-w` / `--watch`).
-- 🎨 **Multi-Theme Support**: Built-in dark/light/retro color themes (`t` to switch in-app or `-t` flag).
-- 🔍 **In-document Search Bar**: Quick search overlay triggered with `/`.
-- 🖼️ **Terminal Graphics Protocol Ready**: iTerm2 / Kitty inline image protocol integration.
-- ⚡ **Interactive TUI**: Maximized reading screen (clean viewport with clock in bottom bar), smooth scrolling, custom width (`--width`), vim keybindings (`j`/`k`/`gg`/`G`/`q`/`Esc`).
-- 📟 **Inline Mode**: Pipe directly to terminal with ANSI colors via `--inline`.
-- 🔌 **Stdin Pipe**: Supports piping directly from CLI tools (e.g. `cat file.md | mdreader` or AI tools).
+- 📑 **豐富的 Markdown 渲染**：標題、表格、列表、引用區塊，以及具備語法高亮的代碼區塊。
+- 💻 **Vim 風格程式源碼與點檔案檢視**：支援各種程式語言（`.c`, `.h`, `.js`, `.css`, `.sh`, `.py`, `.rs`, `.go`, `Makefile` 等）及設定檔（`.vimrc`, `.bashrc` 等）的語法高亮排版檢視。
+- 🌐 **原生 HTML 文件支援**：零外部依賴直接渲染 `.html` / `.htm` 網頁檔與管線輸入之 HTML，完整保留表格、標題、代碼與列表。
+- 📊 **Mermaid 流程圖支援**：自動將 ```` ```mermaid ```` 圖表轉換為 ASCII/Unicode 文字圖表內嵌顯示，完全解決傳統工具因 mermaid 語法而崩潰的問題。
+- 📁 **Midnight Commander 雙欄檔案管理模式 (`Ctrl+O`)**：左右雙欄瀏覽、`Tab` 切換、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動/重命名、`F7` 新增資料夾、`F8` 刪除、`?` 快捷鍵說明與雙欄目錄獨立記憶。
+- 📑 **互動式大綱目錄 (TOC Outline)**：自動解析文件標題並提供可搜尋跳轉的大綱視窗（按 `O` 開啟）。
+- 📂 **檔案選擇器 (File Picker)**：快速選擇檔案並支援 `Ctrl+A` 顯示隱藏檔案與路徑記憶（按 `o` 開啟或直接執行 `mdreader`）。
+- 🔄 **Watch 監聽模式**：偵測檔案變更自動重新載入（`-w` / `--watch`）。
+- 🎨 **多款配色主題與記憶**：內建 10+ 款深色/淺色主題（按 `t` 循環切換），設定自動持久化保存至 `~/.config/mdreader/config.json`。
+- 🔍 **文件內搜尋欄**：Vim 風格搜尋列（按 `/` 開啟），支援 `n` / `N` 快速跳轉匹配處。
+- 📝 **外部編輯器整合**：按 `v` 隨時叫用 `$EDITOR` 或 `vim` 編輯文件，存檔離開後即時重載。
+- 🖱️ **滑鼠選取與剪貼簿同步**：支援 macOS `pbcopy`、Linux `xclip` / `wl-copy` 與 Textual OSC 52。
+- 🖲️ **滑鼠模式切換**：按 `m` 鍵可快速在 TUI 互動模式與終端原生滑鼠框選模式之間切換。
+- ⚡ **互動式 TUI**：全螢幕極大化閱讀介面、平滑垂直與水平左右捲動（`d` / `f` / `←` / `→`）、欄寬縮放（`-` / `=`）、Vim 導航鍵（`j`/`k`/`gg`/`G`/`q`/`Esc`）。
+- 📟 **Inline 模式**：透過 `--inline` 直接以 ANSI 彩色輸出至終端標準輸出（適合搭配 fzf 預覽）。
+- 🔌 **Stdin Pipe**：支援由命令列管線直接輸入（如 `cat file.md | mdreader` 或 AI 工具輸出）。
 
 ## Installation
 
