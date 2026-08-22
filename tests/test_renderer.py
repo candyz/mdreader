@@ -83,3 +83,31 @@ def test_html_to_markdown_basic():
     assert "| 資料 1 | 資料 2 |" in md
     # Should exclude head/style
     assert "color: red" not in md
+
+
+def test_is_markdown_file():
+    from mdreader.renderer.html import is_markdown_file
+
+    assert is_markdown_file("test.md") is True
+    assert is_markdown_file("doc.markdown") is True
+    assert is_markdown_file("notes.mdown") is True
+    assert is_markdown_file("test.txt") is False
+    assert is_markdown_file("script.py") is False
+    assert is_markdown_file("index.html") is False
+    assert is_markdown_file(None) is False
+
+
+def test_plain_text_preprocessing():
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+
+    widget = MarkdownViewerWidget()
+    txt_content = "def foo():\n    return 42\n"
+    res = widget._preprocess(txt_content, filename="script.py")
+    assert res.startswith("```text\n")
+    assert "def foo():" in res
+    assert res.endswith("\n```")
+
+    # Markdown file should not be wrapped into code fence
+    md_content = "# Header\nHello world"
+    res_md = widget._preprocess(md_content, filename="readme.md")
+    assert res_md.startswith("# Header")

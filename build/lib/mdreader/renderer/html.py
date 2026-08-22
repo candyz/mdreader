@@ -185,6 +185,14 @@ def html_to_markdown(html_content: str) -> str:
         return html_content
 
 
+def is_markdown_file(filename: str | None = None) -> bool:
+    """Check if filename has a markdown extension."""
+    if not filename:
+        return False
+    fn = filename.lower()
+    return fn.endswith((".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdwn", ".mdtxt", ".mdtext"))
+
+
 def is_html_content(text: str, filename: str | None = None) -> bool:
     """Check if content or filename indicates HTML format."""
     if filename:

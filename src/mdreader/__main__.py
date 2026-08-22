@@ -6,7 +6,7 @@ from pathlib import Path
 from mdreader import __version__
 from mdreader.app import MDReaderApp
 from mdreader.renderer.mermaid import preprocess_mermaid
-from mdreader.renderer.html import html_to_markdown, is_html_content
+from mdreader.renderer.html import html_to_markdown, is_html_content, is_markdown_file
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -89,8 +89,11 @@ def main() -> None:
         # Non-interactive stdout rendering using rich
         console = Console(width=args.width)
         raw_text = content
-        if is_html_content(raw_text, str(filepath.name) if filepath else None):
+        fname = str(filepath.name) if filepath else None
+        if is_html_content(raw_text, fname):
             raw_text = html_to_markdown(raw_text)
+        elif fname and not is_markdown_file(fname):
+            raw_text = f"```text\n{raw_text}\n```"
         processed_md = preprocess_mermaid(raw_text)
         md = Markdown(processed_md)
         console.print(md)
