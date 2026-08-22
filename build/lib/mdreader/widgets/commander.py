@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
-from textual.screen import Screen
+from textual.screen import Screen, ModalScreen
 from textual.widgets import OptionList, Label, Footer
 from textual.widgets.option_list import Option
 from textual.binding import Binding
+from textual import events
 from mdreader.utils.config import get_config_value, set_config_value
 
 
@@ -133,7 +134,7 @@ class PaneWidget(Vertical):
         return None
 
 
-class CommanderScreen(Screen[Optional[Path]]):
+class CommanderScreen(ModalScreen[Optional[Path]]):
     """Full-screen Midnight Commander-style dual pane file manager."""
 
     BINDINGS = [
@@ -265,6 +266,13 @@ class CommanderScreen(Screen[Optional[Path]]):
                 right_pane.query_one("#right-pane-list", OptionList).focus()
             except Exception:
                 pass
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle key events explicitly to prevent bubbling to parent App bindings."""
+        if event.key == "tab":
+            event.stop()
+            event.prevent_default()
+            self.action_switch_pane()
 
     def action_switch_pane(self) -> None:
         """Switch active pane between Left and Right (Tab)."""
