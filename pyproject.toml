@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdreader"
-version = "0.5.1"
+version = "0.5.2"
 description = "Terminal Markdown reader with Mermaid flowchart rendering support"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -2,19 +2,36 @@
 from __future__ import annotations
 import textual.widgets._markdown as tm
 from textual.widgets import MarkdownViewer
+from textual.widgets._markdown import MarkdownTable, MarkdownTableContent, MarkdownFence
+from textual.css.scalar import Scalar
+from rich.cells import cell_len
 from mdreader.renderer.mermaid import preprocess_mermaid
 from mdreader.renderer.html import html_to_markdown, is_html_content
 
 
-# Monkey-patch Textual's MarkdownTableContent.pre_layout so wide markdown tables
-# do not get crushed/truncated into single-character columns or ellipsis.
-def _table_content_pre_layout(self, layout):
-    layout.auto_minimum = False
-    layout.expand = False
-    layout.shrink = False
-    layout.stretch_height = True
+# Monkey-patch Textual's MarkdownTable.compose so each column width is computed
+# from the maximum length among the header and all rows in that column, ensuring
+# columns are uniformly aligned and wide tables scroll smoothly horizontally.
+def _custom_markdown_table_compose(self):
+    headers, rows = self._get_headers_and_rows()
+    self._headers = headers
+    self._rows = rows
+    tc = MarkdownTableContent(headers, rows)
+    num_cols = len(headers)
+    col_widths = [0] * num_cols
+    for idx, h in enumerate(headers):
+        col_widths[idx] = max(col_widths[idx], cell_len(h.plain))
+    for row in rows:
+        for idx, cell in enumerate(row):
+            if idx < num_cols:
+                col_widths[idx] = max(col_widths[idx], cell_len(cell.plain))
+    tc.styles.grid_size_columns = num_cols
+    tc.styles.grid_columns = [Scalar.from_number(w + 2) for w in col_widths]
+    total_w = sum(col_widths) + num_cols * 2 + max(0, num_cols - 1)
+    tc.styles.width = total_w
+    yield tc
 
-tm.MarkdownTableContent.pre_layout = _table_content_pre_layout
+tm.MarkdownTable.compose = _custom_markdown_table_compose
 
 
 class MarkdownViewerWidget(MarkdownViewer):
@@ -53,18 +70,6 @@ class MarkdownViewerWidget(MarkdownViewer):
         height: auto;
         overflow-x: auto;
         overflow-y: hidden;
-    }
-    MarkdownTableContent {
-        width: auto;
-        height: auto;
-        & > .cell {
-            text-overflow: clip;
-            width: auto;
-        }
-        & > .header {
-            text-overflow: clip;
-            width: auto;
-        }
     }
     """
 
@@ -117,11 +122,11 @@ class MarkdownViewerWidget(MarkdownViewer):
         if self.allow_horizontal_scroll and self.max_scroll_x > 0:
             self.scroll_relative(x=dx)
         
-        # 2. Scroll any visible code block / markdown table in document
-        from textual.widgets._markdown import MarkdownFence, MarkdownTable
+        # 2. Scroll any wide code block / markdown table in document
         for child in self.document.children:
             if isinstance(child, (MarkdownFence, MarkdownTable)) and child.max_scroll_x > 0:
-                child.scroll_to(x=max(0, min(child.max_scroll_x, child.scroll_x + dx)), animate=True)
+                target_x = max(0, min(child.max_scroll_x, child.scroll_x + dx))
+                child.scroll_to(x=target_x, immediate=True, animate=False)
 
     def page_down(self) -> None:
         """Scroll down by one page."""
