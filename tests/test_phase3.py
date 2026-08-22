@@ -39,9 +39,13 @@ def test_file_picker_scan(tmp_path: Path):
     assert any("sub/" in l for l in item_labels)
     assert not any("ignored.txt" in l for l in item_labels)
 
-    # Show all files: includes .txt and other plain text
+    # Show all files: includes .txt and other plain text and dotfiles
+    (tmp_path / "sub" / ".vimrc").write_text("syntax on", encoding="utf-8")
+    (tmp_path / "sub" / ".config").mkdir()
     screen_all = FilePickerScreen(start_dir=tmp_path / "sub", show_all_files=True)
     screen_all._scan_directory()
     item_labels_all = [label for label, item_type, path in screen_all.items]
     assert any("doc2.markdown" in l for l in item_labels_all)
     assert any("ignored.txt" in l for l in item_labels_all)
+    assert any(".vimrc" in l for l in item_labels_all)
+    assert any(".config/" in l for l in item_labels_all)

@@ -149,6 +149,11 @@ def test_code_and_plain_text_preprocessing():
     res_sh = widget._preprocess(sh_content, filename="build.sh")
     assert res_sh.startswith("```bash\n")
 
+    # .vimrc should be highlighted as vim
+    vim_content = 'syntax on\nset number'
+    res_vim = widget._preprocess(vim_content, filename=".vimrc")
+    assert res_vim.startswith("```vim\n")
+
     # Markdown file should not be wrapped into code fence
     md_content = "# Header\nHello world"
     res_md = widget._preprocess(md_content, filename="readme.md")

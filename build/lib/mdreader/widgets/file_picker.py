@@ -116,7 +116,8 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
             subdirs = []
             files = []
             for entry in self.current_dir.iterdir():
-                if entry.name.startswith(".") and entry.name != "..":
+                # If not showing all files, skip hidden files and directories
+                if not self.show_all_files and entry.name.startswith(".") and entry.name != "..":
                     continue
                 if entry.is_dir():
                     if entry.name not in excluded_dirs:
