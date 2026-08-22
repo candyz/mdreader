@@ -8,6 +8,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, OptionList, Label, Checkbox
 from textual.widgets.option_list import Option
 from textual.binding import Binding
+from mdreader.utils.config import get_config_value, set_config_value
 
 
 class FilePickerScreen(ModalScreen[Optional[Path]]):
@@ -92,13 +93,16 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
     }
     """
 
-    def __init__(self, start_dir: Path | str = ".", initial_query: str = "", show_all_files: bool = False):
+    def __init__(self, start_dir: Path | str = ".", initial_query: str = "", show_all_files: bool | None = None):
         super().__init__()
         self.current_dir = Path(start_dir).resolve()
         if not self.current_dir.is_dir():
             self.current_dir = self.current_dir.parent
         self.initial_query = initial_query
-        self.show_all_files = show_all_files
+        if show_all_files is None:
+            self.show_all_files = bool(get_config_value("show_all_files", False))
+        else:
+            self.show_all_files = show_all_files
         self.items: List[tuple[str, str, Path]] = []  # (display_label, type, path)
 
     def _scan_directory(self) -> None:
@@ -194,6 +198,7 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
     def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
         if event.checkbox.id == "all-files-checkbox":
             self.show_all_files = event.value
+            set_config_value("show_all_files", event.value)
             filter_input = self.query_one("#filter-input", Input)
             self._refresh_view(filter_input.value)
 

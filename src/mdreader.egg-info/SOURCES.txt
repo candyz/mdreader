@@ -15,6 +15,7 @@ src/mdreader/renderer/graphics.py
 src/mdreader/renderer/html.py
 src/mdreader/renderer/mermaid.py
 src/mdreader/utils/__init__.py
+src/mdreader/utils/config.py
 src/mdreader/utils/file_watcher.py
 src/mdreader/widgets/__init__.py
 src/mdreader/widgets/context_menu.py

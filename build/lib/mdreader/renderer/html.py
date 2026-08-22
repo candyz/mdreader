@@ -270,10 +270,12 @@ def is_html_content(text: str, filename: str | None = None) -> bool:
         fn = filename.lower()
         if fn.endswith((".html", ".htm", ".xhtml")):
             return True
+        # If filename is explicitly provided and not an html extension, do not treat as html
+        return False
     
     clean = text.strip()[:500].lower()
     if clean.startswith(("<!doctype html", "<html", "<head", "<body")):
         return True
-    if re.search(r"<(?:p|div|h[1-6]|table|ul|ol|body|html)[^>]*>", clean):
+    if re.search(r"<(?:p|div|h[1-6]|table|ul|ol|body|html)(?:\s+[^>]*)?>", clean):
         return True
     return False

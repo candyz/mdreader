@@ -9,6 +9,7 @@ from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.utils.file_watcher import FileWatcher
+from mdreader.utils.config import get_config_value, set_config_value
 
 
 class ClockLabel(Label):
@@ -181,6 +182,15 @@ class MDReaderApp(App):
         if self._custom_theme:
             if self._custom_theme in self.available_themes:
                 self.theme = self._custom_theme
+        else:
+            saved_theme = get_config_value("theme")
+            if saved_theme and saved_theme in self.available_themes:
+                self.theme = saved_theme
+        
+        # Sync _theme_index with current theme
+        valid_themes = [t for t in self.THEME_LIST if t in self.available_themes]
+        if self.theme in valid_themes:
+            self._theme_index = valid_themes.index(self.theme)
         
         # Ensure focus is on markdown document for immediate keyboard response
         viewer = self.query_one("#viewer", MarkdownViewerWidget)
@@ -270,6 +280,7 @@ class MDReaderApp(App):
         self._theme_index = (self._theme_index + 1) % len(valid_themes)
         new_theme = valid_themes[self._theme_index]
         self.theme = new_theme
+        set_config_value("theme", new_theme)
         self.notify(f"Theme switched to: {new_theme}", timeout=1.5)
 
     def action_open_search(self) -> None:
