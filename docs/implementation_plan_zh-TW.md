@@ -257,12 +257,14 @@ mdreader --version
  以 [test.md](file:///Users/candyz/AI/agy/mdreader/test.md) 作為驗收測試檔案：
  
  - [x] 標題（`#` ~ `######`）正確渲染為不同大小/樣式
- - [x] 表格正確對齊顯示
- - [x] Code block 有語法高亮（SQL, scheme, bash）
+ - [x] 表格正確對齊顯示且具備精確欄寬計算
+ - [x] 程式碼檔案（.c, .h, .js, .css, .sh, .py 等）與點檔案（.vimrc）具備 Vim 風格語法高亮著色
  - [x] **Mermaid `graph TD` 流程圖正確轉為 ASCII art 顯示**
- - [x] 上下與水平左右捲動流暢（`↑`/`↓`/`←`/`→`/`j`/`k`/`gg`/`G`）
- - [x] `Tab` 開啟專屬大綱瀏覽視窗 (Outline Modal)，選擇後跳轉
+ - [x] 上下與水平左右捲動流暢（`↑`/`↓`/`←`/`→`/`d`/`f`/`j`/`k`/`gg`/`G`）
+ - [x] `O` 開啟專屬大綱瀏覽視窗 (Outline Modal)，選擇後跳轉
+ - [x] `Ctrl+O` 開啟 **Midnight Commander 雙欄檔案管理模式**（左右雙欄、批次多選、F3 檢視、F4 編輯、F5 複製、F6 移動、F7 新增目錄、F8 刪除）
  - [x] `/` Vim 風格全文搜尋與 `n` / `N` 跳轉
  - [x] `v` 呼叫外部編輯器 (`$EDITOR` / `vim`) 並在退出後自動重載
  - [x] `q` / `Esc` 可正常退出
+ - [x] 使用者設定自動記憶持久化（Theme 配色、Show all files、雙欄目錄路徑）
  - [x] 不會因任何 mermaid 語法而 crash

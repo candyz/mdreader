@@ -41,16 +41,17 @@ Navigate effortlessly inside the interactive TUI with the following shortcuts:
 | Shortcut | Description |
 | :--- | :--- |
 | **`q`** / **`Esc`** | Quit `mdreader` / Dismiss current modal or search input |
-| **`Tab`** | **Open Outline Modal (TOC)**: Browse document headings, select with `↑`/`↓`/`j`/`k`, and press `Enter` to jump |
+| **`O`** | **Open Outline Modal (TOC)**: Browse document headings, select with `↑`/`↓`/`j`/`k`, and press `Enter` to jump |
+| **`o`** | **Open Fuzzy File Picker**, allowing quick switching between documents |
+| **`Ctrl+O`** | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `Ctrl+O`/`Esc` return) |
+| **`v`** | **Edit in External Editor (Vim / $EDITOR)**: Suspends TUI, opens editor, and auto-reloads upon saving & exiting |
+| **`t`** | **Cycle Color Themes** (Dark, Light, Tokyo Night, Monokai, Solarized, Dracula, etc. - automatically remembered) |
 | **`j`** / **`Page Up`** | **Page Up** (scroll one page up) |
 | **`k`** / **`Page Down`** | **Page Down** (scroll one page down) |
 | **`gg`** / **`Home`** | **Jump to Top of document** |
 | **`G`** / **`End`** | **Jump to Bottom of document** |
 | **`↓`** / **`↑`** | Smooth vertical scroll line-by-line |
-| **`←`** / **`→`** | **Horizontal scroll** (useful for wide tables and code blocks) |
-| **`o`** | **Open Fuzzy File Picker**, allowing quick switching between documents |
-| **`v`** | **Edit in External Editor (Vim / $EDITOR)**: Suspends TUI, opens editor, and auto-reloads upon saving & exiting |
-| **`t`** | **Cycle Color Themes** (Dark, Light, Tokyo Night, Monokai, Solarized, Dracula, etc.) |
+| **`←`** / **`→`** / **`d`** / **`f`** | **Horizontal scroll** (`d`: left, `f`: right, useful for wide tables, code blocks, and charts) |
 | **`/`** | **Open In-document Search**: Type `/keyword` and press `Enter` to start searching |
 | **`n`** | **Jump to Next Search Match** |
 | **`N`** | **Jump to Previous Search Match** |

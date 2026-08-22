@@ -68,12 +68,14 @@
 ## 4. Verification Checklist
 
 - [x] Headers (`#` ~ `######`) rendered with distinct styles.
-- [x] Tables aligned and styled cleanly.
-- [x] Code blocks with syntax highlighting.
+- [x] Tables aligned and styled cleanly with accurate column widths.
+- [x] Source code files (.c, .h, .js, .css, .sh, .py, etc.) and dotfiles (.vimrc) with Vim-like syntax highlighting.
 - [x] **Mermaid `graph TD` / `graph LR` converted to ASCII art**.
-- [x] Smooth vertical and horizontal scrolling (`↑`/`↓`/`←`/`→`/`j`/`k`/`gg`/`G`).
-- [x] `Tab` opens Table of Contents outline modal for instant navigation.
+- [x] Smooth vertical and horizontal scrolling (`↑`/`↓`/`←`/`→`/`d`/`f`/`j`/`k`/`gg`/`G`).
+- [x] `O` opens Table of Contents outline modal for instant navigation.
+- [x] `Ctrl+O` opens **Midnight Commander dual-pane file manager** (Tab switch pane, Ins/Space multi-select, F3 View, F4 Edit, F5 Copy, F6 Move, F7 Mkdir, F8 Delete).
 - [x] `/` Vim-style in-document search with `n` / `N` navigation.
 - [x] `v` suspends TUI to edit in external `$EDITOR` / `vim` with auto-reload.
 - [x] `m` toggles mouse tracking for native terminal text selection.
 - [x] Native HTML document rendering (`.html` / `.htm`).
+- [x] User configuration persistence (Theme, Show all files, Dual-pane paths).
