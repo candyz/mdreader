@@ -6,9 +6,11 @@ from mdreader.widgets.file_picker import FilePickerScreen
 
 def test_graphics_protocol_detection(monkeypatch):
     monkeypatch.setenv("TERM_PROGRAM", "iTerm.app")
+    monkeypatch.setenv("LC_TERMINAL", "iTerm2")
     assert is_iterm2_supported() is True
 
     monkeypatch.setenv("TERM_PROGRAM", "Apple_Terminal")
+    monkeypatch.setenv("LC_TERMINAL", "")
     assert is_iterm2_supported() is False
 
     monkeypatch.setenv("TERM_PROGRAM", "ghostty")

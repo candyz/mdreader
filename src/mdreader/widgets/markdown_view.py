@@ -1,8 +1,20 @@
 """Markdown viewer widget module with Mermaid preprocessing & TOC support."""
 from __future__ import annotations
+import textual.widgets._markdown as tm
 from textual.widgets import MarkdownViewer
 from mdreader.renderer.mermaid import preprocess_mermaid
 from mdreader.renderer.html import html_to_markdown, is_html_content
+
+
+# Monkey-patch Textual's MarkdownTableContent.pre_layout so wide markdown tables
+# do not get crushed/truncated into single-character columns or ellipsis.
+def _table_content_pre_layout(self, layout):
+    layout.auto_minimum = False
+    layout.expand = False
+    layout.shrink = False
+    layout.stretch_height = True
+
+tm.MarkdownTableContent.pre_layout = _table_content_pre_layout
 
 
 class MarkdownViewerWidget(MarkdownViewer):
@@ -35,6 +47,24 @@ class MarkdownViewerWidget(MarkdownViewer):
         background: $boost;
         padding: 0 1;
         margin: 1 0;
+    }
+    MarkdownTable {
+        width: 1fr;
+        height: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    MarkdownTableContent {
+        width: auto;
+        height: auto;
+        & > .cell {
+            text-overflow: clip;
+            width: auto;
+        }
+        & > .header {
+            text-overflow: clip;
+            width: auto;
+        }
     }
     """
 
@@ -82,15 +112,15 @@ class MarkdownViewerWidget(MarkdownViewer):
         self.scroll_relative(y=dy)
 
     def scroll_horizontal(self, dx: int) -> None:
-        """Scroll wide elements (such as code fences) horizontally."""
+        """Scroll wide elements (such as tables and code fences) horizontally."""
         # 1. First scroll viewer itself if it supports horizontal scrolling
         if self.allow_horizontal_scroll and self.max_scroll_x > 0:
             self.scroll_relative(x=dx)
         
-        # 2. Scroll any visible code block / scrollable child in the current viewport
-        from textual.widgets._markdown import MarkdownFence
+        # 2. Scroll any visible code block / markdown table in document
+        from textual.widgets._markdown import MarkdownFence, MarkdownTable
         for child in self.document.children:
-            if isinstance(child, MarkdownFence) and child.max_scroll_x > 0:
+            if isinstance(child, (MarkdownFence, MarkdownTable)) and child.max_scroll_x > 0:
                 child.scroll_to(x=max(0, min(child.max_scroll_x, child.scroll_x + dx)), animate=True)
 
     def page_down(self) -> None:
