@@ -95,9 +95,9 @@ curl -s https://example.com | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
-| `Tab` | **Open Table of Contents (Outline)**: Navigate chapters with `↑`/`↓`/`j`/`k` and press `Enter` to jump |
+| `O` | **Open Table of Contents (Outline)**: Navigate chapters with `↑`/`↓`/`j`/`k` and press `Enter` to jump |
 | `o` | **Open Fuzzy File Picker**: Select `.md` or `.html` files in current directory tree |
-| `F9` / `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `F3` view, `F4` edit, `F9`/`Esc` return) |
+| `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `F3` view, `F4` edit, `Ctrl+O`/`Esc` return) |
 | `v` | **Edit in External Editor (Vim / $EDITOR)**: Automatically pauses TUI and reloads upon exit |
 | `t` | **Switch Color Theme**: Cycle through dark, light, tokyo-night, monokai, solarized, etc. |
 | `/` | **Open Search Bar**: Type `/query` and press `Enter` to search |

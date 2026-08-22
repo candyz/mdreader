@@ -66,9 +66,9 @@ cat test.md | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
-| `Tab` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
+| `O` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | `o` | Open Fuzzy File Picker modal (檔案選擇器) |
-| `F9` / `Ctrl+O` | **Midnight Commander 雙欄檔案管理模式**：左右雙欄切換 (`Tab`)、`F3`/`Enter` 檢視、`F4` 編輯、`F9`/`Esc` 返回閱讀 |
+| `Ctrl+O` | **Midnight Commander 雙欄檔案管理模式**：左右雙欄切換 (`Tab`)、`F3`/`Enter` 檢視、`F4` 編輯、`Ctrl+O`/`Esc` 返回閱讀 |
 | `v` | **開啟外部編輯器 (Edit in Vim / $EDITOR)**：離開編輯後自動重載 |
 | `t` | Switch Color Theme (切換色彩主題) |
 | `/` | **開啟搜尋欄 (Search)**：輸入 `/keyword` 後按 Enter 開始搜尋 |

@@ -141,7 +141,7 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         Binding("tab", "switch_pane", "Switch Pane (Tab)", priority=True),
         Binding("f3", "view_file", "F3 View", priority=True),
         Binding("f4", "edit_file", "F4 Edit", priority=True),
-        Binding("f9", "toggle_mode", "F9 Reader", priority=True),
+        Binding("ctrl+o", "toggle_mode", "Reader (^O)", priority=True),
         Binding("f10", "quit_app", "F10 Quit", priority=True),
         Binding("escape", "toggle_mode", "Back/Reader", priority=True),
         Binding("q", "toggle_mode", "Back/Reader", show=False),
