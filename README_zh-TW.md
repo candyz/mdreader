@@ -78,7 +78,7 @@ cat test.md | mdreader
 | `gg` / `Home` | **Jump to Top (回到文件最上方)** |
 | `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
 | `Down` / `Up` | Line by line scroll (逐行垂直捲動) |
-| `Left` / `Right` | Horizontal scroll for wide content/code (水平向左/右捲動) |
+| `Left` / `Right` / `d` / `f` | Horizontal scroll (`d` 向左捲動、`f` 向右捲動) |
 | `Mouse Drag` | **選取文字 (Select Text)**：框選文字時自動複製到系統剪貼簿 |
 | `Shift + Drag` | **終端原生選取 (Terminal Bypass)**：強制使用終端原生框選複製 |
 | `m` | **切換滑鼠攔截模式 (Toggle Mouse Mode)**：關閉時完全恢復終端原生滑鼠操作 |

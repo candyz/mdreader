@@ -107,7 +107,7 @@ curl -s https://example.com | mdreader
 | `gg` / `Home` | **Jump to Top of document** |
 | `G` / `End` | **Jump to Bottom of document** |
 | `Down` / `Up` | Vertical scroll line by line |
-| `Left` / `Right` | Horizontal scroll for wide content/code blocks |
+| `Left` / `Right` / `d` / `f` | Horizontal scroll (`d`: scroll left, `f`: scroll right) |
 | `Mouse Drag` | **Select Text**: Automatically copies selection to system clipboard on release |
 | `Shift + Drag` | **Terminal Bypass Selection**: Force native terminal text selection |
 | `m` | **Toggle Mouse Mode**: Switch between TUI mouse capture and native terminal selection mode |

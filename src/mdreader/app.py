@@ -120,6 +120,8 @@ class MDReaderApp(App):
         Binding("down", "scroll_down", "Down", show=False),
         Binding("left", "scroll_left", "Left", show=False),
         Binding("right", "scroll_right", "Right", show=False),
+        Binding("d", "scroll_left", "Scroll Left (d)", show=False),
+        Binding("f", "scroll_right", "Scroll Right (f)", show=False),
         Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
         Binding("equals", "zoom_in", "Zoom In (=)", show=False),
         Binding("plus", "zoom_in", "Zoom In (+)", show=False),
