@@ -94,6 +94,13 @@ class VirtualTextViewer(ScrollView):
         self._setup_lexer()
         self._update_virtual_size()
 
+    def toggle_line_numbers(self) -> bool:
+        """Toggle display of line number column."""
+        self.show_line_numbers = not self.show_line_numbers
+        self._update_virtual_size()
+        self.refresh()
+        return self.show_line_numbers
+
     def set_soft_wrap(self, wrap: bool) -> None:
         """Toggle soft wrapping in virtual viewer."""
         self.soft_wrap = wrap

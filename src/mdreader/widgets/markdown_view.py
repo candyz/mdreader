@@ -9,6 +9,11 @@ from mdreader.renderer.mermaid import preprocess_mermaid
 from mdreader.renderer.html import html_to_markdown, is_html_content, is_markdown_file, detect_code_language
 
 
+from textual.content import Content, Span
+from textual.style import Style
+from markdown_it.token import Token
+
+
 # Monkey-patch Textual's MarkdownTable.compose so each column width is computed
 # from the maximum length among the header and all rows in that column, ensuring
 # columns are uniformly aligned and wide tables scroll smoothly horizontally.
@@ -32,6 +37,70 @@ def _custom_markdown_table_compose(self):
     yield tc
 
 tm.MarkdownTable.compose = _custom_markdown_table_compose
+
+
+# Monkey-patch Textual's MarkdownBlock._token_to_content to preserve soft linebreaks
+# (displaying separate lines rather than collapsing into a single merged paragraph, matching leaf/GFM).
+def _custom_token_to_content(self, token: Token) -> Content:
+    if token.children is None:
+        return Content("")
+
+    tokens: list[str] = []
+    spans: list[Span] = []
+    style_stack: list[tuple[Style | str, int]] = []
+    position: int = 0
+
+    def add_content(text: str) -> None:
+        nonlocal position
+        tokens.append(text)
+        position += len(text)
+
+    def add_style(style: Style | str) -> None:
+        style_stack.append((style, position))
+
+    def close_tag() -> None:
+        if style_stack:
+            style, start = style_stack.pop()
+            spans.append(Span(start, position, style))
+
+    for child in token.children:
+        child_type = child.type
+        if child_type == "text":
+            add_content(child.content)
+        elif child_type in ("hardbreak", "softbreak"):
+            add_content("\n")
+        elif child_type == "code_inline":
+            add_style(".code_inline")
+            add_content(child.content)
+            close_tag()
+        elif child_type == "em_open":
+            add_style(".em")
+        elif child_type == "strong_open":
+            add_style(".strong")
+        elif child_type == "s_open":
+            add_style(".s")
+        elif child_type == "link_open":
+            href = child.attrs.get("href", "")
+            action = f"link({href!r})"
+            add_style(Style.from_meta({"@click": action}))
+        elif child_type == "image":
+            href = child.attrs.get("src", "")
+            alt = child.attrs.get("alt", "")
+            action = f"link({href!r})"
+            add_style(Style.from_meta({"@click": action}))
+            add_content("🖼  ")
+            if alt:
+                add_content(f"({alt})")
+            if child.children is not None:
+                for grandchild in child.children:
+                    add_content(grandchild.content)
+            close_tag()
+        elif child_type.endswith("_close"):
+            close_tag()
+
+    return Content("".join(tokens), spans=spans)
+
+tm.MarkdownBlock._token_to_content = _custom_token_to_content
 
 
 class MarkdownViewerWidget(MarkdownViewer):

@@ -590,3 +590,40 @@ def test_cli_args_parsing():
     args, _ = parse_args(["README.md", "--export-html", "out.html", "--list-themes"])
     assert args.export_html == "out.html"
     assert args.list_themes is True
+
+
+def test_markdown_softbreaks_preservation():
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    from textual.app import App, ComposeResult
+    import asyncio
+
+    raw = "Line One\nLine Two\nLine Three"
+
+    class AppSoftBreak(App):
+        def compose(self) -> ComposeResult:
+            yield MarkdownViewerWidget(raw_markdown=raw, id="viewer")
+
+    async def run():
+        app = AppSoftBreak()
+        async with app.run_test() as pilot:
+            viewer = app.query_one("#viewer", MarkdownViewerWidget)
+            para = viewer.document.children[0]
+            content_str = str(getattr(para, "_content", ""))
+            assert "Line One\nLine Two\nLine Three" in content_str
+
+    asyncio.run(run())
+
+
+def test_virtual_viewer_line_numbers_toggle():
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    viewer = VirtualTextViewer(raw_text="hello\nworld", filename="test.py")
+    assert viewer.show_line_numbers is True
+
+    new_state = viewer.toggle_line_numbers()
+    assert new_state is False
+    assert viewer.show_line_numbers is False
+
+    new_state = viewer.toggle_line_numbers()
+    assert new_state is True
+    assert viewer.show_line_numbers is True

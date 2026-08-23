@@ -193,6 +193,8 @@ class MDReaderApp(App):
         Binding("ctrl+k", "copy_code_block", "Copy Code", show=False),
         Binding("ctrl+t", "open_in_terminal", "Terminal (Ctrl+T)", show=False),
         Binding("ctrl+shift+o", "reveal_in_finder", "Reveal File", show=False),
+        Binding("L", "toggle_line_numbers", "Line No (L)", show=False),
+        Binding("alt+l", "toggle_line_numbers", "Line No", show=False),
         Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
@@ -711,6 +713,16 @@ class MDReaderApp(App):
             viewer.set_soft_wrap(self._soft_wrap)
         status_text = "已開啟 (Wrap)" if self._soft_wrap else "已關閉 (No Wrap, 可按 h/l 水平捲動)"
         self.notify(f"自動折行：{status_text}", title="自動換行 (w)", timeout=1.5)
+
+    def action_toggle_line_numbers(self) -> None:
+        """Toggle line numbers visibility in VirtualTextViewer (L / Alt+L)."""
+        viewer = self.query_one("#viewer")
+        if hasattr(viewer, "toggle_line_numbers"):
+            state = viewer.toggle_line_numbers()
+            msg = "已顯示行號 (Line Numbers On)" if state else "已隱藏行號 (Line Numbers Off)"
+            self.notify(msg, title="行號切換 (L)", timeout=1.5)
+        else:
+            self.notify("Markdown 渲染模式不支援行號切換（僅純文字/原始碼模式支援）", title="行號切換 (L)", timeout=2.0)
 
     def action_open_link(self) -> None:
         """Extract hyperlinks from document and open in browser (gx)."""

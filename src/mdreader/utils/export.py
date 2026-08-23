@@ -86,7 +86,7 @@ h1, h2 {{
 def export_to_html(markdown_text: str, title: str = "Exported Document") -> str:
     """Convert Markdown text to styled standalone HTML document."""
     try:
-        md = MarkdownIt()
+        md = MarkdownIt("gfm-like", {"breaks": True})
         html_body = md.render(markdown_text)
     except Exception:
         # Fallback to preformatted text if markdown parsing fails

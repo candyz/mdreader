@@ -52,6 +52,7 @@ mdreader README.md --export-txt output.txt
 | **`O`** | **開啟大綱模式 (TOC Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | **`Ctrl+O`** | **Midnight Commander 雙欄檔案總管**：左右雙欄 (`Tab`)、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
 | **`w`** / **`Alt+Z`** | **切換自動折行 (Toggle Soft Wrap)**：在自動折行與水平捲動模式之間切換 |
+| **`L`** / **`Alt+L`** | **切換行號顯示 (Toggle Line Numbers)**：在原始碼與純文字檔案中顯示/隱藏左側行號欄 |
 | **`gx`** | **擷取超連結 (Open Links)**：列出文件中的網址並於預設瀏覽器中開啟 |
 | **`m` + `[a-z]`** | **建立書籤 (Set Mark)**：在當前行建立以指定英文字母命名的書籤 |
 | **`'` + `[a-z]`** | **跳轉書籤 (Jump to Mark)**：立即跳轉至先前儲存的書籤行號 |

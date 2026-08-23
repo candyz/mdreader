@@ -113,6 +113,7 @@ curl -s https://example.com | mdreader
 | `O` | **Table of Contents (Outline)**: Navigate headings and press `Enter` to jump |
 | `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `s` sort, `Ctrl+D` bookmarks, `Ctrl+F` grep) |
 | `w` / `Alt+Z` | **Toggle Soft Line Wrap**: Switch between automatic line wrapping and horizontal scrolling |
+| `L` / `Alt+L` | **Toggle Line Numbers**: Show/hide line numbers column in code & plain text files |
 | `gx` | **Extract & Open Hyperlinks**: Extract web links and open in default browser |
 | `m` + `[a-z]` | **Set Bookmark (Mark)**: Set bookmark at current line |
 | `'` + `[a-z]` | **Jump to Bookmark**: Jump to previously saved bookmark line |
