@@ -143,6 +143,14 @@ class MarkdownViewerWidget(MarkdownViewer):
     """
 
     DEFAULT_CSS = """
+    MarkdownViewerWidget MarkdownTable {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    MarkdownViewerWidget MarkdownFence {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
     MarkdownViewerWidget.-no-wrap {
         overflow-x: auto;
     }
@@ -152,6 +160,10 @@ class MarkdownViewerWidget(MarkdownViewer):
     }
     MarkdownViewerWidget.-no-wrap MarkdownBlock {
         text-wrap: nowrap;
+        width: auto;
+    }
+    MarkdownViewerWidget.-no-wrap MarkdownTable {
+        overflow-x: auto;
         width: auto;
     }
     """
@@ -222,13 +234,15 @@ class MarkdownViewerWidget(MarkdownViewer):
         """Scroll wide elements (such as tables and code fences) horizontally."""
         # 1. First scroll viewer itself if it supports horizontal scrolling
         if self.allow_horizontal_scroll and self.max_scroll_x > 0:
-            self.scroll_relative(x=dx)
+            self.scroll_relative(x=dx, animate=False)
         
         # 2. Scroll any wide code block / markdown table in document
-        for child in self.document.children:
-            if isinstance(child, (MarkdownFence, MarkdownTable)) and child.max_scroll_x > 0:
-                target_x = max(0, min(child.max_scroll_x, child.scroll_x + dx))
-                child.scroll_to(x=target_x, immediate=True, animate=False)
+        try:
+            for child in self.document.children:
+                if isinstance(child, (MarkdownFence, MarkdownTable)) and child.max_scroll_x > 0:
+                    child.scroll_relative(x=dx, animate=False)
+        except Exception:
+            pass
 
     def page_down(self) -> None:
         """Scroll down by one page."""
