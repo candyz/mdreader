@@ -52,6 +52,7 @@ class HelpModal(ModalScreen[None]):
         padding: 1 2;
     }
     #help-title {
+        width: 100%;
         text-style: bold;
         color: $accent;
         margin-bottom: 1;
@@ -97,7 +98,7 @@ class HelpModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="help-dialog"):
-            yield Label("⌨️ Midnight Commander Keybindings (Help)", id="help-title")
+            yield Label("💡 Midnight Commander Keybindings (Help)", id="help-title")
             for key, desc in self.SHORTCUTS:
                 with Horizontal(classes="help-row"):
                     yield Label(key, classes="help-key")
