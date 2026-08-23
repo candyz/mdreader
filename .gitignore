@@ -8,10 +8,14 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+build/
+dist/
 dist-ssr
-.venv
-__pycache__
+*.egg-info/
+src/*.egg-info/
+.pytest_cache/
+.venv/
+__pycache__/
 *.pyc
 #pwa-*.png
 #app-icon.svg

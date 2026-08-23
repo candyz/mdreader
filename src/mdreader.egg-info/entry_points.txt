@@ -1,2 +1,0 @@
-[console_scripts]
-mdreader = mdreader.__main__:main
