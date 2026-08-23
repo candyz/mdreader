@@ -680,3 +680,32 @@ def test_cmd_prompt_bar_toggle(tmp_path: Path):
             assert app.cmd_prompt_visible is False
 
     asyncio.run(run())
+
+
+def test_markdown_and_virtual_soft_wrap():
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    # 1. MarkdownViewer soft wrap toggle
+    md_viewer = MarkdownViewerWidget(raw_markdown="# Title\nLong text")
+    assert md_viewer.soft_wrap is True
+    assert "-no-wrap" not in md_viewer.classes
+
+    md_viewer.set_soft_wrap(False)
+    assert md_viewer.soft_wrap is False
+    assert "-no-wrap" in md_viewer.classes
+
+    md_viewer.set_soft_wrap(True)
+    assert md_viewer.soft_wrap is True
+    assert "-no-wrap" not in md_viewer.classes
+
+    # 2. VirtualTextViewer visual line wrapping
+    long_line = "A" * 150
+    v_viewer = VirtualTextViewer(raw_text=long_line, filename="test.py")
+    assert v_viewer.soft_wrap is False
+    assert len(v_viewer.lines) == 1
+
+    v_viewer.set_soft_wrap(True)
+    assert v_viewer.soft_wrap is True
+    display_lines = getattr(v_viewer, "_display_lines", [])
+    assert len(display_lines) >= 2

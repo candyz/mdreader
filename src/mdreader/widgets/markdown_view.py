@@ -142,6 +142,20 @@ class MarkdownViewerWidget(MarkdownViewer):
     }
     """
 
+    DEFAULT_CSS = """
+    MarkdownViewerWidget.-no-wrap {
+        overflow-x: auto;
+    }
+    MarkdownViewerWidget.-no-wrap > Markdown {
+        width: auto;
+        min-width: 100%;
+    }
+    MarkdownViewerWidget.-no-wrap MarkdownBlock {
+        text-wrap: nowrap;
+        width: auto;
+    }
+    """
+
     def __init__(
         self,
         raw_markdown: str = "",
@@ -166,9 +180,16 @@ class MarkdownViewerWidget(MarkdownViewer):
     def set_soft_wrap(self, wrap: bool) -> None:
         """Toggle soft wrapping in Markdown viewer."""
         self.soft_wrap = wrap
-        if hasattr(self, "document") and self.document:
-            self.document.styles.overflow_x = "hidden" if wrap else "auto"
-            self.document.refresh()
+        if wrap:
+            self.remove_class("-no-wrap")
+            self.scroll_x = 0
+        else:
+            self.add_class("-no-wrap")
+        try:
+            if self.is_mounted and hasattr(self, "document"):
+                self.document.refresh()
+        except Exception:
+            pass
 
     def _preprocess(self, text: str, filename: str | None = None) -> str:
         """Auto convert HTML to Markdown if needed, format code/plain text files with syntax highlighting, then preprocess Mermaid diagrams."""

@@ -120,15 +120,50 @@ class VirtualTextViewer(ScrollView):
             except Exception:
                 self._lexer = None
 
+    def _compute_display_lines(self) -> None:
+        """Compute display lines when soft_wrap is True, or use raw lines when False."""
+        if not self.soft_wrap:
+            self._display_lines = self.lines
+            self._line_map = None
+            return
+
+        viewport_w = self.size.width if self.size and self.size.width > 0 else 80
+        prefix_len = 8 if self.show_line_numbers else 0
+        w = max(20, viewport_w - prefix_len - 2)
+
+        wrapped = []
+        line_map = []
+        for orig_idx, line in enumerate(self.lines):
+            if not line:
+                wrapped.append("")
+                line_map.append((orig_idx, True))
+            elif len(line) <= w:
+                wrapped.append(line)
+                line_map.append((orig_idx, True))
+            else:
+                chunks = [line[i:i+w] for i in range(0, len(line), w)]
+                for chunk_idx, chunk in enumerate(chunks):
+                    wrapped.append(chunk)
+                    line_map.append((orig_idx, chunk_idx == 0))
+        self._display_lines = wrapped
+        self._line_map = line_map
+
     def _update_virtual_size(self) -> None:
+        self._compute_display_lines()
+        display_lines = getattr(self, "_display_lines", self.lines)
         if self.soft_wrap:
             width = max(40, self.size.width if self.size and self.size.width > 0 else 80)
-            self.virtual_size = Size(width, len(self.lines))
+            self.virtual_size = Size(width, len(display_lines))
             return
         sample = self.lines[:2000] if len(self.lines) > 2000 else self.lines
         max_len = max((len(l) for l in sample), default=80)
         prefix_len = 8 if self.show_line_numbers else 0
         self.virtual_size = Size(max_len + prefix_len + 4, len(self.lines))
+
+    def on_resize(self, event) -> None:
+        if self.soft_wrap:
+            self._update_virtual_size()
+            self.refresh()
 
     def update_content(self, text: str | Sequence[str], filename: str | None = None) -> None:
         """Update content and reset virtual geometry."""
@@ -151,18 +186,24 @@ class VirtualTextViewer(ScrollView):
         scroll_x = int(self.scroll_x)
         idx = scroll_y + y
 
-        if not (0 <= idx < len(self.lines)):
+        display_lines = getattr(self, "_display_lines", self.lines)
+        if not (0 <= idx < len(display_lines)):
             return Strip([])
 
-        line_str = self.lines[idx]
-        if scroll_x > 0:
+        line_str = display_lines[idx]
+        if not self.soft_wrap and scroll_x > 0:
             line_str = line_str[scroll_x:] if scroll_x < len(line_str) else ""
 
         segments: list[Segment] = []
 
         # Optional line numbers
         if self.show_line_numbers:
-            line_no = f"{idx + 1:>6} │ "
+            line_map = getattr(self, "_line_map", None)
+            if line_map and idx < len(line_map):
+                orig_idx, is_first = line_map[idx]
+                line_no = f"{orig_idx + 1:>6} │ " if is_first else "       │ "
+            else:
+                line_no = f"{idx + 1:>6} │ "
             segments.append(Segment(line_no, Style(color="grey50")))
 
         # Highlight if explicitly jumped to
