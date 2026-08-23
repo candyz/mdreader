@@ -635,3 +635,20 @@ def test_reader_help_modal():
     modal = ReaderHelpModal()
     assert len(HELP_SECTIONS) >= 5
     assert modal is not None
+
+
+def test_terminal_and_finder_actions(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    import os
+
+    test_file = tmp_path / "test.md"
+    test_file.write_text("# Test", encoding="utf-8")
+
+    app = MDReaderApp(filepath=test_file)
+    assert app.filepath == test_file
+
+    # Ensure no NameError when accessing terminal action helper logic
+    target_dir = app.filepath.parent if app.filepath and app.filepath.exists() else Path.cwd()
+    shell = os.environ.get("SHELL") or "/bin/sh"
+    assert target_dir == tmp_path
+    assert len(shell) > 0

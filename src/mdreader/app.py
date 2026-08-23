@@ -1,6 +1,11 @@
 """Textual Application for Markdown Reader."""
 from __future__ import annotations
+import os
+import sys
 import time
+import subprocess
+import webbrowser
+import shutil
 from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.binding import Binding
