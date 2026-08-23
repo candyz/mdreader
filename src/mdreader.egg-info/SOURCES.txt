@@ -21,7 +21,9 @@ src/mdreader/widgets/__init__.py
 src/mdreader/widgets/commander.py
 src/mdreader/widgets/context_menu.py
 src/mdreader/widgets/file_picker.py
+src/mdreader/widgets/link_picker.py
 src/mdreader/widgets/markdown_view.py
+src/mdreader/widgets/marks_modal.py
 src/mdreader/widgets/outline_modal.py
 src/mdreader/widgets/virtual_viewer.py
 tests/test_file_watcher.py

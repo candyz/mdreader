@@ -343,3 +343,74 @@ def test_full_document_copy_fallback(tmp_path: Path):
             assert "# Test Document" in copied[0]
 
     asyncio.run(run())
+
+
+def test_extract_links():
+    from mdreader.widgets.link_picker import extract_links_from_text
+
+    text = """
+    Check out [GitHub](https://github.com) and [Google](https://google.com).
+    Also raw link https://textual.textualize.io/guide/
+    """
+    links = extract_links_from_text(text)
+    assert len(links) == 3
+    labels = [l[0] for l in links]
+    assert "GitHub" in labels
+    assert "Google" in labels
+    assert "https://textual.textualize.io/guide/" in labels
+
+
+def test_marks_modal():
+    from mdreader.widgets.marks_modal import MarksModal
+
+    marks = {"a": 42, "b": 100}
+    lines = [f"Line {i}" for i in range(150)]
+    modal = MarksModal(marks, lines)
+    assert modal.marks == marks
+
+
+def test_vim_marks_and_wrap_toggle(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    import asyncio
+
+    txt_file = tmp_path / "marks.txt"
+    txt_file.write_text("\n".join(f"Row {i+1}" for i in range(300)), encoding="utf-8")
+
+    async def run():
+        app = MDReaderApp(filepath=txt_file)
+        async with app.run_test() as pilot:
+            viewer = app.query_one("#viewer", VirtualTextViewer)
+            
+            # 1. Soft wrap toggle
+            assert app._soft_wrap is True
+            app.action_toggle_wrap()
+            await pilot.pause()
+            assert app._soft_wrap is False
+            app.action_toggle_wrap()
+            await pilot.pause()
+            assert app._soft_wrap is True
+
+            # 2. Set mark 'a' at top
+            await pilot.press("m", "a")
+            await pilot.pause()
+            assert app._marks.get("a") == 1
+
+            # 3. Jump to line 200 and set mark 'b'
+            app.action_goto_line(200)
+            await pilot.pause()
+            await pilot.press("m", "b")
+            await pilot.pause()
+            assert app._marks.get("b") == 200
+
+            # 4. Jump back to mark 'a' using 'a
+            await pilot.press("'", "a")
+            await pilot.pause()
+            assert viewer.scroll_y == 0
+
+            # 5. Jump to mark 'b' using 'b
+            await pilot.press("'", "b")
+            await pilot.pause()
+            assert viewer.scroll_y == 199
+
+    asyncio.run(run())

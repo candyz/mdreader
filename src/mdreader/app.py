@@ -9,6 +9,8 @@ from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
+from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
+from mdreader.widgets.marks_modal import MarksModal
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
 
@@ -137,12 +139,16 @@ class MDReaderApp(App):
         Binding("o", "open_file_picker", "Open file", show=True),
         Binding("O", "toggle_toc", "Outline", show=True),
         Binding("ctrl+o", "open_commander", "Commander", show=True),
+        Binding("w", "toggle_wrap", "Wrap", show=True),
         Binding("v", "edit_in_editor", "Edit", show=True),
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
         Binding("slash", "open_search", "Search (/)", show=False),
         Binding("colon", "open_goto_line", "Go to Line (:)", show=False),
+        Binding("alt+z", "toggle_wrap", "Wrap (Alt+Z)", show=False),
+        Binding("gx", "open_link", "Open Link (gx)", show=False),
+        Binding("ctrl+m", "list_marks", "Marks (Ctrl+M)", show=False),
         Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
         Binding("y", "copy_selected_text", "Yank / Copy", show=False),
         Binding("c", "copy_selected_text", "Copy", show=False),
@@ -199,6 +205,10 @@ class MDReaderApp(App):
         self._mouse_tracking_enabled: bool = True
         self._digit_buffer: str = ""
         self._input_mode: str = "search"
+        self._soft_wrap: bool = True
+        self._marks: dict[str, int] = {}
+        self._waiting_for_mark: bool = False
+        self._waiting_for_jump_mark: bool = False
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -572,18 +582,100 @@ class MDReaderApp(App):
         except Exception as e:
             self.notify(f"Failed to open file: {e}", title="Error", severity="error")
 
+    def _get_current_line(self) -> int:
+        """Get the line number currently at the top of the viewport (1-indexed)."""
+        try:
+            viewer = self.query_one("#viewer")
+            scroll_y = int(viewer.scroll_y)
+            return max(1, scroll_y + 1)
+        except Exception:
+            return 1
+
+    def action_toggle_wrap(self) -> None:
+        """Toggle soft line wrapping on/off (w / Alt+Z)."""
+        self._soft_wrap = not self._soft_wrap
+        viewer = self.query_one("#viewer")
+        if hasattr(viewer, "set_soft_wrap"):
+            viewer.set_soft_wrap(self._soft_wrap)
+        status_text = "已開啟 (Wrap)" if self._soft_wrap else "已關閉 (No Wrap, 可按 h/l 水平捲動)"
+        self.notify(f"自動折行：{status_text}", title="自動換行 (w)", timeout=1.5)
+
+    def action_open_link(self) -> None:
+        """Extract hyperlinks from document and open in browser (gx)."""
+        links = extract_links_from_text(self.content or "")
+        if not links:
+            self.notify("文件中未發現任何超連結 (HTTP/HTTPS)", title="開啟超連結 (gx)", severity="warning", timeout=2.0)
+            return
+        if len(links) == 1:
+            import webbrowser
+            url = links[0][1]
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
+            self.notify(f"已在瀏覽器開啟：\n{url}", title="開啟超連結 (gx)", timeout=2.0)
+            return
+
+        self.push_screen(LinkPickerModal(links), self._on_link_picked)
+
+    def _on_link_picked(self, url: str | None) -> None:
+        if url:
+            self.notify(f"已在瀏覽器開啟：\n{url}", title="開啟超連結 (gx)", timeout=2.0)
+
+    def action_list_marks(self) -> None:
+        """Open bookmarks modal dialog (Ctrl+M)."""
+        lines = self.content.splitlines() if self.content else []
+        self.push_screen(MarksModal(self._marks, lines), self._on_mark_selected)
+
+    def _on_mark_selected(self, target_line: int | None) -> None:
+        if target_line is not None:
+            self.action_goto_line(target_line)
+
     def on_key(self, event) -> None:
-        """Handle raw key sequences like 'gg', 'G', or '123G' for scrolling/jumping."""
+        """Handle raw key sequences like 'gg', 'G', '123G', 'm[a-z]', and '[a-z]' for marks/jumps."""
         if self.search_visible:
             return
 
         import time
         now = time.time()
 
+        # 1. Handle setting mark after 'm' key
+        if self._waiting_for_mark:
+            self._waiting_for_mark = False
+            if event.character and event.character.isalpha():
+                key = event.character.lower()
+                line_no = self._get_current_line()
+                self._marks[key] = line_no
+                self.notify(f"已在第 {line_no} 行設定書籤 [{key.upper()}]", title="設定書籤 (Mark)", timeout=1.5)
+                return
+
+        # 2. Handle jumping to mark after "'" or "`" key
+        if self._waiting_for_jump_mark:
+            self._waiting_for_jump_mark = False
+            if event.character and event.character.isalpha():
+                key = event.character.lower()
+                if key in self._marks:
+                    line_no = self._marks[key]
+                    self.action_goto_line(line_no)
+                    self.notify(f"已跳轉至書籤 [{key.upper()}] (第 {line_no} 行)", title="跳轉書籤", timeout=1.5)
+                else:
+                    self.notify(f"未設定書籤 [{key.upper()}]", title="書籤不存在", severity="warning", timeout=1.5)
+                return
+
+        # 3. Digit buffering for numeric line jump
         if event.character and event.character.isdigit():
             self._digit_buffer += event.character
             return
 
+        # 4. Handle mark prefix keys 'm' and "'"
+        if event.character == "m":
+            self._waiting_for_mark = True
+            return
+        elif event.character in ("'", "`"):
+            self._waiting_for_jump_mark = True
+            return
+
+        # 5. Handle navigation and jumps
         if event.character == "g":
             if self._digit_buffer:
                 target_line = int(self._digit_buffer)

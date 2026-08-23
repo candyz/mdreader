@@ -77,10 +77,18 @@ class VirtualTextViewer(ScrollView):
         self._highlighted_line: int | None = None
         self._search_query: str = ""
         self.show_line_numbers: bool = True
+        self.soft_wrap: bool = False
         self.document = self  # Duck-type compatibility with MarkdownViewerWidget
         self._lexer = None
         self._setup_lexer()
         self._update_virtual_size()
+
+    def set_soft_wrap(self, wrap: bool) -> None:
+        """Toggle soft wrapping in virtual viewer."""
+        self.soft_wrap = wrap
+        self.scroll_x = 0
+        self._update_virtual_size()
+        self.refresh()
 
     def _setup_lexer(self) -> None:
         """Initialize lightweight Pygments lexer based on filename extension."""
@@ -95,6 +103,10 @@ class VirtualTextViewer(ScrollView):
                 self._lexer = None
 
     def _update_virtual_size(self) -> None:
+        if self.soft_wrap:
+            width = max(40, self.size.width if self.size and self.size.width > 0 else 80)
+            self.virtual_size = Size(width, len(self.lines))
+            return
         sample = self.lines[:2000] if len(self.lines) > 2000 else self.lines
         max_len = max((len(l) for l in sample), default=80)
         prefix_len = 8 if self.show_line_numbers else 0
