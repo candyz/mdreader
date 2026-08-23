@@ -527,3 +527,45 @@ def test_grep_search_modal(tmp_path: Path):
 
     modal = GrepSearchModal(root_dir=tmp_path)
     assert modal.root_dir == tmp_path.resolve()
+
+
+def test_export_utilities(tmp_path: Path):
+    from mdreader.utils.export import export_to_html, export_document_to_file
+
+    md_content = "# Title Heading\n\n- item 1\n- item 2\n\n```python\nprint('hello')\n```"
+    html_out = export_to_html(md_content, title="My Test")
+    assert "<!DOCTYPE html>" in html_out
+    assert "<title>My Test</title>" in html_out
+    assert "Title Heading" in html_out
+    assert "print('hello')" in html_out
+
+    dest_file = tmp_path / "out.html"
+    res_path = export_document_to_file(md_content, dest_file, export_format="html", title="Doc")
+    assert res_path.exists()
+    assert "<!DOCTYPE html>" in res_path.read_text(encoding="utf-8")
+
+
+def test_extract_code_blocks():
+    from mdreader.widgets.code_block_modal import extract_code_blocks, CodeBlockModal
+
+    md_text = """
+    Here is some Python:
+    ```python
+    import os
+    print(os.getcwd())
+    ```
+
+    And some Shell:
+    ```bash
+    echo "test"
+    ```
+    """
+    blocks = extract_code_blocks(md_text)
+    assert len(blocks) == 2
+    assert blocks[0][0] == "python"
+    assert "import os" in blocks[0][1]
+    assert blocks[1][0] == "bash"
+    assert "echo \"test\"" in blocks[1][1]
+
+    modal = CodeBlockModal(blocks)
+    assert len(modal.code_blocks) == 2

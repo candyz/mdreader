@@ -15,6 +15,8 @@ from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
 from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
 from mdreader.widgets.commander import format_file_size
+from mdreader.widgets.export_modal import ExportModal
+from mdreader.widgets.code_block_modal import CodeBlockModal, extract_code_blocks
 
 
 class ClockLabel(Label):
@@ -186,6 +188,11 @@ class MDReaderApp(App):
         Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
         Binding("equals", "zoom_in", "Zoom In (=)", show=False),
         Binding("plus", "zoom_in", "Zoom In (+)", show=False),
+        Binding("e", "export_document", "Export (e)", show=False),
+        Binding("Y", "copy_code_block", "Copy Code (Y)", show=False),
+        Binding("ctrl+k", "copy_code_block", "Copy Code", show=False),
+        Binding("ctrl+t", "open_in_terminal", "Terminal (Ctrl+T)", show=False),
+        Binding("ctrl+shift+o", "reveal_in_finder", "Reveal File", show=False),
         Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
         Binding("r", "reload_file", "Reload", show=False),
     ]
@@ -721,6 +728,65 @@ class MDReaderApp(App):
     def _on_link_picked(self, url: str | None) -> None:
         if url:
             self.notify(f"已在瀏覽器開啟：\n{url}", title="開啟超連結 (gx)", timeout=2.0)
+
+    def action_export_document(self) -> None:
+        """Export document to HTML, TXT, or MD format (e)."""
+        doc_text = self._mmap_buffer.read_all_text() if getattr(self, "_mmap_buffer", None) is not None else (self.content or "")
+        if not doc_text.strip():
+            self.notify("目前沒有可匯出的文件內容", title="匯出 (e)", severity="warning", timeout=2.0)
+            return
+        self.push_screen(ExportModal(content=doc_text, current_filepath=self.filepath), self._on_export_complete)
+
+    def _on_export_complete(self, exported_path: Path | None) -> None:
+        if exported_path and exported_path.exists():
+            self.notify(f"已成功匯出至：\n{exported_path}", title="匯出成功", timeout=3.0)
+
+    def action_copy_code_block(self) -> None:
+        """Extract and copy fenced code blocks from markdown (Y / Ctrl+K)."""
+        doc_text = self._mmap_buffer.read_all_text() if getattr(self, "_mmap_buffer", None) is not None else (self.content or "")
+        blocks = extract_code_blocks(doc_text)
+        if not blocks:
+            self.notify("文件中未發現任何程式碼區塊 (Code Blocks)", title="複製程式碼 (Y)", severity="warning", timeout=2.0)
+            return
+        if len(blocks) == 1:
+            code = blocks[0][1]
+            self.copy_to_system_clipboard(code)
+            self.notify(f"已複製程式碼區塊 ({len(code.splitlines())} 行)", title="複製程式碼成功 (Y)", timeout=2.0)
+            return
+
+        self.push_screen(CodeBlockModal(blocks), self._on_code_block_selected)
+
+    def _on_code_block_selected(self, code: str | None) -> None:
+        if code:
+            self.copy_to_system_clipboard(code)
+            self.notify(f"已複製程式碼區塊 ({len(code.splitlines())} 行)", title="複製程式碼成功", timeout=2.0)
+
+    def action_open_in_terminal(self) -> None:
+        """Launch terminal shell in current file directory (Ctrl+T)."""
+        target_dir = self.filepath.parent if self.filepath and self.filepath.exists() else Path.cwd()
+        shell = os.environ.get("SHELL") or "/bin/sh"
+        try:
+            with self.suspend():
+                import subprocess
+                subprocess.run([shell], cwd=str(target_dir.resolve()))
+        except Exception as e:
+            self.notify(f"無法開啟終端機：{e}", title="Error", severity="error")
+
+    def action_reveal_in_finder(self) -> None:
+        """Reveal file or folder in system file manager (Finder / xdg-open)."""
+        target_path = self.filepath if self.filepath and self.filepath.exists() else Path.cwd()
+        import subprocess, sys
+        try:
+            if sys.platform == "darwin":
+                if target_path.is_file():
+                    subprocess.run(["open", "-R", str(target_path)])
+                else:
+                    subprocess.run(["open", str(target_path)])
+            elif sys.platform.startswith("linux"):
+                subprocess.run(["xdg-open", str(target_path.parent if target_path.is_file() else target_path)])
+            self.notify(f"已在檔案管理員中顯示：\n{target_path.name}", title="檔案管理員", timeout=2.0)
+        except Exception as e:
+            self.notify(f"無法開啟檔案管理員：{e}", title="Error", severity="error")
 
     def action_list_marks(self) -> None:
         """Open bookmarks modal dialog (Ctrl+M)."""

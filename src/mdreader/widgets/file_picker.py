@@ -46,7 +46,7 @@ from mdreader.widgets.dir_bookmarks import DirBookmarksModal
 from mdreader.widgets.grep_modal import GrepSearchModal
 
 
-class FilePickerScreen(ModalScreen[Optional[Path | tuple[Path, int]]]):
+class FilePickerScreen(ModalScreen[object]):
     """Maximized modal screen for browsing directories and selecting Markdown/HTML/Text files."""
 
     BINDINGS = [
