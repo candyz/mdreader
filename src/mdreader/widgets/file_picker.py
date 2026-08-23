@@ -42,7 +42,11 @@ def fuzzy_score(pattern: str, text: str) -> tuple[bool, int]:
     return False, 0
 
 
-class FilePickerScreen(ModalScreen[Optional[Path]]):
+from mdreader.widgets.dir_bookmarks import DirBookmarksModal
+from mdreader.widgets.grep_modal import GrepSearchModal
+
+
+class FilePickerScreen(ModalScreen[Optional[Path | tuple[Path, int]]]):
     """Maximized modal screen for browsing directories and selecting Markdown/HTML/Text files."""
 
     BINDINGS = [
@@ -51,7 +55,10 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
         Binding("up", "move_up", "Up", priority=True, show=False),
         Binding("down", "move_down", "Down", priority=True, show=False),
         Binding("ctrl+a", "toggle_all_files", "Toggle All Files", priority=True),
+        Binding("ctrl+h", "toggle_all_files", "Toggle Hidden (Ctrl+H)", priority=True, show=False),
         Binding("ctrl+r", "toggle_recent_files", "Recent Files", priority=True),
+        Binding("ctrl+d", "open_bookmarks", "Bookmarks (Ctrl+D)", priority=True),
+        Binding("ctrl+f", "open_grep", "Grep Content (Ctrl+F)", priority=True),
     ]
 
     CSS = """
@@ -300,6 +307,27 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
             filter_input.focus()
         elif item_type == "file":
             self.dismiss(target_path)
+
+    def action_open_bookmarks(self) -> None:
+        """Open directory bookmarks modal (Ctrl+D)."""
+        self.app.push_screen(DirBookmarksModal(self.current_dir), self._on_bookmark_selected)
+
+    def _on_bookmark_selected(self, target_dir: Path | None) -> None:
+        if target_dir and target_dir.is_dir():
+            self.show_recent = False
+            self.current_dir = target_dir.resolve()
+            filter_input = self.query_one("#filter-input", Input)
+            filter_input.value = ""
+            self._refresh_view()
+            filter_input.focus()
+
+    def action_open_grep(self) -> None:
+        """Open full-text content grep modal (Ctrl+F)."""
+        self.app.push_screen(GrepSearchModal(self.current_dir), self._on_grep_result)
+
+    def _on_grep_result(self, result: tuple[Path, int] | None) -> None:
+        if result:
+            self.dismiss(result)
 
     def action_toggle_all_files(self) -> None:
         """Toggle Show All Files checkbox via Ctrl+A."""

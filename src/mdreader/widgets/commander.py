@@ -13,6 +13,8 @@ from textual.widgets.option_list import Option
 from textual.binding import Binding
 from textual import events
 from mdreader.utils.config import get_config_value, set_config_value
+from mdreader.widgets.dir_bookmarks import DirBookmarksModal
+from mdreader.widgets.grep_modal import GrepSearchModal
 
 
 def format_file_size(size_bytes: int) -> str:
@@ -84,7 +86,9 @@ class HelpModal(ModalScreen[None]):
         ("F6", "Rename or Move item(s) to target directory"),
         ("F7", "Create new directory (Mkdir)"),
         ("F8", "Delete selected item(s) or directory"),
-        ("Ctrl+A", "Toggle hidden dotfiles (.vimrc, etc.)"),
+        ("Ctrl+D", "Directory Bookmarks & Quick Jump"),
+        ("Ctrl+F", "Full-text content Grep search in folder"),
+        ("Ctrl+A / Ctrl+H", "Toggle hidden dotfiles (.vimrc, etc.)"),
         ("r", "Reload / Refresh directory panes"),
         ("? / F1", "Show this Keybindings Help (More...)"),
         ("Ctrl+O / Esc / q", "Return to Markdown Reader Mode"),
@@ -459,7 +463,10 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         Binding("f8", "delete_file", "Del", priority=True),
         Binding("question_mark", "show_help", "More...", priority=True),
         Binding("f1", "show_help", "Help", show=False, priority=True),
+        Binding("ctrl+d", "open_bookmarks", "Bookmarks (Ctrl+D)", priority=True, show=False),
+        Binding("ctrl+f", "open_grep", "Grep (Ctrl+F)", priority=True, show=False),
         Binding("ctrl+a", "toggle_all", "Hidden", show=False, priority=True),
+        Binding("ctrl+h", "toggle_all", "Hidden", show=False, priority=True),
         Binding("ctrl+o", "toggle_mode", "Reader", priority=True),
         Binding("f10", "quit_app", "Quit", priority=True),
         Binding("escape", "toggle_mode", "Back/Reader", priority=True, show=False),
@@ -621,6 +628,29 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
     def action_show_help(self) -> None:
         """Show full shortcuts help modal (More... / ? / F1)."""
         self.app.push_screen(HelpModal())
+
+    def action_open_bookmarks(self) -> None:
+        """Open directory bookmarks to jump active pane (Ctrl+D)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        self.app.push_screen(DirBookmarksModal(active_pane.current_dir), self._on_commander_bookmark_selected)
+
+    def _on_commander_bookmark_selected(self, target_dir: Path | None) -> None:
+        if target_dir and target_dir.is_dir():
+            active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+            active_pane.current_dir = target_dir.resolve()
+            active_pane.selected_paths.clear()
+            active_pane.refresh_pane()
+            self._save_dirs()
+
+    def action_open_grep(self) -> None:
+        """Open full-text grep search modal for active pane's directory (Ctrl+F)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        self.app.push_screen(GrepSearchModal(active_pane.current_dir), self._on_commander_grep_selected)
+
+    def _on_commander_grep_selected(self, result: tuple[Path, int] | None) -> None:
+        if result:
+            self._save_dirs()
+            self.dismiss(result)
 
     def action_toggle_all(self) -> None:
         """Toggle showing hidden files."""

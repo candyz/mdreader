@@ -17,11 +17,14 @@ src/mdreader/renderer/mermaid.py
 src/mdreader/utils/__init__.py
 src/mdreader/utils/config.py
 src/mdreader/utils/file_watcher.py
+src/mdreader/utils/grep.py
 src/mdreader/utils/mmap_buffer.py
 src/mdreader/widgets/__init__.py
 src/mdreader/widgets/commander.py
 src/mdreader/widgets/context_menu.py
+src/mdreader/widgets/dir_bookmarks.py
 src/mdreader/widgets/file_picker.py
+src/mdreader/widgets/grep_modal.py
 src/mdreader/widgets/link_picker.py
 src/mdreader/widgets/markdown_view.py
 src/mdreader/widgets/marks_modal.py

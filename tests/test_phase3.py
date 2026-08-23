@@ -487,3 +487,43 @@ def test_mmap_viewer_integration(tmp_path: Path):
             assert viewer.scroll_y == 3999
 
     asyncio.run(run())
+
+
+def test_grep_search(tmp_path: Path):
+    from mdreader.utils.grep import grep_search
+
+    sub_dir = tmp_path / "sub"
+    sub_dir.mkdir()
+    f1 = sub_dir / "code.py"
+    f1.write_text("def hello_world():\n    return 'UNIQUE_GREP_TARGET'\n", encoding="utf-8")
+
+    f2 = sub_dir / "notes.md"
+    f2.write_text("# Notes\n\nSome notes without target.\n", encoding="utf-8")
+
+    matches = grep_search(tmp_path, "UNIQUE_GREP_TARGET")
+    assert len(matches) == 1
+    assert matches[0][0] == f1
+    assert matches[0][1] == 2
+    assert "UNIQUE_GREP_TARGET" in matches[0][2]
+
+
+def test_dir_bookmarks_modal():
+    from mdreader.widgets.dir_bookmarks import DirBookmarksModal
+
+    modal = DirBookmarksModal(Path.cwd())
+    assert len(modal.destinations) >= 3
+    paths = [p for _, p in modal.destinations]
+    assert Path.home() in paths
+    assert Path.cwd() in paths
+
+
+def test_grep_search_modal(tmp_path: Path):
+    from mdreader.widgets.grep_modal import GrepSearchModal
+    from mdreader.app import MDReaderApp
+    import asyncio
+
+    test_file = tmp_path / "sample.txt"
+    test_file.write_text("line 1\nline 2 with GREP_KEYWORD\nline 3", encoding="utf-8")
+
+    modal = GrepSearchModal(root_dir=tmp_path)
+    assert modal.root_dir == tmp_path.resolve()

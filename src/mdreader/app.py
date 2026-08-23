@@ -612,13 +612,17 @@ class MDReaderApp(App):
         from mdreader.widgets.commander import CommanderScreen
         self.push_screen(CommanderScreen(current_path=self.filepath), self._on_file_selected)
 
-    def _on_file_selected(self, selected_path: Path | None) -> None:
-        """Callback when file is selected from modal."""
-        if selected_path and selected_path.is_file():
-            self.run_worker(self.open_file(selected_path))
+    def _on_file_selected(self, selected_result: Path | tuple[Path, int] | None) -> None:
+        """Callback when file is selected from modal (supports Path or (Path, line_no))."""
+        if isinstance(selected_result, tuple):
+            filepath, line_no = selected_result
+            if filepath.is_file():
+                self.run_worker(self.open_file(filepath, line_no=line_no))
+        elif isinstance(selected_result, Path) and selected_result.is_file():
+            self.run_worker(self.open_file(selected_result))
 
-    async def open_file(self, filepath: Path) -> None:
-        """Switch current viewer to a new file."""
+    async def open_file(self, filepath: Path, line_no: int | None = None) -> None:
+        """Switch current viewer to a new file and optionally jump to a line number."""
         try:
             self.filepath = filepath
             self.SUB_TITLE = str(filepath.name)
@@ -669,6 +673,10 @@ class MDReaderApp(App):
                     on_modified=self._on_file_changed,
                 )
                 self._watcher.start()
+
+            if line_no is not None:
+                self.action_goto_line(line_no)
+
             self.notify(f"Opened: {filepath.name}", timeout=1.5)
         except Exception as e:
             self.notify(f"Failed to open file: {e}", title="Error", severity="error")
