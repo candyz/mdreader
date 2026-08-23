@@ -106,7 +106,7 @@ class MDReaderApp(App):
     
     #main-container {
         width: 100%;
-        height: 100%;
+        height: 1fr;
         align: center middle;
     }
 
@@ -115,34 +115,10 @@ class MDReaderApp(App):
         height: 100%;
     }
 
-    #footer-bar {
+    #bottom-area {
         dock: bottom;
-        height: 1;
         width: 100%;
-        background: $footer-background;
-    }
-
-    #footer-bar > Footer {
-        width: 1fr;
-        dock: none;
-    }
-
-    #footer-bar > Input {
-        width: 1fr;
-        height: 1;
-        border: none;
-        padding: 0 1;
-        background: $surface;
-        color: $text;
-        display: none;
-    }
-
-    #footer-bar > Input.-visible {
-        display: block;
-    }
-
-    #footer-bar.-searching > Footer {
-        display: none;
+        height: auto;
     }
 
     #cmd-prompt-bar {
@@ -171,6 +147,35 @@ class MDReaderApp(App):
         padding: 0;
         background: transparent;
         color: $text;
+    }
+
+    #footer-bar {
+        height: 1;
+        width: 100%;
+        background: $footer-background;
+    }
+
+    #footer-bar > Footer {
+        width: 1fr;
+        dock: none;
+    }
+
+    #footer-bar > Input {
+        width: 1fr;
+        height: 1;
+        border: none;
+        padding: 0 1;
+        background: $surface;
+        color: $text;
+        display: none;
+    }
+
+    #footer-bar > Input.-visible {
+        display: block;
+    }
+
+    #footer-bar.-searching > Footer {
+        display: none;
     }
 
     #position-label {
@@ -308,14 +313,15 @@ class MDReaderApp(App):
                     content=self.content,
                     filename=str(self.filepath.name) if self.filepath else None,
                 )
-        with Horizontal(id="cmd-prompt-bar"):
-            yield Label(self._get_prompt_label(), id="prompt-label")
-            yield Input(placeholder="Type shell command (e.g. ls, git status, cd <dir>)... Enter to run, Esc to close", id="prompt-input")
-        with Horizontal(id="footer-bar"):
-            yield Footer()
-            yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
-            yield PositionLabel("0%", id="position-label")
-            yield ClockLabel(id="clock-label")
+        with Vertical(id="bottom-area"):
+            with Horizontal(id="cmd-prompt-bar"):
+                yield Label(self._get_prompt_label(), id="prompt-label")
+                yield Input(placeholder="Type shell command (e.g. ls, git status, cd <dir>)... Enter to run, Esc to close", id="prompt-input")
+            with Horizontal(id="footer-bar"):
+                yield Footer()
+                yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
+                yield PositionLabel("0%", id="position-label")
+                yield ClockLabel(id="clock-label")
 
     def _get_prompt_label(self) -> str:
         """Generate Midnight Commander style command line prompt [user@host:dir]$."""
@@ -954,6 +960,10 @@ class MDReaderApp(App):
 
     def on_key(self, event) -> None:
         """Handle raw key sequences like 'gg', 'G', '123G', 'm[a-z]', and '[a-z]' for marks/jumps."""
+        if self.cmd_prompt_visible:
+            if event.key == "escape":
+                self.cmd_prompt_visible = False
+            return
         if self.search_visible:
             return
 
