@@ -569,3 +569,24 @@ def test_extract_code_blocks():
 
     modal = CodeBlockModal(blocks)
     assert len(modal.code_blocks) == 2
+
+
+def test_cli_args_parsing():
+    from mdreader.__main__ import parse_args
+
+    # 1. Positional +line syntax
+    args, line = parse_args(["+120", "doc.md"])
+    assert args.file == "doc.md"
+    assert line == 120
+
+    # 2. Flag -l
+    args, line = parse_args(["-l", "42", "doc.md", "--watch", "-t", "tokyo-night"])
+    assert args.file == "doc.md"
+    assert line == 42
+    assert args.watch is True
+    assert args.theme == "tokyo-night"
+
+    # 3. Export flags
+    args, _ = parse_args(["README.md", "--export-html", "out.html", "--list-themes"])
+    assert args.export_html == "out.html"
+    assert args.list_themes is True

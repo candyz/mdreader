@@ -207,10 +207,12 @@ class MDReaderApp(App):
         watch: bool = False,
         theme: str | None = None,
         show_toc: bool = False,
+        initial_line: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.filepath = Path(filepath) if filepath else None
+        self.initial_line = initial_line
         self._mmap_buffer: MmapLineBuffer | None = None
         if not content and self.filepath and self.filepath.is_file():
             try:
@@ -301,6 +303,10 @@ class MDReaderApp(App):
         # Record opened file to recent files history
         if self.filepath:
             add_recent_file(self.filepath)
+
+        # Jump to initial line if requested via CLI
+        if self.initial_line is not None:
+            self.action_goto_line(self.initial_line)
 
         # Start file watcher if watch mode is enabled
         if self.watch_mode and self.filepath and self.filepath.exists():

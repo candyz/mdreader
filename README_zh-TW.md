@@ -2,94 +2,113 @@
 
 An interactive terminal Markdown previewer with native **Mermaid flowchart rendering** support (GUI-like experience in CLI), inspired by [leaf](https://github.com/RivoLink/leaf).
 
-## Features
+## ✨ 功能特色
 
-- 📑 **豐富的 Markdown 渲染**：標題、表格、列表、引用區塊，以及具備語法高亮的代碼區塊。
-- 💻 **Vim 風格程式源碼與點檔案檢視**：支援各種程式語言（`.c`, `.h`, `.js`, `.css`, `.sh`, `.py`, `.rs`, `.go`, `Makefile` 等）及設定檔（`.vimrc`, `.bashrc` 等）的語法高亮排版檢視。
-- 🌐 **原生 HTML 文件支援**：零外部依賴直接渲染 `.html` / `.htm` 網頁檔與管線輸入之 HTML，完整保留表格、標題、代碼與列表。
-- 📊 **Mermaid 流程圖支援**：自動將 ```` ```mermaid ```` 圖表轉換為 ASCII/Unicode 文字圖表內嵌顯示，完全解決傳統工具因 mermaid 語法而崩潰的問題。
-- 📁 **Midnight Commander 雙欄檔案管理模式 (`Ctrl+O`)**：左右雙欄瀏覽、`Tab` 切換、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動/重命名、`F7` 新增資料夾、`F8` 刪除、`?` 快捷鍵說明與雙欄目錄獨立記憶。
-- 📑 **互動式大綱目錄 (TOC Outline)**：自動解析文件標題並提供可搜尋跳轉的大綱視窗（按 `O` 開啟）。
-- 📂 **檔案選擇器 (File Picker)**：快速選擇檔案並支援 `Ctrl+A` 顯示隱藏檔案與路徑記憶（按 `o` 開啟或直接執行 `mdreader`）。
+- 📑 **豐富的 Markdown 與 Mermaid 流程圖渲染**：標題、表格、列表、引用區塊、語法高亮程式碼區塊，以及原生的 ```` ```mermaid ```` ASCII/Unicode 流程圖繪製。
+- ⚡ **GB 級超大檔案極限讀取架構**：內建 Zero-copy `mmap` 記憶體映射與二進位行索引，10 萬行超大檔案 30ms 極速載入，RAM 佔用低於 10MB，並具備次毫秒級二進位搜尋。
+- 💻 **Vim 風格導航與行號跳轉**：
+  - 自動折行切換（`w` / `Alt+Z`）
+  - 快速跳轉行號（`:123`、`500G`、`42gg`）
+  - Vim 書籤功能（`m` + 按鍵建立書籤、`'` + 按鍵跳轉、`Ctrl+M` 開啟書籤清單）
+  - 快速擷取超連結並以預設瀏覽器開啟（`gx`）
+- 📊 **響應式增強型狀態列**：
+  - 即時顯示：`1.5M │ Markdown │ [WRAP] │ Ln 42/1000 (4%)`
+  - 螢幕寬度較窄時（< 95 欄）自動隱藏時鐘等輔助資訊，保持介面簡潔。
+- 📁 **Midnight Commander 雙欄檔案管理模式 (`Ctrl+O`)**：
+  - `Tab` 切換面板、`Insert`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動/重命名、`F7` 建立目錄、`F8` 刪除、`s`/`F2` 檔案排序（名稱/大小/時間/副檔名）、`Ctrl+D` 目錄書籤、`Ctrl+F` 全文搜尋。
+- 🔍 **資料夾全文檢索 (`Ctrl+F`)**：
+  - 支援 `ripgrep (rg)` 引擎加速與 Python 原生串流搜尋，在檔案樹中搜尋包含關鍵字的檔案並直接跳轉至對應行號。
+- 🔖 **目錄書籤與快速路徑跳轉 (`Ctrl+D`)**：
+  - 快速跳轉至家目錄 (`~`)、工作區目錄、Downloads、Desktop、Documents、根目錄 (`/`) 與最近開啟目錄。
+- 📂 **Fzf 風格模糊檔案選擇器 (`o`)**：
+  - 子序列模糊評分演算法、最近檔案快速切換（`Ctrl+R`）、隱藏檔切換（`Ctrl+H` / `Ctrl+A`）。
+- 📤 **獨立 HTML / 純文字匯出 (`e` / 命令列 `--export-html`)**：
+  - 一鍵將文件匯出為具備現代深色/淺色排版 CSS 的獨立 HTML 檔或純文字檔。
+- 💻 **程式碼區塊快速提取與複製 (`Y` / `Ctrl+K`)**：
+  - 自動列出文件內所有程式碼區塊，點選即可一鍵複製至系統剪貼簿。
+- 🛠️ **外部工具與終端機整合**：
+  - `v` / `F4`：叫用 `$EDITOR` / `vim` 編輯文件並自動熱重載
+  - `Ctrl+T`：在當前檔案目錄開啟終端機 Shell
+  - `Ctrl+Shift+O`：在系統檔案管理員（Finder / xdg-open）中顯示該檔案
 - 🔄 **Watch 監聽模式**：偵測檔案變更自動重新載入（`-w` / `--watch`）。
-- 🎨 **多款配色主題與記憶**：內建 10+ 款深色/淺色主題（按 `t` 循環切換），設定自動持久化保存至 `~/.config/mdreader/config.json`。
-- 🔍 **文件內搜尋欄**：Vim 風格搜尋列（按 `/` 開啟），支援 `n` / `N` 快速跳轉匹配處。
-- 📝 **外部編輯器整合**：按 `v` 隨時叫用 `$EDITOR` 或 `vim` 編輯文件，存檔離開後即時重載。
-- 🖱️ **滑鼠選取與剪貼簿同步**：支援 macOS `pbcopy`、Linux `xclip` / `wl-copy` 與 Textual OSC 52。
-- 🖲️ **滑鼠模式切換**：按 `m` 鍵可快速在 TUI 互動模式與終端原生滑鼠框選模式之間切換。
-- ⚡ **互動式 TUI**：全螢幕極大化閱讀介面、平滑垂直與水平左右捲動（`d` / `f` / `←` / `→`）、欄寬縮放（`-` / `=`）、Vim 導航鍵（`j`/`k`/`gg`/`G`/`q`/`Esc`）。
-- 📟 **Inline 模式**：透過 `--inline` 直接以 ANSI 彩色輸出至終端標準輸出（適合搭配 fzf 預覽）。
-- 🔌 **Stdin Pipe**：支援由命令列管線直接輸入（如 `cat file.md | mdreader` 或 AI 工具輸出）。
+- 🎨 **多款配色主題**：內建 10+ 款主題（`t` 循環切換、`--list-themes`），設定自動持久化保存。
+- 🖱️ **滑鼠選取與剪貼簿同步**：支援 macOS `pbcopy`、Linux `wl-copy` / `xclip` 與 OSC 52。按 `m` 鍵切換滑鼠模式。
+- 📟 **命令列自動化**：支援指定啟動行號（`+50` / `-l 50`）、無介面直接匯出（`--export-html`）與管線輸出（`--inline`）。
 
-## Installation
+---
+
+## 🚀 安裝方式
 
 ```bash
-# Clone the repository
+# 推薦使用 pipx 安裝（自動加入環境變數且獨立隔離）
 git clone https://github.com/candyz/mdreader.git
 cd mdreader
-
-# Install using pip
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
+pipx install .
+mdreader --version
 ```
 
-## Usage
+---
+
+## 🎯 使用範例
 
 ```bash
-# 1. Open without arguments to browse and select Markdown files in current folder
+# 1. 直接開啟檔案選擇器
 mdreader
 
-# 2. Preview a specific markdown file interactively (full document view by default)
-mdreader README.md
+# 2. 開啟檔案並直接跳轉至第 50 行
+mdreader +50 README.md
+mdreader -l 50 README.md
 
-# 3. Preview test.md containing complex Mermaid flowchart
-mdreader test.md
+# 3. 預覽 HTML 網頁或巨量 Log 資料檔
+mdreader index.html
+mdreader gigantic_data.log
 
-# 4. Watch mode: auto-reload when file changes
-mdreader -w test.md
+# 4. 監聽模式：檔案變更時自動重載
+mdreader -w README.md
 
-# 5. Set specific theme on launch
-mdreader -t solarized-dark test.md
+# 5. 列出所有主題並於啟動時指定主題
+mdreader --list-themes
+mdreader -t tokyo-night README.md
 
-# 6. Show TOC outline sidebar on startup (default is hidden)
-mdreader --toc test.md
+# 6. 無介面直接將 Markdown 匯出為 HTML 或純文字
+mdreader README.md --export-html output.html
+mdreader README.md --export-txt output.txt
 
-# 7. Set maximum width (columns)
-mdreader --width 100 test.md
+# 7. 終端標準輸出預覽（適合搭配 fzf 預覽視窗）
+mdreader --inline README.md
 
-# 8. Non-interactive stdout preview
-mdreader --inline test.md
-
-# 9. Stream or pipe from stdin
+# 8. 由管線讀取內容
 cat test.md | mdreader
+curl -s https://example.com | mdreader
 ```
 
-## Keybindings (TUI Mode)
+---
 
-| Key | Action |
+## ⌨️ 快捷鍵一覽 (TUI 閱讀模式)
+
+| 按鍵 | 動作說明 |
 | :--- | :--- |
-| `q` / `Esc` | Quit viewer / Dismiss modal or search |
-| `O` | **開啟大綱模式 (Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
-| `o` | Open Fuzzy File Picker modal (檔案選擇器) |
-| `Ctrl+O` | **Midnight Commander 雙欄檔案管理模式**：左右雙欄切換 (`Tab`)、`Ins`/`Space` 批次多選、`F3`/`Enter` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動/重命名、`F7` 新增資料夾、`F8` 刪除、`Ctrl+O`/`Esc` 返回閱讀 |
-| `v` | **開啟外部編輯器 (Edit in Vim / $EDITOR)**：離開編輯後自動重載 |
-| `t` | Switch Color Theme (切換色彩主題) |
-| `/` | **開啟搜尋欄 (Search)**：輸入 `/keyword` 後按 Enter 開始搜尋 |
-| `n` | **Jump to Next Search Match (跳至下一處搜尋結果)** |
-| `N` | **Jump to Previous Search Match (跳至上一處搜尋結果)** |
-| `j` / `Page Up` | **Scroll Page Up (上一頁)** |
-| `k` / `Page Down` | **Scroll Page Down (下一頁)** |
-| `gg` / `Home` | **Jump to Top (回到文件最上方)** |
-| `G` / `End` | **Jump to Bottom (跳至文件最下方)** |
-| `Down` / `Up` | Line by line scroll (逐行垂直捲動) |
-| `Left` / `Right` / `d` / `f` | Horizontal scroll (`d` 向左捲動、`f` 向右捲動) |
-| `Mouse Drag` | **選取文字 (Select Text)**：框選文字時自動複製到系統剪貼簿 |
-| `Shift + Drag` | **終端原生選取 (Terminal Bypass)**：強制使用終端原生框選複製 |
-| `m` | **切換滑鼠攔截模式 (Toggle Mouse Mode)**：關閉時完全恢復終端原生滑鼠操作 |
-| `Right Click` | **滑鼠右鍵選單 (Context Menu)**：開啟浮動選單進行 Copy / Search / Select All |
-| `y` / `c` / `Ctrl+C` | **手動複製已選取文字 (Copy Selection)** |
-| `-` | **收窄閱讀版面寬度 (Narrow column width)**（最窄 40 欄） |
-| `=` / `+` | **拓寬閱讀版面寬度 (Widen column width)**（至 100% 滿版） |
-| `Cmd +` / `Cmd -` | **縮放終端字型大小 (Terminal Font Zoom)**（由終端模擬器控制） |
-| `Mouse wheel` | Scroll (滑鼠滾動) |
+| `q` / `Esc` | 離開程式 / 關閉彈出視窗或搜尋列 |
+| `o` | **開啟檔案選擇器**：瀏覽檔案、`Ctrl+R` 最近檔案、`Ctrl+D` 目錄書籤、`Ctrl+F` 全文搜尋 |
+| `O` | **章節大綱目錄 (TOC)**：瀏覽文件標題大綱，按 Enter 即時跳轉 |
+| `Ctrl+O` | **Midnight Commander 雙欄檔案總管**：`Tab` 切換雙欄、`Ins`/`Space` 多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
+| `w` / `Alt+Z` | **切換自動折行**：在自動換行與水平捲動模式之間切換 |
+| `gx` | **擷取並開啟超連結**：擷取文件中的超連結並於預設瀏覽器中開啟 |
+| `m` + `[a-z]` | **設定書籤**：在當前行建立指定代號的書籤 |
+| `'` + `[a-z]` | **跳轉書籤**：跳轉至先前建立的指定書籤行 |
+| `Ctrl+M` | **書籤清單**：開啟視窗檢視並選擇已儲存的書籤 |
+| `:` / `[N]G` / `[N]gg` | **跳轉行號**：直接跳轉至指定行號 |
+| `e` | **匯出文件**：將文件匯出為獨立 HTML、純文字或 Markdown |
+| `Y` / `Ctrl+K` | **複製程式碼區塊**：快速提取並複製程式碼區塊至剪貼簿 |
+| `v` | **外部編輯器編輯**：呼叫 `$EDITOR` / `vim` 編輯文件，存檔後自動重載 |
+| `Ctrl+T` | **開啟終端機 Shell**：在當前檔案所在目錄開啟原生 Shell |
+| `Ctrl+Shift+O` | **檔案管理員定位**：在系統檔案管理員（Finder / xdg-open）中顯示該檔案 |
+| `t` | **切換色彩主題**：循環切換內建配色主題 |
+| `/` | **文件搜尋**：Vim 風格關鍵字搜尋（`n` 下一處、`N` 上一處） |
+| `j` / `Page Up` | 上一頁 |
+| `k` / `Page Down` | 下一頁 |
+| `gg` / `Home` | 回到文件最上方 |
+| `G` / `End` | 跳至文件最下方 |
+| `y` / `c` / `Ctrl+C` | 複製滑鼠框選文字或全文至系統剪貼簿 |
+| `m` | **切換滑鼠攔截模式**：關閉時完全恢復終端原生滑鼠框選操作 |
+| `-` / `=` | 調整閱讀版面寬度 |

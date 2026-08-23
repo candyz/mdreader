@@ -20,22 +20,36 @@ An interactive terminal Markdown and HTML previewer with native **Mermaid flowch
 
 ## ✨ Features
 
-- 📑 **Rich Markdown Rendering**: Headers, tables, lists, blockquotes, styled code blocks with syntax highlighting.
-- 💻 **Vim-like Source Code & Dotfile Viewer**: Syntax-highlighted view for source files (`.c`, `.h`, `.js`, `.css`, `.sh`, `.py`, `.rs`, `.go`, `Makefile`, etc.) and configuration dotfiles (`.vimrc`, `.bashrc`, etc.).
-- 🌐 **Native HTML Document Support**: Zero-dependency rendering for `.html` / `.htm` web pages and piped HTML with tables, headings, code, and lists.
-- 📊 **Mermaid Flowchart Support**: Automatically renders ```` ```mermaid ```` diagrams as ASCII/Unicode art inline without crashing.
-- 📁 **Midnight Commander Dual-Pane File Manager (`Ctrl+O`)**: Full-featured dual-pane browser with `Tab` switching, `Insert`/`Space` multi-selection, `F3` view, `F4` edit, `F5` copy, `F6` move/rename, `F7` mkdir, `F8` delete, `?` help, and independent path persistence.
-- 📑 **Interactive Table of Contents (TOC Outline)**: Automatically extracts document headings into a searchable and keyboard-navigable outline modal (`O` to toggle).
-- 📂 **Fuzzy File Picker**: Interactive modal file selector with instant filtering, hidden dotfile toggle (`Ctrl+A`), and directory remembrance (`o` key in TUI or launch `mdreader` without arguments).
+- 📑 **Rich Markdown & Mermaid Flowcharts**: Headers, tables, lists, blockquotes, syntax-highlighted code blocks, and native ```` ```mermaid ```` ASCII/Unicode flowchart rendering.
+- ⚡ **Gigabyte-level Extreme Large File Performance**: Built-in zero-copy `mmap` lazy line buffer and uint line indexing. Opens 100,000+ line files in 30ms with < 10MB constant RAM and sub-millisecond byte searching.
+- 💻 **Vim-like Navigation & Line Jumping**:
+  - Soft wrap toggle (`w` / `Alt+Z`)
+  - Jump to line with `:` prompt or numeric buffer (`:123`, `500G`, `42gg`)
+  - Vim marks and bookmarks (`m` + key to mark, `'` + key to jump, `Ctrl+M` to browse)
+  - Hyperlink extractor & browser opener (`gx`)
+- 📊 **Responsive Enhanced Status Bar**:
+  - Real-time indicator: `1.5M │ Markdown │ [WRAP] │ Ln 42/1000 (4%)`
+  - Responsive hierarchical hiding on narrow screens (< 95 columns).
+- 📁 **Midnight Commander Dual-Pane File Manager (`Ctrl+O`)**:
+  - `Tab` switch active pane, `Insert`/`Space` multi-selection, `F3` view, `F4` edit, `F5` copy, `F6` move/rename, `F7` mkdir, `F8` delete, `s` / `F2` sorting (Name/Size/Time/Ext), `Ctrl+D` directory bookmarks, `Ctrl+F` folder grep search.
+- 🔍 **Folder Content Grep Search (`Ctrl+F`)**:
+  - Blazing-fast full-text search across directory trees with `ripgrep (rg)` acceleration and pure Python streaming fallback. Jumps directly to matching file line.
+- 🔖 **Directory Bookmarks & Quick Jump (`Ctrl+D`)**:
+  - Jump instantly to Home (`~`), Workspace Root, Downloads, Desktop, Documents, Root (`/`), or recent directories.
+- 📂 **Fzf-style Fuzzy File Picker (`o`)**:
+  - Subsequence match scoring, Recent Files toggle (`Ctrl+R`), Hidden Dotfiles toggle (`Ctrl+H` / `Ctrl+A`), and directory remembrance.
+- 📤 **Standalone HTML & Text Export (`e` / CLI `--export-html`)**:
+  - Export beautiful standalone HTML documents with modern dark/light CSS or plain text.
+- 💻 **Code Block Extraction (`Y` / `Ctrl+K`)**:
+  - Extract and copy code blocks directly to clipboard.
+- 🛠️ **System Tool Integration**:
+  - `v` / `F4`: Edit with `$EDITOR` / `vim` and auto hot-reload
+  - `Ctrl+T`: Open terminal shell in current file directory
+  - `Ctrl+Shift+O`: Reveal file in macOS Finder or Linux file manager
 - 🔄 **Watch Mode**: Live hot-reloading on disk changes (`-w` / `--watch`).
-- 🎨 **Multi-Theme Support & Persistence**: Built-in 10+ color themes (`t` to cycle), automatically saved across sessions in `~/.config/mdreader/config.json`.
-- 🔍 **In-document Search Bar**: Vim-style search overlay (`/`) with instant keyword jumping (`n` / `N`) and active match highlighting.
-- 📝 **External Editor Integration**: Press `v` to edit with `$EDITOR` or `vim` and auto-reload upon exit.
-- 🖱️ **Mouse Text Selection & Clipboard Sync**: Seamlessly copy selected text to system clipboard (supports macOS `pbcopy`, Linux X11 `xclip`, Wayland `wl-copy`, and Textual OSC 52).
-- 🖲️ **Mouse Tracking Toggle**: Press `m` to toggle mouse tracking and restore native terminal text selection.
-- ⚡ **Interactive TUI**: Maximized reading screen (clean viewport with clock in bottom bar), smooth vertical & horizontal scrolling (`d`/`f`/`←`/`→`), custom width adjustment (`-`/`=`), vim keybindings (`j`/`k`/`gg`/`G`/`q`/`Esc`).
-- 📟 **Inline Mode**: Pipe directly to terminal standard output with ANSI colors via `--inline`.
-- 🔌 **Stdin Pipe**: Supports piping directly from CLI tools (e.g. `cat file.md | mdreader` or AI tools).
+- 🎨 **Multi-Theme Support**: Built-in 10+ themes (`t` to cycle, `--list-themes`), persisted across sessions.
+- 🖱️ **Mouse Selection & System Clipboard**: Seamless clipboard integration (macOS `pbcopy`, Linux Wayland `wl-copy`, X11 `xclip`, OSC 52). Toggle mouse mode with `m`.
+- 📟 **CLI Automation**: Line jumping (`+50` / `-l 50`), headless export (`--export-html`), and stdout pipe (`--inline`).
 
 ---
 
@@ -70,34 +84,32 @@ pip install -e .
 ## 🎯 Usage
 
 ```bash
-# 1. Open without arguments to browse and select Markdown/HTML files in current folder
+# 1. Open interactive file picker
 mdreader
 
-# 2. Preview a specific markdown file interactively
-mdreader README.md
+# 2. Open specific file and jump to line 50
+mdreader +50 README.md
+mdreader -l 50 README.md
 
-# 3. Preview HTML document
+# 3. Preview HTML document or massive log file
 mdreader index.html
+mdreader gigantic_data.log
 
-# 4. Preview test.md containing complex Mermaid flowchart
-mdreader test.md
-
-# 5. Watch mode: auto-reload when file changes on disk
+# 4. Watch mode: auto-reload on file changes
 mdreader -w README.md
 
-# 6. Set specific theme on launch
-mdreader -t solarized-dark README.md
+# 5. List available themes and select theme on launch
+mdreader --list-themes
+mdreader -t tokyo-night README.md
 
-# 7. Show TOC outline sidebar on startup (default is hidden)
-mdreader --toc README.md
+# 6. Headless export to standalone HTML or Plain Text (no GUI)
+mdreader README.md --export-html /tmp/readme.html
+mdreader README.md --export-txt /tmp/readme.txt
 
-# 8. Set maximum width (columns)
-mdreader --width 100 README.md
-
-# 9. Non-interactive stdout preview (ideal for fzf previewer)
+# 7. Non-interactive stdout preview (ideal for fzf previewer)
 mdreader --inline README.md
 
-# 10. Stream or pipe from stdin
+# 8. Stream or pipe from stdin
 cat test.md | mdreader
 curl -s https://example.com | mdreader
 ```
@@ -109,29 +121,29 @@ curl -s https://example.com | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
-| `O` | **Open Table of Contents (Outline)**: Navigate chapters with `↑`/`↓`/`j`/`k` and press `Enter` to jump |
-| `o` | **Open Fuzzy File Picker**: Select `.md` or `.html` files in current directory tree |
-| `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `Ctrl+O`/`Esc` return) |
-| `v` | **Edit in External Editor (Vim / $EDITOR)**: Automatically pauses TUI and reloads upon exit |
-| `t` | **Switch Color Theme**: Cycle through dark, light, tokyo-night, monokai, solarized, etc. |
-| `/` | **Open Search Bar**: Type `/query` and press `Enter` to search |
-| `n` | **Jump to Next Search Match** |
-| `N` | **Jump to Previous Search Match** |
-| `j` / `Page Up` | **Scroll Page Up** |
-| `k` / `Page Down` | **Scroll Page Down** |
-| `gg` / `Home` | **Jump to Top of document** |
-| `G` / `End` | **Jump to Bottom of document** |
-| `Down` / `Up` | Vertical scroll line by line |
-| `Left` / `Right` / `d` / `f` | Horizontal scroll (`d`: scroll left, `f`: scroll right) |
-| `Mouse Drag` | **Select Text**: Automatically copies selection to system clipboard on release |
-| `Shift + Drag` | **Terminal Bypass Selection**: Force native terminal text selection |
-| `m` | **Toggle Mouse Mode**: Switch between TUI mouse capture and native terminal selection mode |
-| `Right Click` | **Context Menu**: Open floating modal for Copy / Search / Select All |
-| `y` / `c` / `Ctrl+C` | **Manually copy current selection to clipboard** |
-| `-` | **Narrow reading column width** (minimum 40 columns) |
-| `=` / `+` | **Widen reading column width** (up to 100% full width) |
-| `Cmd +` / `Cmd -` | **Terminal Font Zoom** (handled natively by terminal emulator) |
-| `Mouse Wheel` | Scroll content |
+| `o` | **Open Fuzzy File Picker**: Browse files, `Ctrl+R` recent, `Ctrl+D` bookmarks, `Ctrl+F` grep |
+| `O` | **Table of Contents (Outline)**: Navigate headings and press `Enter` to jump |
+| `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `s` sort, `Ctrl+D` bookmarks, `Ctrl+F` grep) |
+| `w` / `Alt+Z` | **Toggle Soft Line Wrap**: Switch between automatic line wrapping and horizontal scrolling |
+| `gx` | **Extract & Open Hyperlinks**: Extract web links and open in default browser |
+| `m` + `[a-z]` | **Set Bookmark (Mark)**: Set bookmark at current line |
+| `'` + `[a-z]` | **Jump to Bookmark**: Jump to previously saved bookmark line |
+| `Ctrl+M` | **List Bookmarks**: Open modal to view and select all bookmarks |
+| `:` / `[N]G` / `[N]gg` | **Go to Line**: Jump to line number |
+| `e` | **Export Document**: Export to Standalone HTML, Plain Text, or Markdown |
+| `Y` / `Ctrl+K` | **Copy Code Block**: Extract and copy code blocks to clipboard |
+| `v` | **Edit in External Editor (Vim / $EDITOR)**: Pauses TUI and reloads upon exit |
+| `Ctrl+T` | **Open Terminal Shell**: Launch `$SHELL` in current file's directory |
+| `Ctrl+Shift+O` | **Reveal File**: Reveal in macOS Finder or Linux file manager |
+| `t` | **Switch Color Theme**: Cycle through built-in color themes |
+| `/` | **Search**: Vim-style search overlay (`n` next, `N` prev) |
+| `j` / `Page Up` | Scroll page up |
+| `k` / `Page Down` | Scroll page down |
+| `gg` / `Home` | Jump to top of document |
+| `G` / `End` | Jump to bottom of document |
+| `y` / `c` / `Ctrl+C` | Copy mouse selection or entire document to system clipboard |
+| `m` | **Toggle Mouse Mode**: Switch between TUI mouse capture and native terminal selection |
+| `-` / `=` | Adjust reading column width |
 
 ---
 

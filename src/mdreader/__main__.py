@@ -11,20 +11,41 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 
-def parse_args() -> argparse.Namespace:
+from mdreader.utils.export import export_document_to_file
+
+
+def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int | None]:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # Extract vim-style +<line> syntax (e.g. mdreader +50 README.md)
+    plus_line = None
+    filtered_argv = []
+    for arg in argv:
+        if arg.startswith("+") and arg[1:].isdigit():
+            plus_line = int(arg[1:])
+        else:
+            filtered_argv.append(arg)
+
     parser = argparse.ArgumentParser(
         prog="mdreader",
-        description="Terminal Markdown previewer with Mermaid support — GUI-like experience in CLI",
+        description="Terminal Markdown & Text reader with Mermaid support and Gigabit performance — GUI-like experience in CLI",
     )
     parser.add_argument(
         "file",
         nargs="?",
-        help="Path to the markdown file to preview (reads from stdin if omitted or '-')",
+        help="Path to the file to preview (reads from stdin if omitted or '-')",
     )
     parser.add_argument(
         "-v", "--version",
         action="version",
         version=f"%(prog)s {__version__}",
+    )
+    parser.add_argument(
+        "-l", "--line",
+        type=int,
+        default=None,
+        help="Jump directly to line number on startup (1-indexed, e.g. -l 42 or +42)",
     )
     parser.add_argument(
         "-w", "--watch",
@@ -41,7 +62,12 @@ def parse_args() -> argparse.Namespace:
         "-t", "--theme",
         type=str,
         default=None,
-        help="Set color theme (e.g. textual-dark, textual-light, tokyo-night, monokai, solarized-dark, nord)",
+        help="Set color theme (e.g. textual-dark, textual-light, tokyo-night, monokai, solarized-dark, dracula, nord)",
+    )
+    parser.add_argument(
+        "--list-themes",
+        action="store_true",
+        help="List all available built-in color themes and exit",
     )
     parser.add_argument(
         "--toc",
@@ -49,15 +75,37 @@ def parse_args() -> argparse.Namespace:
         help="Show Table of Contents outline sidebar on startup",
     )
     parser.add_argument(
+        "--export-html",
+        type=str,
+        default=None,
+        metavar="OUT_HTML",
+        help="Export document directly to standalone HTML file without launching TUI",
+    )
+    parser.add_argument(
+        "--export-txt",
+        type=str,
+        default=None,
+        metavar="OUT_TXT",
+        help="Export document directly to plain text file without launching TUI",
+    )
+    parser.add_argument(
         "--inline",
         action="store_true",
         help="Render Markdown directly to stdout without interactive TUI",
     )
-    return parser.parse_args()
+    args = parser.parse_args(filtered_argv)
+    initial_line = plus_line if plus_line is not None else args.line
+    return args, initial_line
 
 
 def main() -> None:
-    args = parse_args()
+    args, initial_line = parse_args()
+
+    if args.list_themes:
+        print(f"mdreader v{__version__} - Available Color Themes:")
+        for t in MDReaderApp.THEME_LIST:
+            print(f"  • {t}")
+        return
 
     content = ""
     filepath = None
@@ -85,6 +133,16 @@ def main() -> None:
             else:
                 content = "# Welcome to mdreader\n\nNo markdown file specified. Press `o` to open the file picker or `q` to quit."
 
+    # Direct CLI Export Mode
+    if args.export_html:
+        out_p = export_document_to_file(content, args.export_html, export_format="html", title=filepath.stem if filepath else "Document")
+        print(f"✅ Successfully exported standalone HTML: {out_p}")
+        return
+    if args.export_txt:
+        out_p = export_document_to_file(content, args.export_txt, export_format="txt", title=filepath.stem if filepath else "Document")
+        print(f"✅ Successfully exported plain text: {out_p}")
+        return
+
     if args.inline:
         # Non-interactive stdout rendering using rich
         console = Console(width=args.width)
@@ -108,6 +166,7 @@ def main() -> None:
         watch=args.watch,
         theme=args.theme,
         show_toc=args.toc,
+        initial_line=initial_line,
     )
     app.run()
 
