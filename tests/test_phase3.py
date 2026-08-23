@@ -123,6 +123,22 @@ def test_position_label():
     label.update_position(scroll_y=0, max_scroll_y=0, virtual_height=20, size_height=40, total_lines=20)
     assert "Ln 1/20 (100%)" in str(label.render())
 
+    # Full rich status with file size, type, and wrap
+    label.update_position(
+        scroll_y=42,
+        max_scroll_y=1000,
+        total_lines=1000,
+        file_size=1565863,
+        file_type="Markdown",
+        soft_wrap=True,
+        available_width=130,
+    )
+    rendered = str(label.render())
+    assert "1.5M" in rendered
+    assert "Markdown" in rendered
+    assert "[WRAP]" in rendered
+    assert "Ln 43/1000" in rendered
+
 
 def test_virtual_text_viewer():
     from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer

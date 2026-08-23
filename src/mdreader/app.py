@@ -14,6 +14,7 @@ from mdreader.widgets.marks_modal import MarksModal
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
 from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
+from mdreader.widgets.commander import format_file_size
 
 
 class ClockLabel(Label):
@@ -28,7 +29,7 @@ class ClockLabel(Label):
 
 
 class PositionLabel(Label):
-    """Document scroll position and line indicator display widget (like leaf/vim)."""
+    """Document scroll position and rich status indicator widget (like leaf/vim)."""
 
     def update_position(
         self,
@@ -37,6 +38,10 @@ class PositionLabel(Label):
         virtual_height: int = 0,
         size_height: int = 0,
         total_lines: int = 0,
+        file_size: int | None = None,
+        file_type: str | None = None,
+        soft_wrap: bool = True,
+        available_width: int = 120,
     ) -> None:
         if max_scroll_y <= 0:
             percent = 100 if virtual_height > 0 and virtual_height <= size_height else 0
@@ -46,9 +51,21 @@ class PositionLabel(Label):
 
         if total_lines > 0:
             current_line = min(total_lines, max(1, int(round(scroll_y)) + 1))
-            self.update(f"Ln {current_line}/{total_lines} ({percent}%)")
+            line_part = f"Ln {current_line}/{total_lines} ({percent}%)"
         else:
-            self.update(f"{percent}%")
+            line_part = f"{percent}%"
+
+        parts: list[str] = []
+        if file_size is not None and file_size > 0 and available_width >= 110:
+            parts.append(format_file_size(file_size))
+        if file_type and available_width >= 125:
+            parts.append(file_type)
+        if available_width >= 85:
+            wrap_badge = r"\[WRAP]" if soft_wrap else r"\[NOWRAP]"
+            parts.append(wrap_badge)
+        parts.append(line_part)
+
+        self.update(" │ ".join(parts))
 
 
 class MDReaderApp(App):
@@ -56,6 +73,7 @@ class MDReaderApp(App):
 
     ALLOW_SELECT = True
     ENABLE_SELECT_AUTO_SCROLL = True
+    ENABLE_COMMAND_PALETTE = False
 
     TITLE = "mdreader"
     SUB_TITLE = "Terminal Markdown Viewer"
@@ -137,7 +155,7 @@ class MDReaderApp(App):
     """
 
     BINDINGS = [
-        Binding("o", "open_file_picker", "Open file", show=True),
+        Binding("o", "open_file_picker", "Open", show=True),
         Binding("O", "toggle_toc", "Outline", show=True),
         Binding("ctrl+o", "open_commander", "Commander", show=True),
         Binding("w", "toggle_wrap", "Wrap", show=True),
@@ -285,8 +303,20 @@ class MDReaderApp(App):
             )
             self._watcher.start()
 
+    def on_resize(self, event) -> None:
+        """Responsive layout adjustment on window resize."""
+        try:
+            clock = self.query_one("#clock-label")
+            if event.size.width < 95:
+                clock.styles.display = "none"
+            else:
+                clock.styles.display = "block"
+        except Exception:
+            pass
+        self._update_position_label()
+
     def _update_position_label(self) -> None:
-        """Update reading progress percentage and line number label."""
+        """Update reading progress percentage and rich status bar label."""
         try:
             viewer = self.query_one("#viewer")
             pos_label = self.query_one("#position-label", PositionLabel)
@@ -298,12 +328,50 @@ class MDReaderApp(App):
             else:
                 total_lines = viewer.virtual_size.height
 
+            file_size = None
+            file_type = None
+            if self.filepath and self.filepath.exists():
+                try:
+                    file_size = self.filepath.stat().st_size
+                    ext = self.filepath.suffix.lower()
+                    if ext in (".md", ".markdown"):
+                        file_type = "Markdown"
+                    elif ext in (".py",):
+                        file_type = "Python"
+                    elif ext in (".rs",):
+                        file_type = "Rust"
+                    elif ext in (".c", ".h", ".cpp"):
+                        file_type = "C/C++"
+                    elif ext in (".html", ".htm"):
+                        file_type = "HTML"
+                    elif ext in (".json", ".toml", ".yaml", ".yml"):
+                        file_type = "Data"
+                    else:
+                        file_type = "Text"
+                except Exception:
+                    pass
+
+            screen_w = self.size.width if self.size and self.size.width > 0 else 120
+            # Responsive clock hiding when screen is narrow (< 95 cols)
+            try:
+                clock = self.query_one("#clock-label")
+                if screen_w < 95:
+                    clock.styles.display = "none"
+                else:
+                    clock.styles.display = "block"
+            except Exception:
+                pass
+
             pos_label.update_position(
                 scroll_y=viewer.scroll_y,
                 max_scroll_y=viewer.max_scroll_y,
                 virtual_height=viewer.virtual_size.height,
                 size_height=viewer.size.height,
                 total_lines=total_lines,
+                file_size=file_size,
+                file_type=file_type,
+                soft_wrap=self._soft_wrap,
+                available_width=screen_w,
             )
         except Exception:
             pass
