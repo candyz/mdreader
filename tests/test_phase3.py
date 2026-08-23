@@ -407,15 +407,15 @@ def test_vim_marks_and_wrap_toggle(tmp_path: Path):
             await pilot.pause()
             assert app._soft_wrap is True
 
-            # 2. Set mark 'a' at top
-            await pilot.press("m", "a")
+            # 2. Set mark 'a' at top with M+a
+            await pilot.press("M", "a")
             await pilot.pause()
             assert app._marks.get("a") == 1
 
-            # 3. Jump to line 200 and set mark 'b'
+            # 3. Jump to line 200 and set mark 'b' with M+b
             app.action_goto_line(200)
             await pilot.pause()
-            await pilot.press("m", "b")
+            await pilot.press("M", "b")
             await pilot.pause()
             assert app._marks.get("b") == 200
 

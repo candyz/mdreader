@@ -998,9 +998,10 @@ class MDReaderApp(App):
             self._digit_buffer += event.character
             return
 
-        # 4. Handle mark prefix keys 'm' and "'"
-        if event.character == "m":
+        # 4. Handle mark prefix keys 'M' (Shift+M) and "'"
+        if event.character == "M":
             self._waiting_for_mark = True
+            self.notify("請按 [a-z] 設定書籤...", title="設定書籤 (M+[a-z])", timeout=1.0)
             return
         elif event.character in ("'", "`"):
             self._waiting_for_jump_mark = True

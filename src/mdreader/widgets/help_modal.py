@@ -36,7 +36,7 @@ HELP_SECTIONS = [
             ("/ [query] Enter", "文件內全文搜尋 (In-document Search)"),
             ("n / N", "跳至下一處 / 上一處搜尋結果 (Next / Prev Match)"),
             ("gx", "擷取文件超連結並於預設瀏覽器開啟 (Open Hyperlink)"),
-            ("m + [a-z]", "在當前行設定書籤 (Set Mark)"),
+            ("M + [a-z]", "在當前行設定書籤 (Set Mark, Shift+M)"),
             ("' + [a-z]", "跳轉至指定書籤行號 (Jump to Mark)"),
             ("Ctrl+M", "書籤總覽清單視窗 (List All Marks)"),
         ],
