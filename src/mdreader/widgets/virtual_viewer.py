@@ -50,6 +50,9 @@ def should_use_virtual_viewer(content: str, filename: str | None) -> bool:
     return False
 
 
+from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
+
+
 class VirtualTextViewer(ScrollView):
     """Virtualized scrollable line viewer rendering only the visible viewport lines (O(1) DOM)."""
 
@@ -64,16 +67,24 @@ class VirtualTextViewer(ScrollView):
 
     def __init__(
         self,
-        raw_text: str = "",
+        raw_text: str | Sequence[str] = "",
+        lines: Sequence[str] | None = None,
         filename: str | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
-        self.raw_text = raw_text
         self.filename = filename
-        self.lines: list[str] = raw_text.splitlines() if raw_text else []
+        if lines is not None:
+            self.lines = lines
+            self.raw_text = ""
+        elif isinstance(raw_text, (list, tuple, MmapLineBuffer)):
+            self.lines = raw_text
+            self.raw_text = ""
+        else:
+            self.raw_text = raw_text
+            self.lines = raw_text.splitlines() if raw_text else []
         self._highlighted_line: int | None = None
         self._search_query: str = ""
         self.show_line_numbers: bool = True
@@ -112,12 +123,16 @@ class VirtualTextViewer(ScrollView):
         prefix_len = 8 if self.show_line_numbers else 0
         self.virtual_size = Size(max_len + prefix_len + 4, len(self.lines))
 
-    def update_content(self, text: str, filename: str | None = None) -> None:
+    def update_content(self, text: str | Sequence[str], filename: str | None = None) -> None:
         """Update content and reset virtual geometry."""
-        self.raw_text = text
         if filename is not None:
             self.filename = filename
-        self.lines = text.splitlines() if text else []
+        if isinstance(text, (list, tuple, MmapLineBuffer)):
+            self.lines = text
+            self.raw_text = ""
+        else:
+            self.raw_text = text
+            self.lines = text.splitlines() if text else []
         self._highlighted_line = None
         self._search_query = ""
         self._setup_lexer()
@@ -233,13 +248,19 @@ class VirtualTextViewer(ScrollView):
 
     def search_text(self, query: str) -> list[object]:
         """Fast substring search returning matching line indices."""
-        q = query.strip().lower()
-        self._search_query = q
+        q = query.strip()
+        self._search_query = q.lower()
         if not q:
             return []
+
+        # Use lightning-fast memory-mapped binary search if available
+        if hasattr(self.lines, "search_text"):
+            return self.lines.search_text(q, case_sensitive=False)
+
+        q_lower = q.lower()
         matches: list[object] = []
         for idx, line in enumerate(self.lines):
-            if q in line.lower():
+            if q_lower in line.lower():
                 matches.append(idx)
         return matches
 

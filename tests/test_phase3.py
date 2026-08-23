@@ -414,3 +414,60 @@ def test_vim_marks_and_wrap_toggle(tmp_path: Path):
             assert viewer.scroll_y == 199
 
     asyncio.run(run())
+
+
+def test_mmap_line_buffer(tmp_path: Path):
+    from mdreader.utils.mmap_buffer import MmapLineBuffer
+
+    # Create a 5,000 line test file
+    sample_file = tmp_path / "big_sample.txt"
+    lines = [f"Entry #{i+1} with some text data" for i in range(5000)]
+    lines[2500] = "SPECIAL_UNIQUE_KEYWORD_FOR_SEARCH"
+    sample_file.write_text("\n".join(lines), encoding="utf-8")
+
+    buf = MmapLineBuffer(sample_file)
+    assert len(buf) == 5000
+    assert buf[0] == "Entry #1 with some text data"
+    assert buf[2500] == "SPECIAL_UNIQUE_KEYWORD_FOR_SEARCH"
+    assert buf[-1] == "Entry #5000 with some text data"
+    assert len(buf[10:20]) == 10
+
+    # Test lightning search
+    matches = buf.search_text("SPECIAL_UNIQUE_KEYWORD")
+    assert matches == [2500]
+
+    # Test full text reading
+    all_text = buf.read_all_text()
+    assert "SPECIAL_UNIQUE_KEYWORD_FOR_SEARCH" in all_text
+    buf.close()
+
+
+def test_mmap_viewer_integration(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    import asyncio
+
+    # Create a large text file > 300KB
+    large_file = tmp_path / "gigantic.log"
+    content = "\n".join(f"2026-08-23 12:00:{i%60:02d} [INFO] System event record {i+1}" for i in range(8000))
+    large_file.write_text(content, encoding="utf-8")
+
+    async def run():
+        app = MDReaderApp(filepath=large_file)
+        async with app.run_test() as pilot:
+            viewer = app.query_one("#viewer", VirtualTextViewer)
+            assert len(viewer.lines) == 8000
+            assert app._mmap_buffer is not None
+
+            # Test line jump
+            app.action_goto_line(4000)
+            await pilot.pause()
+            assert viewer.scroll_y == 3999
+            assert "Ln 4000/8000" in str(app.query_one("#position-label").render())
+
+            # Test search on mmap viewer
+            app.perform_search("event record 4000")
+            await pilot.pause()
+            assert viewer.scroll_y == 3999
+
+    asyncio.run(run())

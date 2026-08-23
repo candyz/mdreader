@@ -13,6 +13,7 @@ from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_tex
 from mdreader.widgets.marks_modal import MarksModal
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
+from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
 
 
 class ClockLabel(Label):
@@ -185,9 +186,15 @@ class MDReaderApp(App):
     ):
         super().__init__(**kwargs)
         self.filepath = Path(filepath) if filepath else None
+        self._mmap_buffer: MmapLineBuffer | None = None
         if not content and self.filepath and self.filepath.is_file():
             try:
-                self.content = self.filepath.read_text(encoding="utf-8")
+                fname = self.filepath.name
+                if self.filepath.stat().st_size > MMAP_THRESHOLD_BYTES and should_use_virtual_viewer("", fname):
+                    self._mmap_buffer = MmapLineBuffer(self.filepath)
+                    self.content = ""
+                else:
+                    self.content = self.filepath.read_text(encoding="utf-8")
             except Exception:
                 self.content = content
         else:
@@ -213,9 +220,11 @@ class MDReaderApp(App):
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
 
-    def _create_viewer(self, content: str, filename: str | None = None):
+    def _create_viewer(self, content: str = "", filename: str | None = None):
         """Create high-performance VirtualTextViewer for large/code files or MarkdownViewerWidget for rich markdown."""
         if should_use_virtual_viewer(content, filename):
+            if getattr(self, "_mmap_buffer", None) is not None:
+                return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, id="viewer")
             return VirtualTextViewer(raw_text=content, filename=filename, id="viewer")
         return MarkdownViewerWidget(
             raw_markdown=content,
@@ -543,20 +552,34 @@ class MDReaderApp(App):
     async def open_file(self, filepath: Path) -> None:
         """Switch current viewer to a new file."""
         try:
-            new_content = filepath.read_text(encoding="utf-8")
             self.filepath = filepath
-            self.content = new_content
             self.SUB_TITLE = str(filepath.name)
             self.title = "mdreader"
             add_recent_file(filepath)
-
             fname = str(filepath.name)
-            use_virtual = should_use_virtual_viewer(new_content, fname)
+
+            is_large_mmap = filepath.stat().st_size > MMAP_THRESHOLD_BYTES and should_use_virtual_viewer("", fname)
+            if is_large_mmap:
+                if hasattr(self, "_mmap_buffer") and self._mmap_buffer:
+                    self._mmap_buffer.close()
+                self._mmap_buffer = MmapLineBuffer(filepath)
+                new_content = ""
+            else:
+                if hasattr(self, "_mmap_buffer") and self._mmap_buffer:
+                    self._mmap_buffer.close()
+                    self._mmap_buffer = None
+                new_content = filepath.read_text(encoding="utf-8")
+
+            self.content = new_content
+            use_virtual = is_large_mmap or should_use_virtual_viewer(new_content, fname)
             current_viewer = self.query_one("#viewer")
             is_currently_virtual = isinstance(current_viewer, VirtualTextViewer)
 
-            if use_virtual == is_currently_virtual:
-                current_viewer.update_content(new_content, fname)
+            if use_virtual and is_currently_virtual:
+                if is_large_mmap:
+                    current_viewer.update_content(self._mmap_buffer, fname)
+                else:
+                    current_viewer.update_content(new_content, fname)
             else:
                 reader_box = self.query_one("#reader-box", Container)
                 await reader_box.remove_children()
@@ -602,7 +625,8 @@ class MDReaderApp(App):
 
     def action_open_link(self) -> None:
         """Extract hyperlinks from document and open in browser (gx)."""
-        links = extract_links_from_text(self.content or "")
+        doc_text = self._mmap_buffer.read_all_text() if getattr(self, "_mmap_buffer", None) is not None else (self.content or "")
+        links = extract_links_from_text(doc_text)
         if not links:
             self.notify("文件中未發現任何超連結 (HTTP/HTTPS)", title="開啟超連結 (gx)", severity="warning", timeout=2.0)
             return
@@ -855,7 +879,10 @@ class MDReaderApp(App):
             return
 
         # If no text selected with mouse, copy the whole document content
-        doc_text = self.content
+        if getattr(self, "_mmap_buffer", None) is not None:
+            doc_text = self._mmap_buffer.read_all_text()
+        else:
+            doc_text = self.content
         if doc_text and doc_text.strip():
             success = self.copy_to_system_clipboard(doc_text)
             lines_count = doc_text.count("\n") + 1
