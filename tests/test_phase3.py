@@ -173,3 +173,33 @@ def test_large_file_virtual_viewer_performance(tmp_path: Path):
     search_time = time.time() - t1
     assert len(matches) == 1
     assert search_time < 0.05, f"Search across 50k lines should take < 0.05s, took {search_time:.4f}s"
+
+
+def test_open_file_swap_viewer(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    import asyncio
+
+    f_txt = tmp_path / "sample.txt"
+    f_txt.write_text("Hello plain text", encoding="utf-8")
+    f_md = tmp_path / "sample.md"
+    f_md.write_text("# Hello Markdown", encoding="utf-8")
+
+    async def run():
+        # Start app with no initial file
+        app = MDReaderApp()
+        async with app.run_test() as pilot:
+            assert isinstance(app.query_one("#viewer"), MarkdownViewerWidget)
+            
+            # Open txt file (swaps to VirtualTextViewer)
+            await app.open_file(f_txt)
+            await pilot.pause()
+            assert isinstance(app.query_one("#viewer"), VirtualTextViewer)
+            
+            # Open md file (swaps back to MarkdownViewerWidget)
+            await app.open_file(f_md)
+            await pilot.pause()
+            assert isinstance(app.query_one("#viewer"), MarkdownViewerWidget)
+
+    asyncio.run(run())

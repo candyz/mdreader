@@ -268,9 +268,9 @@ class MDReaderApp(App):
 
     def _on_file_changed(self) -> None:
         """Invoked in background thread by FileWatcher."""
-        self.call_from_thread(self.action_reload_file)
+        self.call_from_thread(lambda: self.run_worker(self.action_reload_file()))
 
-    def action_reload_file(self) -> None:
+    async def action_reload_file(self) -> None:
         """Reload file content from disk and update viewer."""
         if self.filepath and self.filepath.exists():
             try:
@@ -284,9 +284,9 @@ class MDReaderApp(App):
                     viewer.update_content(new_content, fname)
                 else:
                     reader_box = self.query_one("#reader-box", Container)
-                    reader_box.remove_children()
+                    await reader_box.remove_children()
                     new_viewer = self._create_viewer(new_content, fname)
-                    reader_box.mount(new_viewer)
+                    await reader_box.mount(new_viewer)
                     if hasattr(new_viewer, "document"):
                         new_viewer.document.focus()
                     else:
@@ -455,9 +455,9 @@ class MDReaderApp(App):
     def _on_file_selected(self, selected_path: Path | None) -> None:
         """Callback when file is selected from modal."""
         if selected_path and selected_path.is_file():
-            self.open_file(selected_path)
+            self.run_worker(self.open_file(selected_path))
 
-    def open_file(self, filepath: Path) -> None:
+    async def open_file(self, filepath: Path) -> None:
         """Switch current viewer to a new file."""
         try:
             new_content = filepath.read_text(encoding="utf-8")
@@ -474,9 +474,9 @@ class MDReaderApp(App):
                 current_viewer.update_content(new_content, fname)
             else:
                 reader_box = self.query_one("#reader-box", Container)
-                reader_box.remove_children()
+                await reader_box.remove_children()
                 new_viewer = self._create_viewer(new_content, fname)
-                reader_box.mount(new_viewer)
+                await reader_box.mount(new_viewer)
                 if hasattr(new_viewer, "document"):
                     new_viewer.document.focus()
                 else:
