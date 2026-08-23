@@ -59,6 +59,7 @@ HELP_SECTIONS = [
             ("y / c / Ctrl+C", "複製選取文字或全文至剪貼簿 (Copy to Clipboard)"),
             ("m", "切換滑鼠模式 (Toggle Mouse / Terminal Selection)"),
             ("Ctrl+T", "在當前檔案目錄開啟終端機 Shell"),
+            ("T", "切換終端命令提示列 (Toggle Terminal Prompt Bar)"),
             ("Ctrl+Shift+O", "在系統檔案管理員中定位 (Finder / xdg-open)"),
             ("r", "手動重新載入檔案內容 (Reload File)"),
             ("h / ? / F1", "開啟本說明視窗 (Help)"),

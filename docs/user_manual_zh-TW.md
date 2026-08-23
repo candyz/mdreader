@@ -61,9 +61,10 @@ mdreader README.md --export-txt output.txt
 | **`:`** / **`123G`** / **`50gg`** | **跳轉行號 (Go to Line)**：快速跳轉至指定行號 |
 | **`e`** | **匯出文件 (Export)**：將目前文件匯出為獨立 HTML (.html)、純文字 (.txt) 或 Markdown (.md) |
 | **`Y`** / **`Ctrl+K`** | **複製程式碼區塊 (Copy Code Block)**：快速提取並複製程式碼區塊至系統剪貼簿 |
-| **`v`** | **開啟外部編輯器 (Vim / $EDITOR)**：暫停閱讀器開啟編輯器，存檔退出後自動重新載入 |
-| **`Ctrl+T`** | **開啟終端機 Shell**：在當前檔案所在目錄開啟原生 Shell |
-| **`Ctrl+Shift+O`** | **檔案管理員定位**：在系統檔案管理員（Finder / xdg-open）中顯示該檔案 |
+| **`v`** / **`F4`** | **外部編輯器編輯 (Edit in Editor)**：暫停閱讀器，呼叫 `$EDITOR` 或 `vim` 進行編輯，儲存離開後自動熱重載 |
+| **`Ctrl+T`** | **開啟終端機 (Terminal)**：在當前檔案所在目錄開啟原生 `$SHELL` 終端機環境 |
+| **`T`** | **終端命令提示列 (Toggle Terminal Prompt)**：在狀態列上方展開/收合 Midnight Commander 風格的 Shell Prompt 輸入列，直接輸入指令執行 |
+| **`Ctrl+Shift+O`** | **檔案管理員定位 (Reveal in Finder)**：在系統檔案管理員（Finder / xdg-open）中開啟所在位置 |
 | **`t`** | **循環切換主題色彩**（Dark, Light, Tokyo Night, Monokai, Solarized, Dracula 等，自動持久化記憶） |
 | **`j`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
 | **`k`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |

@@ -652,3 +652,31 @@ def test_terminal_and_finder_actions(tmp_path: Path):
     shell = os.environ.get("SHELL") or "/bin/sh"
     assert target_dir == tmp_path
     assert len(shell) > 0
+
+
+def test_cmd_prompt_bar_toggle(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    import asyncio
+
+    test_file = tmp_path / "test.md"
+    test_file.write_text("# Terminal Test", encoding="utf-8")
+
+    async def run():
+        app = MDReaderApp(filepath=test_file)
+        async with app.run_test() as pilot:
+            assert app.cmd_prompt_visible is False
+            prompt_label = app._get_prompt_label()
+            assert "@" in prompt_label
+            assert "$" in prompt_label
+
+            # Toggle prompt on
+            app.action_toggle_cmd_prompt()
+            await pilot.pause()
+            assert app.cmd_prompt_visible is True
+
+            # Toggle prompt off
+            app.action_toggle_cmd_prompt()
+            await pilot.pause()
+            assert app.cmd_prompt_visible is False
+
+    asyncio.run(run())

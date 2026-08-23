@@ -123,7 +123,8 @@ curl -s https://example.com | mdreader
 | `e` | **Export Document**: Export to Standalone HTML, Plain Text, or Markdown |
 | `Y` / `Ctrl+K` | **Copy Code Block**: Extract and copy code blocks to clipboard |
 | `v` | **Edit in External Editor (Vim / $EDITOR)**: Pauses TUI and reloads upon exit |
-| `Ctrl+T` | **Open Terminal Shell**: Launch `$SHELL` in current file's directory |
+| `Ctrl+T` | **Open Full Terminal Shell**: Launch interactive `$SHELL` in file directory |
+| `T` | **Toggle Terminal Prompt Bar**: Midnight Commander style inline shell prompt above status bar |
 | `Ctrl+Shift+O` | **Reveal File**: Reveal in macOS Finder or Linux file manager |
 | `t` | **Switch Color Theme**: Cycle through built-in color themes |
 | `/` | **Search**: Vim-style search overlay (`n` next, `N` prev) |

@@ -145,6 +145,34 @@ class MDReaderApp(App):
         display: none;
     }
 
+    #cmd-prompt-bar {
+        height: 1;
+        width: 100%;
+        background: $surface-darken-1;
+        display: none;
+        padding: 0 1;
+    }
+
+    #cmd-prompt-bar.-visible {
+        display: block;
+    }
+
+    #prompt-label {
+        width: auto;
+        color: $success;
+        text-style: bold;
+        margin-right: 1;
+    }
+
+    #prompt-input {
+        width: 1fr;
+        height: 1;
+        border: none;
+        padding: 0;
+        background: transparent;
+        color: $text;
+    }
+
     #position-label {
         width: auto;
         padding: 0 1;
@@ -180,6 +208,7 @@ class MDReaderApp(App):
         Binding("gx", "open_link", "Open Link (gx)", show=False),
         Binding("ctrl+m", "list_marks", "Marks (Ctrl+M)", show=False),
         Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
+        Binding("T", "toggle_cmd_prompt", "Terminal Prompt (T)", show=False),
         Binding("y", "copy_selected_text", "Yank / Copy", show=False),
         Binding("c", "copy_selected_text", "Copy", show=False),
         Binding("ctrl+c", "copy_selected_text", "Copy", show=False),
@@ -209,6 +238,7 @@ class MDReaderApp(App):
     ]
 
     search_visible = reactive(False)
+    cmd_prompt_visible = reactive(False)
 
     def __init__(
         self,
@@ -278,11 +308,58 @@ class MDReaderApp(App):
                     content=self.content,
                     filename=str(self.filepath.name) if self.filepath else None,
                 )
+        with Horizontal(id="cmd-prompt-bar"):
+            yield Label(self._get_prompt_label(), id="prompt-label")
+            yield Input(placeholder="Type shell command (e.g. ls, git status, cd <dir>)... Enter to run, Esc to close", id="prompt-input")
         with Horizontal(id="footer-bar"):
             yield Footer()
             yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
             yield PositionLabel("0%", id="position-label")
             yield ClockLabel(id="clock-label")
+
+    def _get_prompt_label(self) -> str:
+        """Generate Midnight Commander style command line prompt [user@host:dir]$."""
+        import getpass, socket
+        try:
+            user = getpass.getuser()
+        except Exception:
+            user = "user"
+        try:
+            host = socket.gethostname().split(".")[0]
+        except Exception:
+            host = "host"
+        try:
+            cwd = str(self.filepath.parent if self.filepath and self.filepath.exists() else Path.cwd())
+            home = str(Path.home())
+            if cwd.startswith(home):
+                cwd = "~" + cwd[len(home):]
+        except Exception:
+            cwd = "."
+        return f"[{user}@{host}:{cwd}]$"
+
+    def watch_cmd_prompt_visible(self, visible: bool) -> None:
+        try:
+            bar = self.query_one("#cmd-prompt-bar", Horizontal)
+            inp = self.query_one("#prompt-input", Input)
+            lbl = self.query_one("#prompt-label", Label)
+            if visible:
+                lbl.update(self._get_prompt_label())
+                bar.add_class("-visible")
+                inp.value = ""
+                inp.focus()
+            else:
+                bar.remove_class("-visible")
+                viewer = self.query_one("#viewer")
+                if hasattr(viewer, "document") and viewer.document:
+                    viewer.document.focus()
+                else:
+                    viewer.focus()
+        except Exception:
+            pass
+
+    def action_toggle_cmd_prompt(self) -> None:
+        """Toggle Midnight Commander style Terminal Prompt bar (T)."""
+        self.cmd_prompt_visible = not self.cmd_prompt_visible
 
     def on_mount(self) -> None:
         if self.max_width:
@@ -524,7 +601,10 @@ class MDReaderApp(App):
         self._input_mode = "goto"
 
     def action_handle_escape(self) -> None:
-        """Escape handles closing search input or quitting."""
+        """Escape handles closing prompt, search input or quitting."""
+        if self.cmd_prompt_visible:
+            self.cmd_prompt_visible = False
+            return
         if self.search_visible:
             footer_bar = self.query_one("#footer-bar")
             footer_bar.remove_class("-searching")
@@ -540,7 +620,7 @@ class MDReaderApp(App):
             self.exit()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle search or goto line submission."""
+        """Handle search, goto line, or terminal command prompt submission."""
         if event.input.id == "search-input":
             val = event.value.strip()
             self.action_handle_escape()
@@ -554,6 +634,50 @@ class MDReaderApp(App):
                     self.notify(f"Invalid line number: {val}", title="Go to Line", severity="warning", timeout=2)
             else:
                 self.perform_search(val)
+        elif event.input.id == "prompt-input":
+            cmd = event.value.strip()
+            if cmd:
+                self._execute_terminal_command(cmd)
+            else:
+                self.cmd_prompt_visible = False
+
+    def _execute_terminal_command(self, cmd: str) -> None:
+        """Execute a shell command in current file/working directory and refresh UI."""
+        target_dir = self.filepath.parent if self.filepath and self.filepath.exists() else Path.cwd()
+        if cmd.startswith("cd ") or cmd == "cd":
+            parts = cmd.split(maxsplit=1)
+            target = parts[1] if len(parts) > 1 else str(Path.home())
+            target_path = Path(os.path.expanduser(target))
+            if not target_path.is_absolute():
+                target_path = (target_dir / target_path).resolve()
+            if target_path.is_dir():
+                os.chdir(target_path)
+                self.notify(f"已切換目錄至：{target_path}", title="cd", timeout=2.0)
+            else:
+                self.notify(f"找不到目錄：{target}", title="Error", severity="error")
+            lbl = self.query_one("#prompt-label", Label)
+            lbl.update(self._get_prompt_label())
+            inp = self.query_one("#prompt-input", Input)
+            inp.value = ""
+            return
+
+        try:
+            with self.suspend():
+                print(f"\033[1;32m{self._get_prompt_label()} {cmd}\033[0m\n")
+                subprocess.run(cmd, shell=True, cwd=str(target_dir.resolve()))
+                print("\n\033[1;34m[Press Enter to return to mdreader]\033[0m", end="")
+                sys.stdout.flush()
+                input()
+        except Exception as e:
+            self.notify(f"執行指令失敗：{e}", title="Error", severity="error")
+
+        try:
+            inp = self.query_one("#prompt-input", Input)
+            inp.value = ""
+            lbl = self.query_one("#prompt-label", Label)
+            lbl.update(self._get_prompt_label())
+        except Exception:
+            pass
 
     def action_goto_line(self, line_number: int) -> None:
         """Jump to specific line number in document (1-indexed)."""
