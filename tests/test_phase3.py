@@ -627,3 +627,11 @@ def test_virtual_viewer_line_numbers_toggle():
     new_state = viewer.toggle_line_numbers()
     assert new_state is True
     assert viewer.show_line_numbers is True
+
+
+def test_reader_help_modal():
+    from mdreader.widgets.help_modal import ReaderHelpModal, HELP_SECTIONS
+
+    modal = ReaderHelpModal()
+    assert len(HELP_SECTIONS) >= 5
+    assert modal is not None

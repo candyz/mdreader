@@ -109,6 +109,7 @@ curl -s https://example.com | mdreader
 | Key | Action |
 | :--- | :--- |
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
+| `h` / `?` / `F1` | **Help**: Open comprehensive keyboard shortcuts & feature guide dialog |
 | `o` | **Open Fuzzy File Picker**: Browse files, `Ctrl+R` recent, `Ctrl+D` bookmarks, `Ctrl+F` grep |
 | `O` | **Table of Contents (Outline)**: Navigate headings and press `Enter` to jump |
 | `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `s` sort, `Ctrl+D` bookmarks, `Ctrl+F` grep) |

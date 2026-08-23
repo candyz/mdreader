@@ -17,6 +17,7 @@ from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
 from mdreader.widgets.commander import format_file_size
 from mdreader.widgets.export_modal import ExportModal
 from mdreader.widgets.code_block_modal import CodeBlockModal, extract_code_blocks
+from mdreader.widgets.help_modal import ReaderHelpModal
 
 
 class ClockLabel(Label):
@@ -164,6 +165,9 @@ class MDReaderApp(App):
         Binding("v", "edit_in_editor", "Edit", show=True),
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("q", "quit", "Quit", show=True),
+        Binding("h", "open_help", "Help", show=True),
+        Binding("question_mark", "open_help", "Help (?)", show=False),
+        Binding("f1", "open_help", "Help (F1)", show=False),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
         Binding("slash", "open_search", "Search (/)", show=False),
         Binding("colon", "open_goto_line", "Go to Line (:)", show=False),
@@ -723,6 +727,10 @@ class MDReaderApp(App):
             self.notify(msg, title="行號切換 (L)", timeout=1.5)
         else:
             self.notify("Markdown 渲染模式不支援行號切換（僅純文字/原始碼模式支援）", title="行號切換 (L)", timeout=2.0)
+
+    def action_open_help(self) -> None:
+        """Open full keyboard shortcuts & help guide modal (h / ? / F1)."""
+        self.push_screen(ReaderHelpModal())
 
     def action_open_link(self) -> None:
         """Extract hyperlinks from document and open in browser (gx)."""

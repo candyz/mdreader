@@ -48,6 +48,7 @@ mdreader README.md --export-txt output.txt
 | 快捷鍵 | 功能說明 |
 | :--- | :--- |
 | **`q`** / **`Esc`** | 退出 mdreader 閱讀器 / 關閉目前浮動視窗 |
+| **`h`** / **`?`** / **`F1`** | **快速鍵與功能說明 (Help)**：開啟完整快速鍵指南對話框 |
 | **`o`** | **開啟檔案選擇器 (File Picker)**：`Ctrl+R` 最近檔案、`Ctrl+D` 目錄書籤、`Ctrl+F` 全文搜尋 |
 | **`O`** | **開啟大綱模式 (TOC Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
 | **`Ctrl+O`** | **Midnight Commander 雙欄檔案總管**：左右雙欄 (`Tab`)、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
