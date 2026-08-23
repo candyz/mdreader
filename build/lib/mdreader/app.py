@@ -8,6 +8,7 @@ from textual.widgets import Footer, Input, Label
 from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
+from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value
 
@@ -21,6 +22,18 @@ class ClockLabel(Label):
 
     def update_time(self) -> None:
         self.update(time.strftime("%X"))
+
+
+class PositionLabel(Label):
+    """Document scroll position percentage display widget (like leaf)."""
+
+    def update_position(self, scroll_y: float, max_scroll_y: int, virtual_height: int = 0, size_height: int = 0) -> None:
+        if max_scroll_y <= 0:
+            percent = 100 if virtual_height > 0 and virtual_height <= size_height else 0
+        else:
+            percent = int(round((scroll_y / max_scroll_y) * 100))
+            percent = max(0, min(100, percent))
+        self.update(f"{percent}%")
 
 
 class MDReaderApp(App):
@@ -91,6 +104,14 @@ class MDReaderApp(App):
         display: none;
     }
 
+    #position-label {
+        width: auto;
+        padding: 0 1;
+        background: $footer-key-background;
+        color: $footer-key-foreground;
+        text-style: bold;
+    }
+
     #clock-label {
         width: auto;
         padding: 0 1;
@@ -144,10 +165,16 @@ class MDReaderApp(App):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.content = content
         self.filepath = Path(filepath) if filepath else None
+        if not content and self.filepath and self.filepath.is_file():
+            try:
+                self.content = self.filepath.read_text(encoding="utf-8")
+            except Exception:
+                self.content = content
+        else:
+            self.content = content
         self.max_width = max_width
-        self.watch = watch
+        self.watch_mode = watch
         self.show_toc = show_toc
         self._custom_theme = theme
         self._theme_index = 0
@@ -161,18 +188,28 @@ class MDReaderApp(App):
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
 
+    def _create_viewer(self, content: str, filename: str | None = None):
+        """Create high-performance VirtualTextViewer for large/code files or MarkdownViewerWidget for rich markdown."""
+        if should_use_virtual_viewer(content, filename):
+            return VirtualTextViewer(raw_text=content, filename=filename, id="viewer")
+        return MarkdownViewerWidget(
+            raw_markdown=content,
+            show_toc=self.show_toc,
+            filename=filename,
+            id="viewer",
+        )
+
     def compose(self) -> ComposeResult:
         with Container(id="main-container"):
             with Container(id="reader-box"):
-                yield MarkdownViewerWidget(
-                    raw_markdown=self.content,
-                    show_toc=self.show_toc,
+                yield self._create_viewer(
+                    content=self.content,
                     filename=str(self.filepath.name) if self.filepath else None,
-                    id="viewer",
                 )
         with Horizontal(id="footer-bar"):
             yield Footer()
             yield Input(placeholder="/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)", id="search-input")
+            yield PositionLabel("0%", id="position-label")
             yield ClockLabel(id="clock-label")
 
     def on_mount(self) -> None:
@@ -194,16 +231,35 @@ class MDReaderApp(App):
             self._theme_index = valid_themes.index(self.theme)
         
         # Ensure focus is on markdown document for immediate keyboard response
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
-        viewer.document.focus()
+        viewer = self.query_one("#viewer")
+        if hasattr(viewer, "document"):
+            viewer.document.focus()
+        else:
+            viewer.focus()
+        self.watch(viewer, "scroll_y", self._update_position_label)
+        self.watch(viewer, "max_scroll_y", self._update_position_label)
 
         # Start file watcher if watch mode is enabled
-        if self.watch and self.filepath and self.filepath.exists():
+        if self.watch_mode and self.filepath and self.filepath.exists():
             self._watcher = FileWatcher(
                 filepath=self.filepath,
                 on_modified=self._on_file_changed,
             )
             self._watcher.start()
+
+    def _update_position_label(self) -> None:
+        """Update reading progress percentage label."""
+        try:
+            viewer = self.query_one("#viewer")
+            pos_label = self.query_one("#position-label", PositionLabel)
+            pos_label.update_position(
+                viewer.scroll_y,
+                viewer.max_scroll_y,
+                viewer.virtual_size.height,
+                viewer.size.height,
+            )
+        except Exception:
+            pass
 
     def on_unmount(self) -> None:
         if self._watcher:
@@ -219,8 +275,25 @@ class MDReaderApp(App):
         if self.filepath and self.filepath.exists():
             try:
                 new_content = self.filepath.read_text(encoding="utf-8")
-                viewer = self.query_one("#viewer", MarkdownViewerWidget)
-                viewer.update_content(new_content, str(self.filepath.name))
+                fname = str(self.filepath.name)
+                viewer = self.query_one("#viewer")
+                use_virtual = should_use_virtual_viewer(new_content, fname)
+                is_currently_virtual = isinstance(viewer, VirtualTextViewer)
+
+                if use_virtual == is_currently_virtual:
+                    viewer.update_content(new_content, fname)
+                else:
+                    reader_box = self.query_one("#reader-box", Container)
+                    reader_box.remove_children()
+                    new_viewer = self._create_viewer(new_content, fname)
+                    reader_box.mount(new_viewer)
+                    if hasattr(new_viewer, "document"):
+                        new_viewer.document.focus()
+                    else:
+                        new_viewer.focus()
+                    self.watch(new_viewer, "scroll_y", self._update_position_label)
+                    self.watch(new_viewer, "max_scroll_y", self._update_position_label)
+
                 self.notify("Document reloaded", title="Auto-Reload", timeout=2)
             except Exception as e:
                 self.notify(f"Reload failed: {e}", title="Error", severity="error")
@@ -249,7 +322,7 @@ class MDReaderApp(App):
             # Reload file content after returning from editor
             if self.filepath.exists():
                 new_content = self.filepath.read_text(encoding="utf-8")
-                viewer = self.query_one("#viewer", MarkdownViewerWidget)
+                viewer = self.query_one("#viewer")
                 viewer.update_content(new_content, str(self.filepath.name))
                 self.notify(f"Reloaded after editing: {self.filepath.name}", title="Edit", timeout=2)
         except Exception as e:
@@ -258,7 +331,7 @@ class MDReaderApp(App):
     def action_toggle_toc(self) -> None:
         """Open full outline modal for chapter browsing and jumping."""
         from mdreader.widgets.outline_modal import OutlineModalScreen
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         headings = viewer.get_headings()
         if not headings:
             self.notify("No headings found in document", title="Outline", timeout=1.5)
@@ -267,10 +340,13 @@ class MDReaderApp(App):
 
     def _on_outline_selected(self, target_block_id: str | None) -> None:
         """Callback when a heading is selected from Outline modal."""
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         if target_block_id:
             viewer.scroll_to_heading_id(target_block_id)
-        viewer.document.focus()
+        if hasattr(viewer, "document"):
+            viewer.document.focus()
+        else:
+            viewer.focus()
 
     def action_toggle_theme(self) -> None:
         """Cycle through available color themes."""
@@ -301,8 +377,11 @@ class MDReaderApp(App):
             footer_bar.remove_class("-searching")
             search_input = self.query_one("#search-input", Input)
             search_input.remove_class("-visible")
-            viewer = self.query_one("#viewer", MarkdownViewerWidget)
-            viewer.document.focus()
+            viewer = self.query_one("#viewer")
+            if hasattr(viewer, "document"):
+                viewer.document.focus()
+            else:
+                viewer.focus()
             self.search_visible = False
         else:
             self.exit()
@@ -317,7 +396,7 @@ class MDReaderApp(App):
 
     def perform_search(self, query: str) -> None:
         """Perform search in markdown content and jump to first match."""
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         matches = viewer.search_text(query)
         self._search_query = query
         self._search_matches = matches
@@ -340,7 +419,7 @@ class MDReaderApp(App):
             return
         
         self._search_match_index = (self._search_match_index + 1) % len(self._search_matches)
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_to_block(self._search_matches[self._search_match_index])
         idx = self._search_match_index + 1
         total = len(self._search_matches)
@@ -356,7 +435,7 @@ class MDReaderApp(App):
             return
         
         self._search_match_index = (self._search_match_index - 1) % len(self._search_matches)
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_to_block(self._search_matches[self._search_match_index])
         idx = self._search_match_index + 1
         total = len(self._search_matches)
@@ -385,11 +464,28 @@ class MDReaderApp(App):
             self.filepath = filepath
             self.SUB_TITLE = str(filepath.name)
             self.title = "mdreader"
-            viewer = self.query_one("#viewer", MarkdownViewerWidget)
-            viewer.update_content(new_content, str(filepath.name))
-            
+
+            fname = str(filepath.name)
+            use_virtual = should_use_virtual_viewer(new_content, fname)
+            current_viewer = self.query_one("#viewer")
+            is_currently_virtual = isinstance(current_viewer, VirtualTextViewer)
+
+            if use_virtual == is_currently_virtual:
+                current_viewer.update_content(new_content, fname)
+            else:
+                reader_box = self.query_one("#reader-box", Container)
+                reader_box.remove_children()
+                new_viewer = self._create_viewer(new_content, fname)
+                reader_box.mount(new_viewer)
+                if hasattr(new_viewer, "document"):
+                    new_viewer.document.focus()
+                else:
+                    new_viewer.focus()
+                self.watch(new_viewer, "scroll_y", self._update_position_label)
+                self.watch(new_viewer, "max_scroll_y", self._update_position_label)
+
             # Restart file watcher on new file if in watch mode
-            if self.watch:
+            if self.watch_mode:
                 if self._watcher:
                     self._watcher.stop()
                 self._watcher = FileWatcher(
@@ -422,37 +518,37 @@ class MDReaderApp(App):
             self._last_g_press_time = 0.0
 
     def action_page_down(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.page_down()
 
     def action_page_up(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.page_up()
 
     def action_scroll_home(self) -> None:
         """Scroll to the top of the document (gg)."""
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_home()
 
     def action_scroll_end(self) -> None:
         """Scroll to the bottom of the document (G)."""
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_end()
 
     def action_scroll_down(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_relative_custom(3)
 
     def action_scroll_up(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_relative_custom(-3)
 
     def action_scroll_right(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_horizontal(8)
 
     def action_scroll_left(self) -> None:
-        viewer = self.query_one("#viewer", MarkdownViewerWidget)
+        viewer = self.query_one("#viewer")
         viewer.scroll_horizontal(-8)
 
     def action_zoom_in(self) -> None:

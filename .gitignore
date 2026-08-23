@@ -41,3 +41,6 @@ notes.md
 model.txt
 memory.md
 test.md
+
+# Rust evaluation & rewrite plan (untracked)
+rust/

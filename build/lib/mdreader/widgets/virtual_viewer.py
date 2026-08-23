@@ -1,0 +1,197 @@
+"""High-performance virtualized line viewer for large files and source code."""
+from __future__ import annotations
+from pathlib import Path
+from textual.scroll_view import ScrollView
+from textual.geometry import Size
+from textual.strip import Strip
+from rich.segment import Segment
+from rich.style import Style
+from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language
+
+LARGE_FILE_LINE_THRESHOLD = 3000
+
+
+def should_use_virtual_viewer(content: str, filename: str | None) -> bool:
+    """Determine whether to use the high-performance VirtualTextViewer instead of MarkdownViewer."""
+    if not filename and not content:
+        return False
+    # Non-markdown code/text files use virtual viewer for instant responsiveness
+    if filename and not is_markdown_file(filename) and not is_html_content(content, filename):
+        return True
+    # Markdown files exceeding threshold use virtual viewer to prevent DOM tree freeze
+    line_count = content.count("\n") + 1
+    if line_count > LARGE_FILE_LINE_THRESHOLD:
+        return True
+    return False
+
+
+class VirtualTextViewer(ScrollView):
+    """Virtualized scrollable line viewer rendering only the visible viewport lines (O(1) DOM)."""
+
+    DEFAULT_CSS = """
+    VirtualTextViewer {
+        width: 100%;
+        height: 100%;
+        background: $surface;
+        color: $text;
+    }
+    """
+
+    def __init__(
+        self,
+        raw_text: str = "",
+        filename: str | None = None,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name=name, id=id, classes=classes)
+        self.raw_text = raw_text
+        self.filename = filename
+        self.lines: list[str] = raw_text.splitlines() if raw_text else []
+        self._highlighted_line: int | None = None
+        self._search_query: str = ""
+        self.show_line_numbers: bool = True
+        self.document = self  # Duck-type compatibility with MarkdownViewerWidget
+        self._update_virtual_size()
+
+    def _update_virtual_size(self) -> None:
+        sample = self.lines[:2000] if len(self.lines) > 2000 else self.lines
+        max_len = max((len(l) for l in sample), default=80)
+        prefix_len = 8 if self.show_line_numbers else 0
+        self.virtual_size = Size(max_len + prefix_len + 4, len(self.lines))
+
+    def update_content(self, text: str, filename: str | None = None) -> None:
+        """Update content and reset virtual geometry."""
+        self.raw_text = text
+        if filename is not None:
+            self.filename = filename
+        self.lines = text.splitlines() if text else []
+        self._highlighted_line = None
+        self._search_query = ""
+        self._update_virtual_size()
+        self.refresh()
+
+    def render_line(self, y: int) -> Strip:
+        scroll_y = int(self.scroll_y)
+        scroll_x = int(self.scroll_x)
+        idx = scroll_y + y
+
+        if not (0 <= idx < len(self.lines)):
+            return Strip([])
+
+        line_str = self.lines[idx]
+        if scroll_x > 0:
+            line_str = line_str[scroll_x:] if scroll_x < len(line_str) else ""
+
+        segments: list[Segment] = []
+
+        # Optional line numbers
+        if self.show_line_numbers:
+            line_no = f"{idx + 1:>6} │ "
+            segments.append(Segment(line_no, Style(color="grey50")))
+
+        # Highlight if explicitly jumped to
+        if idx == self._highlighted_line:
+            segments.append(Segment(line_str, Style(bgcolor="rgb(209,154,102)", color="black", bold=True)))
+            return Strip(segments)
+
+        # Highlight search query in real-time
+        if self._search_query and self._search_query in line_str.lower():
+            q = self._search_query
+            lower = line_str.lower()
+            start = 0
+            while True:
+                found = lower.find(q, start)
+                if found == -1:
+                    if start < len(line_str):
+                        segments.append(Segment(line_str[start:]))
+                    break
+                if found > start:
+                    segments.append(Segment(line_str[start:found]))
+                segments.append(Segment(line_str[found:found + len(q)], Style(bgcolor="yellow", color="black", bold=True)))
+                start = found + len(q)
+            return Strip(segments)
+
+        segments.append(Segment(line_str))
+        return Strip(segments)
+
+    def scroll_relative_custom(self, dy: int) -> None:
+        self.scroll_relative(y=dy)
+
+    def scroll_horizontal(self, dx: int) -> None:
+        self.scroll_relative(x=dx)
+
+    def page_down(self) -> None:
+        self.scroll_relative(y=max(1, self.size.height - 2))
+
+    def page_up(self) -> None:
+        self.scroll_relative(y=-max(1, self.size.height - 2))
+
+    def scroll_home(self) -> None:
+        if self.is_mounted:
+            self.scroll_to(y=0, animate=False)
+        else:
+            self.scroll_y = 0.0
+
+    def scroll_end(self) -> None:
+        if self.is_mounted:
+            self.scroll_to(y=self.max_scroll_y, animate=False)
+        else:
+            self.scroll_y = float(self.max_scroll_y)
+
+    def get_headings(self) -> list[tuple[int, str, str]]:
+        """Extract markdown headings with line index as block_id."""
+        headings = []
+        for idx, line in enumerate(self.lines):
+            l = line.strip()
+            if l.startswith("# "):
+                headings.append((1, l[2:].strip(), str(idx)))
+            elif l.startswith("## "):
+                headings.append((2, l[3:].strip(), str(idx)))
+            elif l.startswith("### "):
+                headings.append((3, l[4:].strip(), str(idx)))
+        return headings
+
+    def scroll_to_heading_id(self, block_id: str) -> None:
+        """Jump directly to line index of heading."""
+        try:
+            line_idx = int(block_id)
+            self._highlighted_line = line_idx
+            if self.is_mounted:
+                self.scroll_to(y=line_idx, animate=False)
+            else:
+                self.scroll_y = float(line_idx)
+            self.refresh()
+        except ValueError:
+            pass
+
+    def search_text(self, query: str) -> list[object]:
+        """Fast substring search returning matching line indices."""
+        q = query.strip().lower()
+        self._search_query = q
+        if not q:
+            return []
+        matches: list[object] = []
+        for idx, line in enumerate(self.lines):
+            if q in line.lower():
+                matches.append(idx)
+        return matches
+
+    def scroll_to_block(self, block: object) -> None:
+        """Scroll to matching line and highlight it."""
+        if isinstance(block, int):
+            self._highlighted_line = block
+            if self.is_mounted:
+                self.scroll_to(y=block, animate=False)
+            else:
+                self.scroll_y = float(block)
+            self.refresh()
+
+    def clear_highlights(self) -> None:
+        self._highlighted_line = None
+        self._search_query = ""
+        self.refresh()
+
+    def toggle_toc(self) -> None:
+        pass

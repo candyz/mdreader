@@ -101,3 +101,75 @@ def test_commander_multiselect(tmp_path: Path):
 
     pane.unselect_all_items()
     assert len(pane.selected_paths) == 0
+
+
+def test_position_label():
+    from mdreader.app import PositionLabel
+
+    label = PositionLabel()
+    # At top with 0 scroll
+    label.update_position(scroll_y=0, max_scroll_y=100)
+    assert "0%" in str(label.render())
+
+    # In middle
+    label.update_position(scroll_y=50, max_scroll_y=100)
+    assert "50%" in str(label.render())
+
+    # At bottom
+    label.update_position(scroll_y=100, max_scroll_y=100)
+    assert "100%" in str(label.render())
+
+    # Fits in single page (max_scroll_y <= 0)
+    label.update_position(scroll_y=0, max_scroll_y=0, virtual_height=20, size_height=40)
+    assert "100%" in str(label.render())
+
+
+def test_virtual_text_viewer():
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
+
+    # Check should_use_virtual_viewer logic
+    assert should_use_virtual_viewer("hello", "file.txt") is True
+    assert should_use_virtual_viewer("hello", "script.py") is True
+    assert should_use_virtual_viewer("# Heading", "doc.md") is False
+    assert should_use_virtual_viewer("line\n" * 4000, "large.md") is True
+
+    # Test VirtualTextViewer operations
+    content = "Line 1\n# Heading 1\nLine 3\n## Sub heading\nLine 5"
+    viewer = VirtualTextViewer(raw_text=content, filename="test.txt")
+    assert len(viewer.lines) == 5
+
+    # Headings extraction
+    headings = viewer.get_headings()
+    assert len(headings) == 2
+    assert headings[0] == (1, "Heading 1", "1")
+    assert headings[1] == (2, "Sub heading", "3")
+
+    # Search
+    matches = viewer.search_text("Heading")
+    assert len(matches) == 2
+    assert matches == [1, 3]
+
+    # Scrolling and line rendering
+    viewer.scroll_to_block(1)
+    assert viewer._highlighted_line == 1
+    strip = viewer.render_line(0)
+    assert len(strip._segments) > 0
+
+
+def test_large_file_virtual_viewer_performance(tmp_path: Path):
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    import time
+
+    # Generate 50,000 lines
+    large_text = "\n".join(f"Data row {i}: some sample content for benchmarking" for i in range(50000))
+    t0 = time.time()
+    viewer = VirtualTextViewer(raw_text=large_text, filename="large.txt")
+    mount_time = time.time() - t0
+    assert mount_time < 0.1, f"Mounting 50k lines should take < 0.1s, took {mount_time:.4f}s"
+
+    # Search 50k lines
+    t1 = time.time()
+    matches = viewer.search_text("row 49999")
+    search_time = time.time() - t1
+    assert len(matches) == 1
+    assert search_time < 0.05, f"Search across 50k lines should take < 0.05s, took {search_time:.4f}s"

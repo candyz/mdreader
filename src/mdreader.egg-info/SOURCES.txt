@@ -23,6 +23,7 @@ src/mdreader/widgets/context_menu.py
 src/mdreader/widgets/file_picker.py
 src/mdreader/widgets/markdown_view.py
 src/mdreader/widgets/outline_modal.py
+src/mdreader/widgets/virtual_viewer.py
 tests/test_file_watcher.py
 tests/test_phase3.py
 tests/test_renderer.py
