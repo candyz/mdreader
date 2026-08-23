@@ -25,15 +25,27 @@ class ClockLabel(Label):
 
 
 class PositionLabel(Label):
-    """Document scroll position percentage display widget (like leaf)."""
+    """Document scroll position and line indicator display widget (like leaf/vim)."""
 
-    def update_position(self, scroll_y: float, max_scroll_y: int, virtual_height: int = 0, size_height: int = 0) -> None:
+    def update_position(
+        self,
+        scroll_y: float,
+        max_scroll_y: int,
+        virtual_height: int = 0,
+        size_height: int = 0,
+        total_lines: int = 0,
+    ) -> None:
         if max_scroll_y <= 0:
             percent = 100 if virtual_height > 0 and virtual_height <= size_height else 0
         else:
             percent = int(round((scroll_y / max_scroll_y) * 100))
             percent = max(0, min(100, percent))
-        self.update(f"{percent}%")
+
+        if total_lines > 0:
+            current_line = min(total_lines, max(1, int(round(scroll_y)) + 1))
+            self.update(f"Ln {current_line}/{total_lines} ({percent}%)")
+        else:
+            self.update(f"{percent}%")
 
 
 class MDReaderApp(App):
@@ -129,7 +141,8 @@ class MDReaderApp(App):
         Binding("t", "toggle_theme", "Theme", show=True),
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "handle_escape", "Cancel/Back", show=False),
-        Binding("slash", "open_search", "Search", show=False),
+        Binding("slash", "open_search", "Search (/)", show=False),
+        Binding("colon", "open_goto_line", "Go to Line (:)", show=False),
         Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
         Binding("y", "copy_selected_text", "Yank / Copy", show=False),
         Binding("c", "copy_selected_text", "Copy", show=False),
@@ -184,6 +197,8 @@ class MDReaderApp(App):
         self._search_matches: list[object] = []
         self._search_match_index: int = -1
         self._mouse_tracking_enabled: bool = True
+        self._digit_buffer: str = ""
+        self._input_mode: str = "search"
 
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
@@ -248,15 +263,24 @@ class MDReaderApp(App):
             self._watcher.start()
 
     def _update_position_label(self) -> None:
-        """Update reading progress percentage label."""
+        """Update reading progress percentage and line number label."""
         try:
             viewer = self.query_one("#viewer")
             pos_label = self.query_one("#position-label", PositionLabel)
+
+            if hasattr(viewer, "lines"):
+                total_lines = len(viewer.lines)
+            elif hasattr(viewer, "raw_markdown"):
+                total_lines = len(viewer.raw_markdown.splitlines())
+            else:
+                total_lines = viewer.virtual_size.height
+
             pos_label.update_position(
-                viewer.scroll_y,
-                viewer.max_scroll_y,
-                viewer.virtual_size.height,
-                viewer.size.height,
+                scroll_y=viewer.scroll_y,
+                max_scroll_y=viewer.max_scroll_y,
+                virtual_height=viewer.virtual_size.height,
+                size_height=viewer.size.height,
+                total_lines=total_lines,
             )
         except Exception:
             pass
@@ -365,10 +389,24 @@ class MDReaderApp(App):
         footer_bar = self.query_one("#footer-bar")
         footer_bar.add_class("-searching")
         search_input = self.query_one("#search-input", Input)
-        search_input.add_class("-visible")
+        search_input.placeholder = "/search pattern... (Enter to find, n: next, N: prev, Esc to dismiss)"
         search_input.value = ""
+        search_input.add_class("-visible")
         search_input.focus()
         self.search_visible = True
+        self._input_mode = "search"
+
+    def action_open_goto_line(self) -> None:
+        """Open jump to line number input in bottom footer bar."""
+        footer_bar = self.query_one("#footer-bar")
+        footer_bar.add_class("-searching")
+        search_input = self.query_one("#search-input", Input)
+        search_input.placeholder = ":line number... (Enter to jump, e.g. 42 or 100, Esc to dismiss)"
+        search_input.value = ":"
+        search_input.add_class("-visible")
+        search_input.focus()
+        self.search_visible = True
+        self._input_mode = "goto"
 
     def action_handle_escape(self) -> None:
         """Escape handles closing search input or quitting."""
@@ -387,12 +425,43 @@ class MDReaderApp(App):
             self.exit()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle search submission (Vim-style /+keyword)."""
+        """Handle search or goto line submission."""
         if event.input.id == "search-input":
-            query = event.value.strip()
+            val = event.value.strip()
             self.action_handle_escape()
-            if query:
-                self.perform_search(query)
+            if not val:
+                return
+            if val.startswith(":") or self._input_mode == "goto":
+                num_str = val.lstrip(":").strip()
+                if num_str.isdigit():
+                    self.action_goto_line(int(num_str))
+                else:
+                    self.notify(f"Invalid line number: {val}", title="Go to Line", severity="warning", timeout=2)
+            else:
+                self.perform_search(val)
+
+    def action_goto_line(self, line_number: int) -> None:
+        """Jump to specific line number in document (1-indexed)."""
+        viewer = self.query_one("#viewer")
+        if isinstance(viewer, VirtualTextViewer):
+            total_lines = max(1, len(viewer.lines))
+            target_line = max(1, min(total_lines, line_number))
+            target_idx = target_line - 1
+            viewer.scroll_to_block(target_idx)
+            viewer.scroll_to(y=target_idx, animate=False)
+            self.notify(f"Jumped to line {target_line}/{total_lines}", title="Go to Line", timeout=1.5)
+        else:
+            if hasattr(viewer, "raw_markdown"):
+                total_lines = max(1, len(viewer.raw_markdown.splitlines()))
+            else:
+                total_lines = max(1, viewer.virtual_size.height)
+            target_line = max(1, min(total_lines, line_number))
+            if total_lines > 1 and viewer.max_scroll_y > 0:
+                target_y = int(round((target_line - 1) / (total_lines - 1) * viewer.max_scroll_y))
+            else:
+                target_y = 0
+            viewer.scroll_to(y=target_y, animate=False)
+            self.notify(f"Jumped to line {target_line}/{total_lines}", title="Go to Line", timeout=1.5)
 
     def perform_search(self, query: str) -> None:
         """Perform search in markdown content and jump to first match."""
@@ -498,23 +567,41 @@ class MDReaderApp(App):
             self.notify(f"Failed to open file: {e}", title="Error", severity="error")
 
     def on_key(self, event) -> None:
-        """Handle raw key sequences like 'gg' for scrolling to top."""
+        """Handle raw key sequences like 'gg', 'G', or '123G' for scrolling/jumping."""
         if self.search_visible:
             return
 
         import time
         now = time.time()
 
+        if event.character and event.character.isdigit():
+            self._digit_buffer += event.character
+            return
+
         if event.character == "g":
-            if now - self._last_g_press_time <= 0.5:
+            if self._digit_buffer:
+                target_line = int(self._digit_buffer)
+                self._digit_buffer = ""
+                self._last_g_press_time = 0.0
+                self.action_goto_line(target_line)
+            elif now - self._last_g_press_time <= 0.5:
                 self.action_scroll_home()
                 self._last_g_press_time = 0.0
             else:
                 self._last_g_press_time = now
         elif event.character == "G":
-            self.action_scroll_end()
+            if self._digit_buffer:
+                target_line = int(self._digit_buffer)
+                self._digit_buffer = ""
+                self.action_goto_line(target_line)
+            else:
+                self.action_scroll_end()
             self._last_g_press_time = 0.0
+        elif event.character == ":":
+            self._digit_buffer = ""
+            self.action_open_goto_line()
         else:
+            self._digit_buffer = ""
             self._last_g_press_time = 0.0
 
     def action_page_down(self) -> None:

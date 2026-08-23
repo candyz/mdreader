@@ -107,21 +107,21 @@ def test_position_label():
     from mdreader.app import PositionLabel
 
     label = PositionLabel()
-    # At top with 0 scroll
-    label.update_position(scroll_y=0, max_scroll_y=100)
-    assert "0%" in str(label.render())
+    # At top with total_lines
+    label.update_position(scroll_y=0, max_scroll_y=100, total_lines=100)
+    assert "Ln 1/100 (0%)" in str(label.render())
 
-    # In middle
-    label.update_position(scroll_y=50, max_scroll_y=100)
-    assert "50%" in str(label.render())
+    # In middle (scroll_y=49 -> line 50)
+    label.update_position(scroll_y=49, max_scroll_y=100, total_lines=100)
+    assert "Ln 50/100 (49%)" in str(label.render())
 
-    # At bottom
-    label.update_position(scroll_y=100, max_scroll_y=100)
-    assert "100%" in str(label.render())
+    # At bottom (scroll_y=99 -> line 100)
+    label.update_position(scroll_y=99, max_scroll_y=100, total_lines=100)
+    assert "Ln 100/100 (99%)" in str(label.render())
 
     # Fits in single page (max_scroll_y <= 0)
-    label.update_position(scroll_y=0, max_scroll_y=0, virtual_height=20, size_height=40)
-    assert "100%" in str(label.render())
+    label.update_position(scroll_y=0, max_scroll_y=0, virtual_height=20, size_height=40, total_lines=20)
+    assert "Ln 1/20 (100%)" in str(label.render())
 
 
 def test_virtual_text_viewer():
@@ -201,5 +201,45 @@ def test_open_file_swap_viewer(tmp_path: Path):
             await app.open_file(f_md)
             await pilot.pause()
             assert isinstance(app.query_one("#viewer"), MarkdownViewerWidget)
+
+    asyncio.run(run())
+
+
+def test_goto_line_and_colon_jump(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    import asyncio
+
+    # 500 lines text file
+    txt_file = tmp_path / "long.txt"
+    txt_file.write_text("\n".join(f"Line {i+1}" for i in range(500)), encoding="utf-8")
+
+    async def run():
+        app = MDReaderApp(filepath=txt_file)
+        async with app.run_test() as pilot:
+            viewer = app.query_one("#viewer", VirtualTextViewer)
+            assert viewer.scroll_y == 0
+            
+            # Jump to line 250 via action_goto_line
+            app.action_goto_line(250)
+            await pilot.pause()
+            assert viewer.scroll_y == 249
+            assert "Ln 250/500" in str(app.query_one("#position-label").render())
+            
+            # Jump to bottom via 500G
+            await pilot.press("5", "0", "0", "G")
+            await pilot.pause()
+            assert "100%" in str(app.query_one("#position-label").render())
+
+            # Jump via colon prompt
+            app.action_open_goto_line()
+            await pilot.pause()
+            assert app.search_visible is True
+            search_input = app.query_one("#search-input")
+            search_input.value = ":42"
+            await pilot.press("enter")
+            await pilot.pause()
+            assert viewer.scroll_y == 41
+            assert "Ln 42/500" in str(app.query_one("#position-label").render())
 
     asyncio.run(run())
