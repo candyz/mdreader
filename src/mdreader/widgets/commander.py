@@ -77,6 +77,7 @@ class HelpModal(ModalScreen[None]):
     SHORTCUTS = [
         ("Tab", "Switch active pane (Left ↔ Right)"),
         ("Insert / Space", "Toggle multi-selection (⭐)"),
+        ("s / F2", "Cycle file sort order (Name/Size/Time/Ext)"),
         ("Enter / F3", "View / open file in Reader or enter dir"),
         ("F4", "Edit current file in Vim / $EDITOR"),
         ("F5", "Copy selected item(s) to target directory"),
@@ -250,13 +251,14 @@ class ConfirmModal(ModalScreen[bool]):
 class PaneWidget(Vertical):
     """A single directory pane (Left or Right) in Commander mode with multi-selection support."""
 
-    def __init__(self, pane_id: str, start_dir: Path, show_all: bool = True, **kwargs):
+    def __init__(self, pane_id: str, start_dir: Path, show_all: bool = True, sort_mode: str = "name", **kwargs):
         super().__init__(id=pane_id, **kwargs)
         self.pane_id = pane_id
         self.current_dir = Path(start_dir).resolve()
         if not self.current_dir.is_dir():
             self.current_dir = self.current_dir.parent
         self.show_all = show_all
+        self.sort_mode = sort_mode  # "name", "size", "time", "ext"
         self.items: List[Tuple[str, str, Path]] = []  # (label, type, path)
         self.selected_paths: Set[Path] = set()
 
@@ -266,6 +268,14 @@ class PaneWidget(Vertical):
         yield OptionList(id=f"{self.pane_id}-list", classes="pane-file-list")
         with Horizontal(classes="pane-info-bar"):
             yield Label("", id=f"{self.pane_id}-info", classes="pane-info-label")
+
+    def cycle_sort_mode(self) -> str:
+        """Cycle through sort modes: name -> size -> time -> ext -> name."""
+        modes = ["name", "size", "time", "ext"]
+        idx = (modes.index(self.sort_mode) + 1) % len(modes)
+        self.sort_mode = modes[idx]
+        self.refresh_pane()
+        return self.sort_mode
 
     def scan(self) -> None:
         """Scan directory items and clean up orphaned selections."""
@@ -293,10 +303,24 @@ class PaneWidget(Vertical):
                         if entry.name.lower().endswith(supported_exts):
                             files.append(entry)
 
-            for d in sorted(subdirs, key=lambda p: p.name.lower()):
+            # Sort subdirs and files according to sort_mode
+            if self.sort_mode == "size":
+                sorted_subdirs = sorted(subdirs, key=lambda p: p.name.lower())
+                sorted_files = sorted(files, key=lambda p: p.stat().st_size if p.is_file() else 0, reverse=True)
+            elif self.sort_mode == "time":
+                sorted_subdirs = sorted(subdirs, key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+                sorted_files = sorted(files, key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+            elif self.sort_mode == "ext":
+                sorted_subdirs = sorted(subdirs, key=lambda p: p.name.lower())
+                sorted_files = sorted(files, key=lambda p: (p.suffix.lower(), p.name.lower()))
+            else:  # "name"
+                sorted_subdirs = sorted(subdirs, key=lambda p: p.name.lower())
+                sorted_files = sorted(files, key=lambda p: p.name.lower())
+
+            for d in sorted_subdirs:
                 items.append((f"📁 {d.name}/", "dir", d))
 
-            for f in sorted(files, key=lambda p: p.name.lower()):
+            for f in sorted_files:
                 fname_lower = f.name.lower()
                 if fname_lower.endswith((".html", ".htm", ".xhtml")):
                     icon = "🌐"
@@ -358,10 +382,11 @@ class PaneWidget(Vertical):
             dirs_count = len([i for i in self.items if i[1] == "dir"])
             files_count = len([i for i in self.items if i[1] == "file"])
             sel_count = len(self.selected_paths)
+            sort_badge = f"[{self.sort_mode.upper()}] "
             if sel_count > 0:
-                info_label.update(f"{total_items} items ({dirs_count} dirs, {files_count} files) | [bold yellow]{sel_count} selected[/]")
+                info_label.update(f"{sort_badge}{total_items} items ({dirs_count} dirs, {files_count} files) | [bold yellow]{sel_count} selected[/]")
             else:
-                info_label.update(f"{total_items} items ({dirs_count} dirs, {files_count} files)")
+                info_label.update(f"{sort_badge}{total_items} items ({dirs_count} dirs, {files_count} files)")
         except Exception:
             pass
 
@@ -424,6 +449,8 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         Binding("tab", "switch_pane", "Switch", priority=True),
         Binding("insert", "toggle_select", "Select", priority=True),
         Binding("space", "toggle_select", "Select", show=False, priority=True),
+        Binding("s", "cycle_sort", "Sort", priority=True),
+        Binding("f2", "cycle_sort", "Sort", show=False, priority=True),
         Binding("f3", "view_file", "View", priority=True),
         Binding("f4", "edit_file", "Edit", priority=True),
         Binding("f5", "copy_file", "Copy", priority=True),
@@ -624,6 +651,12 @@ class CommanderScreen(ModalScreen[Optional[Path]]):
         """Quit the application entirely (F10)."""
         self._save_dirs()
         self.app.exit()
+
+    def action_cycle_sort(self) -> None:
+        """Cycle sorting mode of current active pane (s / F2)."""
+        active_pane = self.query_one(f"#{self.active_pane_id}", PaneWidget)
+        mode = active_pane.cycle_sort_mode()
+        self.notify(f"排序方式：{mode.upper()}", title="檔案排序 (s)", timeout=1.5)
 
     def action_view_file(self) -> None:
         """View highlighted file in Reader Mode (F3 / Enter)."""

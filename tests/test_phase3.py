@@ -243,3 +243,103 @@ def test_goto_line_and_colon_jump(tmp_path: Path):
             assert "Ln 42/500" in str(app.query_one("#position-label").render())
 
     asyncio.run(run())
+
+
+def test_fuzzy_score_and_recent_files(tmp_path: Path):
+    from mdreader.widgets.file_picker import fuzzy_score, FilePickerScreen
+    from mdreader.utils.config import add_recent_file, get_recent_files
+
+    # 1. Fuzzy scoring tests
+    is_m, s = fuzzy_score("sapp", "src/mdreader/app.py")
+    assert is_m is True
+    assert s > 0
+
+    is_m, s = fuzzy_score("app", "app.py")
+    assert is_m is True
+    assert s > 500  # Prefix match bonus
+
+    is_m, _ = fuzzy_score("xyz", "app.py")
+    assert is_m is False
+
+    # 2. Recent files tests
+    f1 = tmp_path / "doc1.md"
+    f1.write_text("# Doc 1", encoding="utf-8")
+    f2 = tmp_path / "doc2.md"
+    f2.write_text("# Doc 2", encoding="utf-8")
+
+    add_recent_file(f1)
+    add_recent_file(f2)
+    recents = get_recent_files()
+    assert str(f2.resolve()) in recents
+    assert str(f1.resolve()) in recents
+
+
+def test_virtual_viewer_syntax_highlighting():
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    py_code = "def calculate_sum(a: int, b: int = 10) -> int:\n    # Add numbers\n    return a + b"
+    viewer = VirtualTextViewer(raw_text=py_code, filename="calc.py")
+    assert viewer._lexer is not None
+
+    strip0 = viewer.render_line(0)
+    # Check that segments contain styled tokens (not just plain string)
+    assert len(strip0._segments) > 1
+    found_keyword = any(seg.style and getattr(seg.style, "color", None) and "magenta" in str(seg.style.color) for seg in strip0._segments)
+    assert found_keyword is True
+
+
+def test_commander_sort_modes(tmp_path: Path):
+    from mdreader.widgets.commander import PaneWidget
+
+    # Create dummy files with different sizes and extensions
+    (tmp_path / "z_small.txt").write_text("a", encoding="utf-8")
+    (tmp_path / "a_large.py").write_text("a" * 500, encoding="utf-8")
+    (tmp_path / "m_medium.md").write_text("a" * 100, encoding="utf-8")
+
+    pane = PaneWidget(pane_id="test-pane", start_dir=tmp_path, show_all=True)
+    
+    # 1. Sort by name
+    pane.sort_mode = "name"
+    pane.scan()
+    file_names = [p.name for _, item_type, p in pane.items if item_type == "file"]
+    assert file_names == ["a_large.py", "m_medium.md", "z_small.txt"]
+
+    # 2. Sort by size (largest first)
+    pane.sort_mode = "size"
+    pane.scan()
+    file_names = [p.name for _, item_type, p in pane.items if item_type == "file"]
+    assert file_names == ["a_large.py", "m_medium.md", "z_small.txt"]
+
+    # 3. Sort by extension
+    pane.sort_mode = "ext"
+    pane.scan()
+    file_names = [p.name for _, item_type, p in pane.items if item_type == "file"]
+    assert file_names == ["m_medium.md", "a_large.py", "z_small.txt"]
+
+    # 4. Cycle sort mode
+    pane.sort_mode = "name"
+    next_mode = pane.cycle_sort_mode()
+    assert next_mode == "size"
+    assert pane.sort_mode == "size"
+
+
+def test_full_document_copy_fallback(tmp_path: Path):
+    from mdreader.app import MDReaderApp
+    import asyncio
+
+    doc_file = tmp_path / "sample.md"
+    doc_file.write_text("# Test Document\n\nFull copy test line.", encoding="utf-8")
+
+    async def run():
+        app = MDReaderApp(filepath=doc_file)
+        async with app.run_test() as pilot:
+            copied = []
+            app.copy_to_system_clipboard = lambda text: copied.append(text) or True
+            
+            # Action copy with no mouse selection should copy entire document
+            app.action_copy_selected_text()
+            await pilot.pause()
+            assert len(copied) == 1
+            assert "# Test Document" in copied[0]
+
+    asyncio.run(run())

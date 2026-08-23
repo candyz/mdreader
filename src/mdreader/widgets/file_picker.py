@@ -8,7 +8,38 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, OptionList, Label, Checkbox
 from textual.widgets.option_list import Option
 from textual.binding import Binding
-from mdreader.utils.config import get_config_value, set_config_value
+from mdreader.utils.config import get_config_value, set_config_value, get_recent_files
+
+
+def fuzzy_score(pattern: str, text: str) -> tuple[bool, int]:
+    """Fzf-style fuzzy matching algorithm returning (is_match, score)."""
+    p = pattern.lower().strip()
+    t = text.lower()
+    if not p:
+        return True, 0
+    if p in t:
+        base = 1000 - len(t)
+        if t.startswith(p):
+            base += 500
+        return True, base
+
+    p_idx = 0
+    score = 0
+    prev_idx = -2
+    for idx, ch in enumerate(t):
+        if p_idx < len(p) and ch == p[p_idx]:
+            score += 10
+            if idx == prev_idx + 1:
+                score += 30  # Consecutive bonus
+            if idx == 0 or t[idx - 1] in ("/", "_", "-", "."):
+                score += 40  # Word boundary bonus
+            prev_idx = idx
+            p_idx += 1
+            if p_idx == len(p):
+                break
+    if p_idx == len(p):
+        return True, score - len(t)
+    return False, 0
 
 
 class FilePickerScreen(ModalScreen[Optional[Path]]):
@@ -20,6 +51,7 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
         Binding("up", "move_up", "Up", priority=True, show=False),
         Binding("down", "move_down", "Down", priority=True, show=False),
         Binding("ctrl+a", "toggle_all_files", "Toggle All Files", priority=True),
+        Binding("ctrl+r", "toggle_recent_files", "Recent Files", priority=True),
     ]
 
     CSS = """
@@ -103,11 +135,25 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
             self.show_all_files = bool(get_config_value("show_all_files", False))
         else:
             self.show_all_files = show_all_files
+        self.show_recent: bool = False
         self.items: List[tuple[str, str, Path]] = []  # (display_label, type, path)
 
     def _scan_directory(self) -> None:
-        """Scan current directory for parent dir (..), subdirectories, and files."""
+        """Scan current directory or recent files."""
         items: List[tuple[str, str, Path]] = []
+
+        if self.show_recent:
+            recents = get_recent_files()
+            if not recents:
+                items.append(("ℹ️ No recent files recorded yet", "info", Path.cwd()))
+            else:
+                for r in recents:
+                    rp = Path(r)
+                    if rp.exists():
+                        items.append((f"🕒 {rp.name:<32} ({rp.parent})", "file", rp))
+            self.items = items
+            return
+
         excluded_dirs = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
         supported_exts = (".md", ".markdown", ".html", ".htm", ".xhtml")
 
@@ -162,12 +208,12 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
             with Horizontal(id="picker-bottom-bar"):
                 yield Input(
                     value=self.initial_query,
-                    placeholder="🔍 Filter files/folders... (↑/↓: navigate, Enter: select/enter, Esc: cancel)",
+                    placeholder="🔍 Fuzzy filter... (e.g. sapp -> app.py, Ctrl+R: Recent, Ctrl+A: All)",
                     id="filter-input",
                 )
                 yield Checkbox("Show all files (Ctrl+A)", value=self.show_all_files, id="all-files-checkbox")
             with Horizontal(id="picker-footer"):
-                yield Label("💡 Enter: Open file / Enter folder | Ctrl+A: Toggle all files | Tab/Esc: Close", id="picker-hint")
+                yield Label("💡 Enter: Open / Enter folder | Ctrl+R: Recent files | Ctrl+A: All files | Esc: Close", id="picker-hint")
 
     def on_mount(self) -> None:
         self._refresh_view(self.initial_query)
@@ -176,20 +222,33 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
     def _refresh_view(self, query: str = "") -> None:
         self._scan_directory()
         title_label = self.query_one("#picker-title", Label)
-        title_label.update(f"📂 {self.current_dir}")
+        if self.show_recent:
+            title_label.update("🕒 Recent Files (最近開啟檔案)")
+        else:
+            title_label.update(f"📂 {self.current_dir}")
 
         option_list = self.query_one("#file-list", OptionList)
         option_list.clear_options()
 
-        q = query.lower().strip()
-        filtered: List[tuple[str, str, Path]] = []
+        q = query.strip()
+        matched_items: List[tuple[int, str, str, Path]] = []
         for label, item_type, path in self.items:
             if item_type == "parent_dir":
-                filtered.append((label, item_type, path))
-            elif not q or q in label.lower() or q in path.name.lower():
-                filtered.append((label, item_type, path))
+                if not q or ".." in q or "parent" in q.lower():
+                    matched_items.append((9999, label, item_type, path))
+            elif not q:
+                matched_items.append((0, label, item_type, path))
+            else:
+                is_m1, s1 = fuzzy_score(q, path.name)
+                is_m2, s2 = fuzzy_score(q, label)
+                if is_m1 or is_m2:
+                    matched_items.append((max(s1, s2), label, item_type, path))
 
-        for label, item_type, path in filtered:
+        if q:
+            # Sort by match score descending
+            matched_items.sort(key=lambda x: x[0], reverse=True)
+
+        for _, label, item_type, path in matched_items:
             option_list.add_option(Option(prompt=label, id=f"{item_type}:{path}"))
 
         if option_list.option_count > 0:
@@ -204,19 +263,7 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "filter-input":
-            option_list = self.query_one("#file-list", OptionList)
-            option_list.clear_options()
-
-            q = event.value.lower().strip()
-            for label, item_type, path in self.items:
-                if item_type == "parent_dir":
-                    if not q or ".." in q or "parent" in q:
-                        option_list.add_option(Option(prompt=label, id=f"{item_type}:{path}"))
-                elif not q or q in label.lower() or q in path.name.lower():
-                    option_list.add_option(Option(prompt=label, id=f"{item_type}:{path}"))
-
-            if option_list.option_count > 0:
-                option_list.highlighted = 0
+            self._refresh_view(event.value)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         event.stop()
@@ -240,9 +287,12 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
         if ":" not in option_id:
             return
         item_type, path_str = option_id.split(":", 1)
+        if item_type == "info":
+            return
         target_path = Path(path_str)
 
         if item_type in ("parent_dir", "dir"):
+            self.show_recent = False
             self.current_dir = target_path.resolve()
             filter_input = self.query_one("#filter-input", Input)
             filter_input.value = ""
@@ -255,6 +305,13 @@ class FilePickerScreen(ModalScreen[Optional[Path]]):
         """Toggle Show All Files checkbox via Ctrl+A."""
         cb = self.query_one("#all-files-checkbox", Checkbox)
         cb.value = not cb.value
+
+    def action_toggle_recent_files(self) -> None:
+        """Toggle between Recent Files and Current Directory via Ctrl+R."""
+        self.show_recent = not self.show_recent
+        filter_input = self.query_one("#filter-input", Input)
+        filter_input.value = ""
+        self._refresh_view()
 
     def on_key(self, event) -> None:
         """Handle key events for tab and escape dismissal."""

@@ -10,7 +10,7 @@ from textual.reactive import reactive
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
 from mdreader.utils.file_watcher import FileWatcher
-from mdreader.utils.config import get_config_value, set_config_value
+from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
 
 
 class ClockLabel(Label):
@@ -253,6 +253,10 @@ class MDReaderApp(App):
             viewer.focus()
         self.watch(viewer, "scroll_y", self._update_position_label)
         self.watch(viewer, "max_scroll_y", self._update_position_label)
+
+        # Record opened file to recent files history
+        if self.filepath:
+            add_recent_file(self.filepath)
 
         # Start file watcher if watch mode is enabled
         if self.watch_mode and self.filepath and self.filepath.exists():
@@ -531,8 +535,10 @@ class MDReaderApp(App):
         try:
             new_content = filepath.read_text(encoding="utf-8")
             self.filepath = filepath
+            self.content = new_content
             self.SUB_TITLE = str(filepath.name)
             self.title = "mdreader"
+            add_recent_file(filepath)
 
             fname = str(filepath.name)
             use_virtual = should_use_virtual_viewer(new_content, fname)
@@ -745,18 +751,28 @@ class MDReaderApp(App):
         return success
 
     def action_copy_selected_text(self) -> None:
-        """Copy current mouse-selected text to system clipboard (y / c / Ctrl+C)."""
+        """Copy mouse-selected text or full document to system clipboard (y / c / Ctrl+C)."""
         selected_text = self.screen.get_selected_text()
-        if not selected_text or not selected_text.strip():
-            self.notify("請先用滑鼠框選欲複製的文字", title="剪貼簿", timeout=1.5)
+        if selected_text and selected_text.strip():
+            success = self.copy_to_system_clipboard(selected_text)
+            preview = selected_text[:40].replace("\n", " ") + ("..." if len(selected_text) > 40 else "")
+            if success:
+                self.notify(f"已複製選取文字：\n「{preview}」", title="複製成功", timeout=2.0)
+            else:
+                self.notify("無法寫入系統剪貼簿", title="複製失敗", severity="error", timeout=2.0)
             return
 
-        success = self.copy_to_system_clipboard(selected_text)
-        preview = selected_text[:40].replace("\n", " ") + ("..." if len(selected_text) > 40 else "")
-        if success:
-            self.notify(f"已複製到剪貼簿：\n「{preview}」", title="複製成功", timeout=2.0)
+        # If no text selected with mouse, copy the whole document content
+        doc_text = self.content
+        if doc_text and doc_text.strip():
+            success = self.copy_to_system_clipboard(doc_text)
+            lines_count = doc_text.count("\n") + 1
+            if success:
+                self.notify(f"已複製全文至剪貼簿 ({lines_count} 行 / {len(doc_text)} 字元)", title="全文複製成功 (y)", timeout=2.0)
+            else:
+                self.notify("無法寫入系統剪貼簿", title="複製失敗", severity="error", timeout=2.0)
         else:
-            self.notify("無法寫入系統剪貼簿", title="複製失敗", severity="error", timeout=2.0)
+            self.notify("目前沒有可複製的內容", title="剪貼簿", timeout=1.5)
 
     def on_text_selected(self, event) -> None:
         """Automatically copy when text is selected with mouse and notify."""

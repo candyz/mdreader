@@ -6,9 +6,34 @@ from textual.geometry import Size
 from textual.strip import Strip
 from rich.segment import Segment
 from rich.style import Style
+import pygments
+from pygments.lexers import get_lexer_by_name
+from pygments.token import Token
 from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language
 
 LARGE_FILE_LINE_THRESHOLD = 3000
+
+TOKEN_STYLES = {
+    Token.Keyword: Style(color="magenta", bold=True),
+    Token.Keyword.Constant: Style(color="magenta", bold=True),
+    Token.Keyword.Type: Style(color="bright_cyan"),
+    Token.Name.Function: Style(color="bright_blue", bold=True),
+    Token.Name.Class: Style(color="bright_cyan", bold=True),
+    Token.Name.Builtin: Style(color="cyan"),
+    Token.String: Style(color="green"),
+    Token.String.Doc: Style(color="green", italic=True),
+    Token.Number: Style(color="bright_cyan"),
+    Token.Comment: Style(color="bright_black", italic=True),
+    Token.Operator: Style(color="bright_yellow"),
+}
+
+
+def get_style_for_token(ttype: Token) -> Style | None:
+    while ttype:
+        if ttype in TOKEN_STYLES:
+            return TOKEN_STYLES[ttype]
+        ttype = ttype.parent
+    return None
 
 
 def should_use_virtual_viewer(content: str, filename: str | None) -> bool:
@@ -53,7 +78,21 @@ class VirtualTextViewer(ScrollView):
         self._search_query: str = ""
         self.show_line_numbers: bool = True
         self.document = self  # Duck-type compatibility with MarkdownViewerWidget
+        self._lexer = None
+        self._setup_lexer()
         self._update_virtual_size()
+
+    def _setup_lexer(self) -> None:
+        """Initialize lightweight Pygments lexer based on filename extension."""
+        self._lexer = None
+        if not self.filename:
+            return
+        lang = detect_code_language(self.filename)
+        if lang and lang != "text":
+            try:
+                self._lexer = get_lexer_by_name(lang)
+            except Exception:
+                self._lexer = None
 
     def _update_virtual_size(self) -> None:
         sample = self.lines[:2000] if len(self.lines) > 2000 else self.lines
@@ -69,6 +108,7 @@ class VirtualTextViewer(ScrollView):
         self.lines = text.splitlines() if text else []
         self._highlighted_line = None
         self._search_query = ""
+        self._setup_lexer()
         self._update_virtual_size()
         self.refresh()
 
@@ -112,6 +152,19 @@ class VirtualTextViewer(ScrollView):
                 segments.append(Segment(line_str[found:found + len(q)], Style(bgcolor="yellow", color="black", bold=True)))
                 start = found + len(q)
             return Strip(segments)
+
+        # On-demand syntax highlighting via Pygments
+        if self._lexer:
+            try:
+                for ttype, val in pygments.lex(line_str, self._lexer):
+                    val = val.rstrip("\r\n")
+                    if not val:
+                        continue
+                    style = get_style_for_token(ttype)
+                    segments.append(Segment(val, style))
+                return Strip(segments)
+            except Exception:
+                pass
 
         segments.append(Segment(line_str))
         return Strip(segments)

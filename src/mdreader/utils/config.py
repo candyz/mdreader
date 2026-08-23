@@ -39,3 +39,29 @@ def set_config_value(key: str, value: Any) -> None:
     cfg = load_config()
     cfg[key] = value
     save_config(cfg)
+
+
+def get_recent_files() -> list[str]:
+    """Get list of recently opened file paths (up to 30)."""
+    recents = get_config_value("recent_files", [])
+    if not isinstance(recents, list):
+        return []
+    # Filter out non-existent files
+    valid_recents = [f for f in recents if isinstance(f, str) and Path(f).exists()]
+    return valid_recents[:30]
+
+
+def add_recent_file(filepath: Path | str | None) -> None:
+    """Add a file path to the recent files list and persist."""
+    if not filepath:
+        return
+    try:
+        p = Path(filepath).resolve()
+        if not p.is_file():
+            return
+        p_str = str(p)
+        recents = [f for f in get_recent_files() if f != p_str]
+        recents.insert(0, p_str)
+        set_config_value("recent_files", recents[:30])
+    except Exception:
+        pass
