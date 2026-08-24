@@ -767,6 +767,17 @@ def test_image_viewer_widget(tmp_path):
     widget.action_reset_zoom()
     assert widget.zoom == 1.0
 
+    # Test duck-typing scroll methods on ImageViewerWidget
+    widget.scroll_relative_custom(3)
+    widget.scroll_relative_custom(-3)
+    widget.scroll_horizontal(8)
+    widget.scroll_horizontal(-8)
+    widget.page_down()
+    widget.page_up()
+    widget.scroll_home()
+    widget.scroll_end()
+    widget.scroll_to_block(0)
+
     # Test SVG loading and rendering
     svg_path = tmp_path / "vector_graphic.svg"
     svg_path.write_text("""<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
@@ -778,7 +789,7 @@ def test_image_viewer_widget(tmp_path):
     assert len(svg_widget._strips) > 0
     assert svg_widget._img_format == "SVG"
 
-    # Test app loading image file directly
+    # Test app loading image file directly and pressing keys =, +, z, -, Z, 0, j, k, d, f
     async def run():
         app = MDReaderApp(filepath=img_path)
         async with app.run_test() as pilot:
@@ -793,5 +804,35 @@ def test_image_viewer_widget(tmp_path):
             app.action_zoom_out()
             await pilot.pause()
             assert viewer.zoom == 1.0
+
+            # Test key '=' for zoom in
+            await pilot.press("=")
+            await pilot.pause()
+            assert viewer.zoom == 1.2
+
+            # Test key '-' for zoom out
+            await pilot.press("-")
+            await pilot.pause()
+            assert viewer.zoom == 1.0
+
+            # Test key 'z' for zoom in
+            await pilot.press("z")
+            await pilot.pause()
+            assert viewer.zoom == 1.2
+
+            # Test key '0' for reset zoom
+            await pilot.press("0")
+            await pilot.pause()
+            assert viewer.zoom == 1.0
+
+            # Test scrolling keys j, k, d, f without throwing AttributeError
+            await pilot.press("j")
+            await pilot.pause()
+            await pilot.press("k")
+            await pilot.pause()
+            await pilot.press("d")
+            await pilot.pause()
+            await pilot.press("f")
+            await pilot.pause()
 
     asyncio.run(run())

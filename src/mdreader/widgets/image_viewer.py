@@ -312,6 +312,56 @@ class ImageViewerWidget(ScrollView):
             pass
 
     # Duck-typing methods for compatibility with MDReaderApp actions
+    def scroll_relative_custom(self, delta_y: int) -> None:
+        """Scroll vertically by relative line count."""
+        try:
+            self.scroll_relative(y=delta_y, animate=False)
+        except Exception:
+            pass
+
+    def scroll_horizontal(self, delta_x: int) -> None:
+        """Scroll horizontally by character count."""
+        try:
+            self.scroll_relative(x=delta_x, animate=False)
+        except Exception:
+            pass
+
+    def page_down(self) -> None:
+        """Scroll down by one page height."""
+        try:
+            self.scroll_page_down(animate=False)
+        except Exception:
+            pass
+
+    def page_up(self) -> None:
+        """Scroll up by one page height."""
+        try:
+            self.scroll_page_up(animate=False)
+        except Exception:
+            pass
+
+    def scroll_home(self) -> None:
+        """Scroll to the top of the image."""
+        try:
+            self.scroll_to(x=0, y=0, animate=False)
+        except Exception:
+            pass
+
+    def scroll_end(self) -> None:
+        """Scroll to the bottom of the image."""
+        try:
+            self.scroll_to(y=self.max_scroll_y, animate=False)
+        except Exception:
+            pass
+
+    def scroll_to_block(self, block_id_or_line: int | str) -> None:
+        """Scroll to line index (duck typing compatibility)."""
+        if isinstance(block_id_or_line, int):
+            try:
+                self.scroll_to(y=block_id_or_line, animate=False)
+            except Exception:
+                pass
+
     def get_headings(self) -> list:
         return []
 

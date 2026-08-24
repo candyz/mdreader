@@ -268,7 +268,13 @@ class MDReaderApp(App):
         Binding("f", "scroll_right", "Scroll Right (f)", show=False),
         Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
         Binding("equals", "zoom_in", "Zoom In (=)", show=False),
+        Binding("equal", "zoom_in", "Zoom In (=)", show=False),
+        Binding("equals_sign", "zoom_in", "Zoom In (=)", show=False),
         Binding("plus", "zoom_in", "Zoom In (+)", show=False),
+        Binding("z", "zoom_in", "Zoom In (z)", show=False),
+        Binding("Z", "zoom_out", "Zoom Out (Z)", show=False),
+        Binding("0", "reset_zoom", "Reset Zoom (0)", show=False),
+        Binding("zero", "reset_zoom", "Reset Zoom (0)", show=False),
         Binding("e", "export_document", "Export (e)", show=False),
         Binding("Y", "copy_code_block", "Copy Code (Y)", show=False),
         Binding("ctrl+k", "copy_code_block", "Copy Code", show=False),
@@ -1082,8 +1088,17 @@ class MDReaderApp(App):
                     self.notify(f"未設定書籤 [{key.upper()}]", title="書籤不存在", severity="warning", timeout=1.5)
                 return
 
-        # 3. Digit buffering for numeric line jump
+        # 3. Digit buffering for numeric line jump (1-9 to start, 0 if buffer exists; skip 0 on ImageViewerWidget)
         if event.character and event.character.isdigit():
+            viewer = self.query_one("#viewer")
+            if isinstance(viewer, ImageViewerWidget):
+                if event.character == "0" and not self._digit_buffer:
+                    self.action_reset_zoom()
+                    return
+                # On image viewer, digits don't do line jumps
+                return
+            if event.character == "0" and not self._digit_buffer:
+                return
             self._digit_buffer += event.character
             return
 
@@ -1096,7 +1111,7 @@ class MDReaderApp(App):
             self._waiting_for_jump_mark = True
             return
 
-        # 5. Handle navigation and jumps
+        # 6. Handle navigation and jumps
         if event.character == "g":
             if self._digit_buffer:
                 target_line = int(self._digit_buffer)
@@ -1207,6 +1222,19 @@ class MDReaderApp(App):
         reader_box.styles.max_width = new_val
         self.max_width = new_val
         self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
+
+    def action_reset_zoom(self) -> None:
+        """Reset image zoom to 100% or reset reading column width."""
+        viewer = self.query_one("#viewer")
+        if isinstance(viewer, ImageViewerWidget):
+            viewer.action_reset_zoom()
+            pct = int(round(viewer.zoom * 100))
+            self.notify(f"重設圖片縮放比例：{pct}%", title="圖片縮放 (0)", timeout=1.5)
+            return
+
+        reader_box = self.query_one("#reader-box")
+        reader_box.styles.max_width = self.max_width
+        self.notify("已重設版面寬度", title="版面寬度", timeout=1.5)
 
     def copy_to_system_clipboard(self, text: str) -> bool:
         """Copy text to macOS/Linux system clipboard using native tools and OSC 52."""
