@@ -733,3 +733,53 @@ def test_github_dark_and_light_themes():
             assert app.theme == "github-light"
 
     asyncio.run(run())
+
+
+def test_image_viewer_widget(tmp_path):
+    from PIL import Image, ImageDraw
+    from mdreader.widgets.image_viewer import ImageViewerWidget, is_image_file
+    from mdreader.app import MDReaderApp
+    import asyncio
+
+    # Create dummy PNG image
+    img_path = tmp_path / "test_logo.png"
+    img = Image.new("RGBA", (100, 50), color=(255, 0, 0, 255))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([10, 10, 40, 40], fill=(0, 255, 0, 255))
+    img.save(img_path)
+
+    assert is_image_file(img_path) is True
+    assert is_image_file("file.jpg") is True
+    assert is_image_file("file.gif") is True
+    assert is_image_file("file.md") is False
+
+    # Instantiate ImageViewerWidget directly
+    widget = ImageViewerWidget(filepath=img_path)
+    assert len(widget._strips) > 0
+    assert widget.virtual_size.height == len(widget._strips) + 1
+
+    # Test zoom actions
+    widget.action_zoom_in()
+    assert widget.zoom == 1.2
+    widget.action_zoom_out()
+    assert widget.zoom == 1.0
+    widget.action_reset_zoom()
+    assert widget.zoom == 1.0
+
+    # Test app loading image file directly
+    async def run():
+        app = MDReaderApp(filepath=img_path)
+        async with app.run_test() as pilot:
+            viewer = app.query_one("#viewer")
+            assert isinstance(viewer, ImageViewerWidget)
+
+            # Test zooming via app actions
+            app.action_zoom_in()
+            await pilot.pause()
+            assert viewer.zoom == 1.2
+
+            app.action_zoom_out()
+            await pilot.pause()
+            assert viewer.zoom == 1.0
+
+    asyncio.run(run())

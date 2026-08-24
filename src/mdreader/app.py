@@ -15,6 +15,7 @@ from textual.reactive import reactive
 from textual.theme import Theme
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
+from mdreader.widgets.image_viewer import ImageViewerWidget, is_image_file
 from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
 from mdreader.widgets.marks_modal import MarksModal
 from mdreader.utils.file_watcher import FileWatcher
@@ -300,15 +301,18 @@ class MDReaderApp(App):
         self.initial_line = initial_line
         self._mmap_buffer: MmapLineBuffer | None = None
         if not content and self.filepath and self.filepath.is_file():
-            try:
-                fname = self.filepath.name
-                if self.filepath.stat().st_size > MMAP_THRESHOLD_BYTES and should_use_virtual_viewer("", fname):
-                    self._mmap_buffer = MmapLineBuffer(self.filepath)
-                    self.content = ""
-                else:
-                    self.content = self.filepath.read_text(encoding="utf-8")
-            except Exception:
-                self.content = content
+            if is_image_file(self.filepath):
+                self.content = ""
+            else:
+                try:
+                    fname = self.filepath.name
+                    if self.filepath.stat().st_size > MMAP_THRESHOLD_BYTES and should_use_virtual_viewer("", fname):
+                        self._mmap_buffer = MmapLineBuffer(self.filepath)
+                        self.content = ""
+                    else:
+                        self.content = self.filepath.read_text(encoding="utf-8")
+                except Exception:
+                    self.content = content
         else:
             self.content = content
         self.max_width = max_width
@@ -332,8 +336,11 @@ class MDReaderApp(App):
         if self.filepath:
             self.SUB_TITLE = str(self.filepath.name)
 
-    def _create_viewer(self, content: str = "", filename: str | None = None):
-        """Create high-performance VirtualTextViewer for large/code files or MarkdownViewerWidget for rich markdown."""
+    def _create_viewer(self, content: str = "", filename: str | None = None, filepath: Path | None = None):
+        """Create ImageViewerWidget, VirtualTextViewer, or MarkdownViewerWidget based on content and file type."""
+        target_path = filepath or self.filepath
+        if is_image_file(target_path) or is_image_file(filename):
+            return ImageViewerWidget(filepath=target_path, id="viewer")
         if should_use_virtual_viewer(content, filename):
             if getattr(self, "_mmap_buffer", None) is not None:
                 return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, id="viewer")
@@ -351,6 +358,7 @@ class MDReaderApp(App):
                 yield self._create_viewer(
                     content=self.content,
                     filename=str(self.filepath.name) if self.filepath else None,
+                    filepath=self.filepath,
                 )
         with Vertical(id="bottom-area"):
             with Horizontal(id="cmd-prompt-bar"):
@@ -480,7 +488,9 @@ class MDReaderApp(App):
                 try:
                     file_size = self.filepath.stat().st_size
                     ext = self.filepath.suffix.lower()
-                    if ext in (".md", ".markdown"):
+                    if ext in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif"):
+                        file_type = f"Image ({ext.lstrip('.').upper()})"
+                    elif ext in (".md", ".markdown"):
                         file_type = "Markdown"
                     elif ext in (".py",):
                         file_type = "Python"
@@ -535,9 +545,23 @@ class MDReaderApp(App):
         """Reload file content from disk and update viewer."""
         if self.filepath and self.filepath.exists():
             try:
-                new_content = self.filepath.read_text(encoding="utf-8")
                 fname = str(self.filepath.name)
                 viewer = self.query_one("#viewer")
+                if is_image_file(self.filepath):
+                    if isinstance(viewer, ImageViewerWidget):
+                        viewer.update_content(self.filepath)
+                    else:
+                        reader_box = self.query_one("#reader-box", Container)
+                        await reader_box.remove_children()
+                        new_viewer = self._create_viewer(content="", filename=fname, filepath=self.filepath)
+                        await reader_box.mount(new_viewer)
+                        new_viewer.focus()
+                        self.watch(new_viewer, "scroll_y", self._update_position_label)
+                        self.watch(new_viewer, "max_scroll_y", self._update_position_label)
+                    self.notify(f"Image reloaded: {fname}", title="Auto-Reload", timeout=2)
+                    return
+
+                new_content = self.filepath.read_text(encoding="utf-8")
                 use_virtual = should_use_virtual_viewer(new_content, fname)
                 is_currently_virtual = isinstance(viewer, VirtualTextViewer)
 
@@ -546,7 +570,7 @@ class MDReaderApp(App):
                 else:
                     reader_box = self.query_one("#reader-box", Container)
                     await reader_box.remove_children()
-                    new_viewer = self._create_viewer(new_content, fname)
+                    new_viewer = self._create_viewer(new_content, fname, filepath=self.filepath)
                     await reader_box.mount(new_viewer)
                     if hasattr(new_viewer, "document"):
                         new_viewer.document.focus()
@@ -560,7 +584,7 @@ class MDReaderApp(App):
                 self.notify(f"Reload failed: {e}", title="Error", severity="error")
 
     def action_edit_in_editor(self) -> None:
-        """Open current file in external editor ($EDITOR or vim) and reload upon exit."""
+        """Open current file in external editor ($EDITOR or vim) or system viewer and reload upon exit."""
         import os
         import shutil
         import subprocess
@@ -568,6 +592,13 @@ class MDReaderApp(App):
         # If reading from stdin without filepath, prompt or notify
         if not self.filepath:
             self.notify("Cannot edit stdin/streamed content directly (no file path)", title="Edit", severity="warning")
+            return
+
+        if is_image_file(self.filepath):
+            viewer = self.query_one("#viewer")
+            if hasattr(viewer, "action_open_external"):
+                viewer.action_open_external()
+                self.notify(f"已呼叫系統檢視器開啟圖片：{self.filepath.name}", title="開啟圖片", timeout=2.0)
             return
 
         editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vim"
@@ -823,6 +854,25 @@ class MDReaderApp(App):
             add_recent_file(filepath)
             fname = str(filepath.name)
 
+            if is_image_file(filepath):
+                if hasattr(self, "_mmap_buffer") and self._mmap_buffer:
+                    self._mmap_buffer.close()
+                    self._mmap_buffer = None
+                self.content = ""
+                current_viewer = self.query_one("#viewer")
+                if isinstance(current_viewer, ImageViewerWidget):
+                    current_viewer.update_content(filepath)
+                else:
+                    reader_box = self.query_one("#reader-box", Container)
+                    await reader_box.remove_children()
+                    new_viewer = self._create_viewer(content="", filename=fname, filepath=filepath)
+                    await reader_box.mount(new_viewer)
+                    new_viewer.focus()
+                    self.watch(new_viewer, "scroll_y", self._update_position_label)
+                    self.watch(new_viewer, "max_scroll_y", self._update_position_label)
+                self.notify(f"Opened Image: {filepath.name}", timeout=1.5)
+                return
+
             is_large_mmap = filepath.stat().st_size > MMAP_THRESHOLD_BYTES and should_use_virtual_viewer("", fname)
             if is_large_mmap:
                 if hasattr(self, "_mmap_buffer") and self._mmap_buffer:
@@ -848,7 +898,7 @@ class MDReaderApp(App):
             else:
                 reader_box = self.query_one("#reader-box", Container)
                 await reader_box.remove_children()
-                new_viewer = self._create_viewer(new_content, fname)
+                new_viewer = self._create_viewer(new_content, fname, filepath=filepath)
                 await reader_box.mount(new_viewer)
                 if hasattr(new_viewer, "document"):
                     new_viewer.document.focus()
@@ -1108,7 +1158,14 @@ class MDReaderApp(App):
         viewer.scroll_horizontal(-8)
 
     def action_zoom_in(self) -> None:
-        """Enlarge reading column width (= / +). Use Cmd +/- for terminal font size."""
+        """Enlarge reading column width or image zoom (= / +)."""
+        viewer = self.query_one("#viewer")
+        if isinstance(viewer, ImageViewerWidget):
+            viewer.action_zoom_in()
+            pct = int(round(viewer.zoom * 100))
+            self.notify(f"圖片縮放比例：{pct}%", title="圖片縮放 (+)", timeout=1.5)
+            return
+
         reader_box = self.query_one("#reader-box")
         current_width = reader_box.styles.max_width
         screen_width = self.size.width
@@ -1129,7 +1186,14 @@ class MDReaderApp(App):
             self.notify(f"版面寬度：{new_val} 欄\n💡 字型大小請用終端機原生快速鍵：Cmd + 或 Cmd -", title="版面寬度調整", timeout=2.5)
 
     def action_zoom_out(self) -> None:
-        """Narrow reading column width (-). Use Cmd +/- for terminal font size."""
+        """Narrow reading column width or image zoom (-)."""
+        viewer = self.query_one("#viewer")
+        if isinstance(viewer, ImageViewerWidget):
+            viewer.action_zoom_out()
+            pct = int(round(viewer.zoom * 100))
+            self.notify(f"圖片縮放比例：{pct}%", title="圖片縮放 (-)", timeout=1.5)
+            return
+
         reader_box = self.query_one("#reader-box")
         current_width = reader_box.styles.max_width
         screen_width = self.size.width
