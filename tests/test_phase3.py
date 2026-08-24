@@ -874,3 +874,48 @@ def test_virtual_viewer_tab_expansion_and_line_padding():
         assert strip.cell_length >= 80
         if y == 0:
             assert "yyy;    認識論" in rendered_text
+
+
+def test_custom_keybindings_configuration(tmp_path, monkeypatch):
+    import json
+    from mdreader.utils.config import get_keybindings, format_keybinding_display, build_app_bindings
+    from mdreader.widgets.help_modal import get_help_sections
+    from mdreader.app import MDReaderApp
+    import asyncio
+
+    # Setup temporary config dir
+    fake_config_dir = tmp_path / ".config" / "mdreader"
+    fake_config_dir.mkdir(parents=True)
+    fake_config_file = fake_config_dir / "config.json"
+
+    # Write custom keybindings
+    custom_cfg = {
+        "keybindings": {
+            "toggle_wrap": "alt+w",
+            "open_help": ["f1", "question_mark"],
+            "zoom_in": ["+", "z"],
+        }
+    }
+    fake_config_file.write_text(json.dumps(custom_cfg), encoding="utf-8")
+
+    import mdreader.utils.config as cfg_mod
+    monkeypatch.setattr(cfg_mod, "CONFIG_FILE", fake_config_file)
+    monkeypatch.setattr(cfg_mod, "CONFIG_DIR", fake_config_dir)
+
+    # Verify get_keybindings returns custom mappings
+    kb = get_keybindings()
+    assert kb["toggle_wrap"] == ["alt+w"]
+    assert kb["open_help"] == ["f1", "question_mark"]
+    assert kb["zoom_in"] == ["+", "z"]
+    assert kb["quit"] == ["q"]  # Unspecified key uses default
+
+    # Verify help sections reflect custom mappings
+    help_sec = get_help_sections()
+    help_text = "".join(f"{k} {d}" for _, items in help_sec for k, d in items)
+    assert "Alt+W" in help_text
+
+    # Verify app initialization with custom bindings
+    app = MDReaderApp(content="# Hello\nCustom bindings test.")
+    bindings_map = app._bindings.key_to_bindings
+    assert "alt+w" in bindings_map
+    assert "q" in bindings_map

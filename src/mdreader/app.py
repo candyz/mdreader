@@ -8,7 +8,7 @@ import webbrowser
 import shutil
 from pathlib import Path
 from textual.app import App, ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingsMap
 from textual.widgets import Footer, Input, Label
 from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
@@ -19,7 +19,7 @@ from mdreader.widgets.image_viewer import ImageViewerWidget, is_image_file
 from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
 from mdreader.widgets.marks_modal import MarksModal
 from mdreader.utils.file_watcher import FileWatcher
-from mdreader.utils.config import get_config_value, set_config_value, add_recent_file
+from mdreader.utils.config import get_config_value, set_config_value, add_recent_file, build_app_bindings
 from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
 from mdreader.widgets.commander import format_file_size
 from mdreader.widgets.export_modal import ExportModal
@@ -233,58 +233,7 @@ class MDReaderApp(App):
     }
     """
 
-    BINDINGS = [
-        Binding("o", "open_file_picker", "Open", show=True),
-        Binding("O", "toggle_toc", "Outline", show=True),
-        Binding("ctrl+o", "open_commander", "Commander", show=True),
-        Binding("w", "toggle_wrap", "Wrap", show=True),
-        Binding("v", "edit_in_editor", "Edit", show=True),
-        Binding("t", "toggle_theme", "Theme", show=True),
-        Binding("q", "quit", "Quit", show=True),
-        Binding("h", "open_help", "Help", show=True),
-        Binding("question_mark", "open_help", "Help (?)", show=False),
-        Binding("f1", "open_help", "Help (F1)", show=False),
-        Binding("escape", "handle_escape", "Cancel/Back", show=False),
-        Binding("slash", "open_search", "Search (/)", show=False),
-        Binding("colon", "open_goto_line", "Go to Line (:)", show=False),
-        Binding("alt+z", "toggle_wrap", "Wrap (Alt+Z)", show=False),
-        Binding("gx", "open_link", "Open Link (gx)", show=False),
-        Binding("ctrl+m", "list_marks", "Marks (Ctrl+M)", show=False),
-        Binding("m", "toggle_mouse_mode", "Mouse Mode (滑鼠模式)", show=False),
-        Binding("T", "toggle_cmd_prompt", "Terminal Prompt (T)", show=False),
-        Binding("y", "copy_selected_text", "Yank / Copy", show=False),
-        Binding("c", "copy_selected_text", "Copy", show=False),
-        Binding("ctrl+c", "copy_selected_text", "Copy", show=False),
-        Binding("ctrl+y", "copy_selected_text", "Yank", show=False),
-        Binding("n", "search_next", "Next match", show=False),
-        Binding("N", "search_prev", "Prev match", show=False),
-        Binding("j", "page_up", "Page Up", show=False),
-        Binding("k", "page_down", "Page Down", show=False),
-        Binding("up", "scroll_up", "Up", show=False),
-        Binding("down", "scroll_down", "Down", show=False),
-        Binding("left", "scroll_left", "Left", show=False),
-        Binding("right", "scroll_right", "Right", show=False),
-        Binding("d", "scroll_left", "Scroll Left (d)", show=False),
-        Binding("f", "scroll_right", "Scroll Right (f)", show=False),
-        Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
-        Binding("equals", "zoom_in", "Zoom In (=)", show=False),
-        Binding("equal", "zoom_in", "Zoom In (=)", show=False),
-        Binding("equals_sign", "zoom_in", "Zoom In (=)", show=False),
-        Binding("plus", "zoom_in", "Zoom In (+)", show=False),
-        Binding("z", "zoom_in", "Zoom In (z)", show=False),
-        Binding("Z", "zoom_out", "Zoom Out (Z)", show=False),
-        Binding("0", "reset_zoom", "Reset Zoom (0)", show=False),
-        Binding("zero", "reset_zoom", "Reset Zoom (0)", show=False),
-        Binding("e", "export_document", "Export (e)", show=False),
-        Binding("Y", "copy_code_block", "Copy Code (Y)", show=False),
-        Binding("ctrl+k", "copy_code_block", "Copy Code", show=False),
-        Binding("ctrl+t", "open_in_terminal", "Terminal (Ctrl+T)", show=False),
-        Binding("ctrl+shift+o", "reveal_in_finder", "Reveal File", show=False),
-        Binding("L", "toggle_line_numbers", "Line No (L)", show=False),
-        Binding("alt+l", "toggle_line_numbers", "Line No", show=False),
-        Binding("G", "scroll_end", "Scroll End (Bottom)", show=False),
-        Binding("r", "reload_file", "Reload", show=False),
-    ]
+    BINDINGS = build_app_bindings()
 
     search_visible = reactive(False)
     cmd_prompt_visible = reactive(False)
@@ -301,6 +250,9 @@ class MDReaderApp(App):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        dynamic_bindings = build_app_bindings()
+        self.BINDINGS = dynamic_bindings
+        self._bindings = BindingsMap(dynamic_bindings)
         self.register_theme(GITHUB_DARK_THEME)
         self.register_theme(GITHUB_LIGHT_THEME)
         self.filepath = Path(filepath) if filepath else None
