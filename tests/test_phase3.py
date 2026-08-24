@@ -919,3 +919,35 @@ def test_custom_keybindings_configuration(tmp_path, monkeypatch):
     bindings_map = app._bindings.key_to_bindings
     assert "alt+w" in bindings_map
     assert "q" in bindings_map
+
+
+def test_default_syntax_fallback_and_override():
+    from mdreader.renderer.html import detect_code_language
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+
+    # 1. Unrecognized / plain text files fallback to 'sh' (or config default_syntax)
+    assert detect_code_language("notes.txt") == "sh"
+    assert detect_code_language("server.log") == "sh"
+    assert detect_code_language("unknown_file") == "sh"
+    assert detect_code_language("config.env") == "sh"
+
+    # 2. Known extensions preserve their dedicated languages
+    assert detect_code_language("main.py") == "python"
+    assert detect_code_language("main.rs") == "rust"
+    assert detect_code_language("data.json") == "json"
+    assert detect_code_language("script.sh") == "bash"
+
+    # 3. VirtualTextViewer initializes with 'sh' lexer by default on plain text
+    viewer = VirtualTextViewer(lines=["# Comment line", "NAME=mdreader", "echo $NAME"], filename="data.txt")
+    assert viewer._lexer is not None
+    assert "bash" in viewer._lexer.name.lower() or "sh" in viewer._lexer.name.lower()
+
+    # 4. VirtualTextViewer with explicit syntax override
+    py_viewer = VirtualTextViewer(lines=["def foo():", "    return 42"], syntax="python")
+    assert py_viewer._lexer is not None
+    assert "python" in py_viewer._lexer.name.lower()
+
+    # 5. MarkdownViewerWidget with syntax override
+    md_viewer = MarkdownViewerWidget(raw_markdown="print('hello')", filename="test.txt", syntax="python")
+    assert "```python" in md_viewer.raw_markdown or "```python" in md_viewer._preprocess("print('hello')", "test.txt")

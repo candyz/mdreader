@@ -191,12 +191,14 @@ class MarkdownViewerWidget(MarkdownViewer):
         raw_markdown: str = "",
         show_toc: bool = False,
         filename: str | None = None,
+        syntax: str | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ):
         self.raw_markdown = raw_markdown
         self.filename = filename
+        self.syntax = syntax
         self.soft_wrap: bool = True
         processed_md = self._preprocess(raw_markdown, filename) if raw_markdown else ""
         super().__init__(
@@ -228,15 +230,22 @@ class MarkdownViewerWidget(MarkdownViewer):
             content = html_to_markdown(content)
         elif filename and not is_markdown_file(filename):
             # Treat code & plain text files (e.g. .c, .h, .js, .css, .sh, .py, etc.) as syntax-highlighted code blocks
-            lang = detect_code_language(filename)
-            content = f"```{lang}\n{content}\n```"
+            lang = self.syntax or detect_code_language(filename)
+            if lang and lang.lower() not in ("none", "plain", "text"):
+                content = f"```{lang}\n{content}\n```"
+            else:
+                content = f"```\n{content}\n```"
+        elif not filename and self.syntax and self.syntax.lower() not in ("none", "plain", "text"):
+            content = f"```{self.syntax}\n{content}\n```"
         return preprocess_mermaid(content)
 
-    def update_content(self, markdown_text: str, filename: str | None = None) -> None:
+    def update_content(self, markdown_text: str, filename: str | None = None, syntax: str | None = None) -> None:
         """Process HTML/Mermaid blocks and update the document."""
         self.raw_markdown = markdown_text
         if filename is not None:
             self.filename = filename
+        if syntax is not None:
+            self.syntax = syntax
         processed_md = self._preprocess(markdown_text, self.filename)
         self.document.update(processed_md)
 

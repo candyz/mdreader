@@ -89,6 +89,12 @@ def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int |
         help="Export document directly to plain text file without launching TUI",
     )
     parser.add_argument(
+        "-s", "--syntax",
+        type=str,
+        default=None,
+        help="Override syntax highlighting language for plain/code files (e.g. sh, bash, python, c, rust, json, none)",
+    )
+    parser.add_argument(
         "--inline",
         action="store_true",
         help="Render Markdown directly to stdout without interactive TUI",
@@ -151,8 +157,13 @@ def main() -> None:
         if is_html_content(raw_text, fname):
             raw_text = html_to_markdown(raw_text)
         elif fname and not is_markdown_file(fname):
-            lang = detect_code_language(fname)
-            raw_text = f"```{lang}\n{raw_text}\n```"
+            lang = args.syntax or detect_code_language(fname)
+            if lang and lang.lower() not in ("none", "plain", "text"):
+                raw_text = f"```{lang}\n{raw_text}\n```"
+            else:
+                raw_text = f"```\n{raw_text}\n```"
+        elif not fname and args.syntax and args.syntax.lower() not in ("none", "plain", "text"):
+            raw_text = f"```{args.syntax}\n{raw_text}\n```"
         processed_md = preprocess_mermaid(raw_text)
         md = Markdown(processed_md)
         console.print(md)
@@ -167,6 +178,7 @@ def main() -> None:
         theme=args.theme,
         show_toc=args.toc,
         initial_line=initial_line,
+        syntax=args.syntax,
     )
     app.run()
 

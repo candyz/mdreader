@@ -193,10 +193,17 @@ def is_markdown_file(filename: str | None = None) -> bool:
     return fn.endswith((".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdwn", ".mdtxt", ".mdtext"))
 
 
-def detect_code_language(filename: str | None = None) -> str:
+def detect_code_language(filename: str | None = None, default_syntax: str | None = None) -> str:
     """Detect appropriate programming language alias for syntax highlighting like Vim."""
+    if default_syntax is None:
+        try:
+            from mdreader.utils.config import get_config_value
+            default_syntax = get_config_value("default_syntax", "sh")
+        except Exception:
+            default_syntax = "sh"
+
     if not filename:
-        return "text"
+        return default_syntax if default_syntax and default_syntax != "none" else "text"
     
     # Common extension mappings for fast & accurate lexer selection
     ext_map = {
@@ -256,12 +263,12 @@ def detect_code_language(filename: str | None = None) -> str:
     try:
         from pygments.lexers import get_lexer_for_filename, ClassNotFound
         lexer = get_lexer_for_filename(filename)
-        if lexer.aliases:
+        if lexer.aliases and lexer.aliases[0] != "text":
             return lexer.aliases[0]
     except Exception:
         pass
     
-    return "text"
+    return default_syntax if default_syntax and default_syntax != "none" else "text"
 
 
 def is_html_content(text: str, filename: str | None = None) -> bool:

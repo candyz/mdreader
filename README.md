@@ -100,6 +100,10 @@ mdreader --inline README.md
 # 8. Stream or pipe from stdin
 cat test.md | mdreader
 curl -s https://example.com | mdreader
+
+# 9. Specify syntax highlighting override (e.g. sh, python, json)
+mdreader -s python snippet.dat
+mdreader -s sh config.env
 ```
 
 ---

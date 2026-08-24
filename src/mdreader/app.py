@@ -247,6 +247,7 @@ class MDReaderApp(App):
         theme: str | None = None,
         show_toc: bool = False,
         initial_line: int | None = None,
+        syntax: str | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -257,6 +258,7 @@ class MDReaderApp(App):
         self.register_theme(GITHUB_LIGHT_THEME)
         self.filepath = Path(filepath) if filepath else None
         self.initial_line = initial_line
+        self.syntax = syntax
         self._mmap_buffer: MmapLineBuffer | None = None
         if not content and self.filepath and self.filepath.is_file():
             if is_image_file(self.filepath):
@@ -301,12 +303,13 @@ class MDReaderApp(App):
             return ImageViewerWidget(filepath=target_path, id="viewer")
         if should_use_virtual_viewer(content, filename):
             if getattr(self, "_mmap_buffer", None) is not None:
-                return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, id="viewer")
-            return VirtualTextViewer(raw_text=content, filename=filename, id="viewer")
+                return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, syntax=self.syntax, id="viewer")
+            return VirtualTextViewer(raw_text=content, filename=filename, syntax=self.syntax, id="viewer")
         return MarkdownViewerWidget(
             raw_markdown=content,
             show_toc=self.show_toc,
             filename=filename,
+            syntax=self.syntax,
             id="viewer",
         )
 
@@ -850,9 +853,9 @@ class MDReaderApp(App):
 
             if use_virtual and is_currently_virtual:
                 if is_large_mmap:
-                    current_viewer.update_content(self._mmap_buffer, fname)
+                    current_viewer.update_content(self._mmap_buffer, fname, syntax=self.syntax)
                 else:
-                    current_viewer.update_content(new_content, fname)
+                    current_viewer.update_content(new_content, fname, syntax=self.syntax)
             else:
                 reader_box = self.query_one("#reader-box", Container)
                 await reader_box.remove_children()

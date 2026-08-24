@@ -80,6 +80,10 @@ mdreader --inline README.md
 # 8. 由管線讀取內容
 cat test.md | mdreader
 curl -s https://example.com | mdreader
+
+# 9. 指定特定語法突顯（例如 sh, python, json 等，純文字預設為 sh）
+mdreader -s python snippet.dat
+mdreader -s sh config.env
 ```
 
 ---

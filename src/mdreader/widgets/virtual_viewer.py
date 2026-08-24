@@ -20,11 +20,13 @@ TOKEN_STYLES = {
     Token.Name.Function: Style(color="bright_blue", bold=True),
     Token.Name.Class: Style(color="bright_cyan", bold=True),
     Token.Name.Builtin: Style(color="cyan"),
+    Token.Name.Variable: Style(color="bright_blue"),
     Token.String: Style(color="green"),
     Token.String.Doc: Style(color="green", italic=True),
     Token.Number: Style(color="bright_cyan"),
     Token.Comment: Style(color="bright_black", italic=True),
     Token.Operator: Style(color="bright_yellow"),
+    Token.Punctuation: Style(color="grey70"),
 }
 
 
@@ -70,12 +72,14 @@ class VirtualTextViewer(ScrollView):
         raw_text: str | Sequence[str] = "",
         lines: Sequence[str] | None = None,
         filename: str | None = None,
+        syntax: str | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
         self.filename = filename
+        self.syntax = syntax
         if lines is not None:
             self.lines = lines
             self.raw_text = ""
@@ -109,16 +113,17 @@ class VirtualTextViewer(ScrollView):
         self.refresh()
 
     def _setup_lexer(self) -> None:
-        """Initialize lightweight Pygments lexer based on filename extension."""
+        """Initialize lightweight Pygments lexer based on filename extension or syntax override."""
         self._lexer = None
-        if not self.filename:
-            return
-        lang = detect_code_language(self.filename)
-        if lang and lang != "text":
+        lang = self.syntax or (detect_code_language(self.filename) if self.filename else detect_code_language(None))
+        if lang and lang.lower() not in ("text", "none", "plain"):
             try:
                 self._lexer = get_lexer_by_name(lang)
             except Exception:
-                self._lexer = None
+                try:
+                    self._lexer = get_lexer_by_name("bash")
+                except Exception:
+                    self._lexer = None
 
     def _compute_display_lines(self) -> None:
         """Compute display lines when soft_wrap is True, or use raw lines when False."""
@@ -166,10 +171,12 @@ class VirtualTextViewer(ScrollView):
             self._update_virtual_size()
             self.refresh()
 
-    def update_content(self, text: str | Sequence[str], filename: str | None = None) -> None:
+    def update_content(self, text: str | Sequence[str], filename: str | None = None, syntax: str | None = None) -> None:
         """Update content and reset virtual geometry."""
         if filename is not None:
             self.filename = filename
+        if syntax is not None:
+            self.syntax = syntax
         if isinstance(text, (list, tuple, MmapLineBuffer)):
             self.lines = text
             self.raw_text = ""

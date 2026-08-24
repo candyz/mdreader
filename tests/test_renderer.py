@@ -108,7 +108,8 @@ def test_detect_code_language():
     assert detect_code_language("script.py") == "python"
     assert detect_code_language("Makefile") == "makefile"
     assert detect_code_language("Dockerfile") == "dockerfile"
-    assert detect_code_language("notes.txt") == "text"
+    assert detect_code_language("notes.txt") == "sh"
+    assert detect_code_language("notes.txt", default_syntax="text") == "text"
 
 
 def test_code_and_plain_text_preprocessing():
