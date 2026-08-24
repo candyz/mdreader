@@ -134,14 +134,15 @@ class VirtualTextViewer(ScrollView):
         wrapped = []
         line_map = []
         for orig_idx, line in enumerate(self.lines):
-            if not line:
+            line_expanded = line.expandtabs(4) if "\t" in line else line
+            if not line_expanded:
                 wrapped.append("")
                 line_map.append((orig_idx, True))
-            elif len(line) <= w:
-                wrapped.append(line)
+            elif len(line_expanded) <= w:
+                wrapped.append(line_expanded)
                 line_map.append((orig_idx, True))
             else:
-                chunks = [line[i:i+w] for i in range(0, len(line), w)]
+                chunks = [line_expanded[i:i+w] for i in range(0, len(line_expanded), w)]
                 for chunk_idx, chunk in enumerate(chunks):
                     wrapped.append(chunk)
                     line_map.append((orig_idx, chunk_idx == 0))
@@ -156,7 +157,7 @@ class VirtualTextViewer(ScrollView):
             self.virtual_size = Size(width, len(display_lines))
             return
         sample = self.lines[:2000] if len(self.lines) > 2000 else self.lines
-        max_len = max((len(l) for l in sample), default=80)
+        max_len = max((len(l.expandtabs(4)) for l in sample), default=80)
         prefix_len = 8 if self.show_line_numbers else 0
         self.virtual_size = Size(max_len + prefix_len + 4, len(self.lines))
 
@@ -185,12 +186,14 @@ class VirtualTextViewer(ScrollView):
         scroll_y = int(self.scroll_y)
         scroll_x = int(self.scroll_x)
         idx = scroll_y + y
+        width = self.size.width if self.size and self.size.width > 0 else 80
 
         display_lines = getattr(self, "_display_lines", self.lines)
         if not (0 <= idx < len(display_lines)):
-            return Strip([])
+            return Strip.blank(width)
 
-        line_str = display_lines[idx]
+        raw_line_str = display_lines[idx]
+        line_str = raw_line_str.expandtabs(4) if "\t" in raw_line_str else raw_line_str
         if not self.soft_wrap and scroll_x > 0:
             line_str = line_str[scroll_x:] if scroll_x < len(line_str) else ""
 
@@ -209,7 +212,8 @@ class VirtualTextViewer(ScrollView):
         # Highlight if explicitly jumped to
         if idx == self._highlighted_line:
             segments.append(Segment(line_str, Style(bgcolor="rgb(209,154,102)", color="black", bold=True)))
-            return Strip(segments)
+            strip = Strip(segments)
+            return strip.adjust_cell_length(width, Style()) if width > 0 else strip
 
         # Highlight search query in real-time
         if self._search_query and self._search_query in line_str.lower():
@@ -226,7 +230,8 @@ class VirtualTextViewer(ScrollView):
                     segments.append(Segment(line_str[start:found]))
                 segments.append(Segment(line_str[found:found + len(q)], Style(bgcolor="yellow", color="black", bold=True)))
                 start = found + len(q)
-            return Strip(segments)
+            strip = Strip(segments)
+            return strip.adjust_cell_length(width, Style()) if width > 0 else strip
 
         # On-demand syntax highlighting via Pygments
         if self._lexer:
@@ -237,12 +242,14 @@ class VirtualTextViewer(ScrollView):
                         continue
                     style = get_style_for_token(ttype)
                     segments.append(Segment(val, style))
-                return Strip(segments)
+                strip = Strip(segments)
+                return strip.adjust_cell_length(width, Style()) if width > 0 else strip
             except Exception:
                 pass
 
         segments.append(Segment(line_str))
-        return Strip(segments)
+        strip = Strip(segments)
+        return strip.adjust_cell_length(width, Style()) if width > 0 else strip
 
     def scroll_relative_custom(self, dy: int) -> None:
         self.scroll_relative(y=dy)

@@ -853,3 +853,24 @@ def test_welcome_screen_version(tmp_path, monkeypatch):
     from mdreader.app import MDReaderApp
     expected_title = f"# Welcome to mdreader v{__version__}"
     assert f"v{__version__}" in expected_title
+
+
+def test_virtual_viewer_tab_expansion_and_line_padding():
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    raw_lines = [
+        "yyy;\t認識論\t586",
+        "yyyy;\t謠言止於智者\t589",
+        "END_TABLE",
+    ]
+    viewer = VirtualTextViewer(lines=raw_lines)
+    viewer._size = (100, 10)
+
+    # Check that render_line expands tabs and pads lines to full viewport width
+    for y in range(len(raw_lines)):
+        strip = viewer.render_line(y)
+        rendered_text = "".join(seg.text for seg in strip._segments)
+        assert "\t" not in rendered_text
+        assert strip.cell_length >= 80
+        if y == 0:
+            assert "yyy;    認識論" in rendered_text
