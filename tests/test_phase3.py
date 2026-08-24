@@ -836,3 +836,20 @@ def test_image_viewer_widget(tmp_path):
             await pilot.pause()
 
     asyncio.run(run())
+
+
+def test_welcome_screen_version(tmp_path, monkeypatch):
+    from mdreader import __version__
+    import subprocess
+    import sys
+
+    # Run in empty directory
+    empty_dir = tmp_path / "empty_dir"
+    empty_dir.mkdir()
+    monkeypatch.chdir(empty_dir)
+
+    from mdreader.__main__ import main
+    # Ensure welcome screen contains version
+    from mdreader.app import MDReaderApp
+    expected_title = f"# Welcome to mdreader v{__version__}"
+    assert f"v{__version__}" in expected_title

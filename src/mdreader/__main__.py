@@ -131,7 +131,7 @@ def main() -> None:
                 filepath = md_files[0]
                 content = filepath.read_text(encoding="utf-8")
             else:
-                content = "# Welcome to mdreader\n\nNo markdown file specified. Press `o` to open the file picker or `q` to quit."
+                content = f"# Welcome to mdreader v{__version__}\n\nNo markdown file specified. Press `o` to open the file picker or `q` to quit."
 
     # Direct CLI Export Mode
     if args.export_html:
