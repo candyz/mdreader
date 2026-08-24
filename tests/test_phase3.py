@@ -751,6 +751,7 @@ def test_image_viewer_widget(tmp_path):
     assert is_image_file(img_path) is True
     assert is_image_file("file.jpg") is True
     assert is_image_file("file.gif") is True
+    assert is_image_file("file.svg") is True
     assert is_image_file("file.md") is False
 
     # Instantiate ImageViewerWidget directly
@@ -765,6 +766,17 @@ def test_image_viewer_widget(tmp_path):
     assert widget.zoom == 1.0
     widget.action_reset_zoom()
     assert widget.zoom == 1.0
+
+    # Test SVG loading and rendering
+    svg_path = tmp_path / "vector_graphic.svg"
+    svg_path.write_text("""<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="100" fill="#202530"/>
+      <circle cx="50" cy="50" r="30" fill="#58a6ff"/>
+    </svg>""", encoding="utf-8")
+
+    svg_widget = ImageViewerWidget(filepath=svg_path)
+    assert len(svg_widget._strips) > 0
+    assert svg_widget._img_format == "SVG"
 
     # Test app loading image file directly
     async def run():

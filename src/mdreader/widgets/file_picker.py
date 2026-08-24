@@ -164,7 +164,7 @@ class FilePickerScreen(ModalScreen[object]):
         excluded_dirs = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
         supported_exts = (
             ".md", ".markdown", ".html", ".htm", ".xhtml",
-            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif",
+            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif", ".svg",
         )
 
         # 1. Add parent directory option if not root
@@ -195,7 +195,7 @@ class FilePickerScreen(ModalScreen[object]):
 
             for f in sorted(files, key=lambda p: p.name.lower()):
                 fname_lower = f.name.lower()
-                if fname_lower.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif")):
+                if fname_lower.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif", ".svg")):
                     ext_icon = "🖼️ "
                 elif fname_lower.endswith((".html", ".htm", ".xhtml")):
                     ext_icon = "🌐"

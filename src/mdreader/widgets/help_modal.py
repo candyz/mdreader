@@ -66,6 +66,16 @@ HELP_SECTIONS = [
             ("q / Esc", "離開 mdreader 閱讀器 / 關閉浮動視窗"),
         ],
     ),
+    (
+        "🖼️ 圖片檢視與縮放 (Image Viewing & Zoom)",
+        [
+            ("+ / = / z", "放大圖片縮放比例 (+20% Zoom In)"),
+            ("- / Z", "縮小圖片縮放比例 (-20% Zoom Out)"),
+            ("0", "重設圖片縮放比例為 100% (Reset Zoom)"),
+            ("↑ / ↓ / ← / → / jkdf", "平移移動檢視大圖 (Pan Image)"),
+            ("v / F4 / Enter", "呼叫系統預設看圖程式開啟原圖 (System Viewer)"),
+        ],
+    ),
 ]
 
 

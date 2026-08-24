@@ -1,7 +1,9 @@
 """High-performance terminal TrueColor image viewer widget using Pillow and ANSI half-blocks."""
 from __future__ import annotations
 import os
+import io
 import sys
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Sequence
@@ -24,6 +26,7 @@ IMAGE_EXTENSIONS = {
     ".ico",
     ".tiff",
     ".tif",
+    ".svg",
 }
 
 
@@ -45,6 +48,70 @@ def format_file_size(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024):.2f} MB"
 
 
+def load_image_or_svg(filepath: Path) -> Image.Image:
+    """Load standard raster image or render SVG to PIL Image with multi-tier fallback."""
+    ext = filepath.suffix.lower()
+    if ext == ".svg":
+        # 1. High-speed Rust-based resvg_py
+        try:
+            import resvg_py
+            svg_content = filepath.read_text(encoding="utf-8")
+            png_bytes = resvg_py.svg_to_bytes(svg_content)
+            img = Image.open(io.BytesIO(png_bytes))
+            img.load()
+            return img
+        except Exception:
+            pass
+
+        # 2. CairoSVG
+        try:
+            import cairosvg
+            svg_bytes = filepath.read_bytes()
+            png_bytes = cairosvg.svg2png(bytestring=svg_bytes)
+            img = Image.open(io.BytesIO(png_bytes))
+            img.load()
+            return img
+        except Exception:
+            pass
+
+        # 3. System QuickLook (macOS) or rsvg-convert (Linux)
+        try:
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            if sys.platform == "darwin":
+                subprocess.run(
+                    ["qlmanage", "-t", "-s", "1024", "-o", temp_dir, str(filepath.resolve())],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=3,
+                )
+                ql_out = Path(temp_dir) / f"{filepath.name}.png"
+                if ql_out.exists():
+                    img = Image.open(ql_out)
+                    img.load()
+                    ql_out.unlink(missing_ok=True)
+                    return img
+            elif shutil.which("rsvg-convert"):
+                temp_png = Path(temp_dir) / f"svg_{filepath.stem}_{os.getpid()}.png"
+                subprocess.run(
+                    ["rsvg-convert", "-o", str(temp_png), str(filepath.resolve())],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=3,
+                )
+                if temp_png.exists():
+                    img = Image.open(temp_png)
+                    img.load()
+                    temp_png.unlink(missing_ok=True)
+                    return img
+        except Exception:
+            pass
+
+        return Image.open(filepath)
+    else:
+        return Image.open(filepath)
+
+
 class ImageViewerWidget(ScrollView):
     """Integrated TrueColor Half-block image viewer widget for terminal displays."""
 
@@ -61,6 +128,8 @@ class ImageViewerWidget(ScrollView):
         Binding("plus", "zoom_in", "Zoom In (+)", show=False),
         Binding("equals", "zoom_in", "Zoom In (=)", show=False),
         Binding("minus", "zoom_out", "Zoom Out (-)", show=False),
+        Binding("z", "zoom_in", "Zoom In (z)", show=False),
+        Binding("Z", "zoom_out", "Zoom Out (Z)", show=False),
         Binding("zero", "reset_zoom", "Reset Zoom (0)", show=False),
         Binding("v", "open_external", "Open with default app (v)", show=False),
         Binding("f4", "open_external", "Open with default app (F4)", show=False),
@@ -85,15 +154,16 @@ class ImageViewerWidget(ScrollView):
         self._load_and_render()
 
     def _load_and_render(self, target_width: int | None = None) -> None:
-        """Load image file and generate TrueColor half-block terminal strips."""
+        """Load image or SVG file and generate TrueColor half-block terminal strips."""
         if not self.filepath.exists() or not self.filepath.is_file():
             self._render_error(f"File not found: {self.filepath}")
             return
 
         try:
-            with Image.open(self.filepath) as raw_img:
+            with load_image_or_svg(self.filepath) as raw_img:
                 self._img_orig_size = raw_img.size
-                self._img_format = raw_img.format or self.filepath.suffix.lstrip(".").upper()
+                is_svg = self.filepath.suffix.lower() == ".svg"
+                self._img_format = "SVG" if is_svg else (raw_img.format or self.filepath.suffix.lstrip(".").upper())
                 self._img_mode = raw_img.mode
 
                 # Composite RGBA or paletted images with transparency onto neutral dark background
@@ -122,7 +192,7 @@ class ImageViewerWidget(ScrollView):
 
                 strips: list[Strip] = []
                 file_size_str = format_file_size(self.filepath.stat().st_size)
-                zoom_pct = int(self.zoom * 100)
+                zoom_pct = int(round(self.zoom * 100))
 
                 # 1. Header Information Banner
                 banner_text = f"🖼️  {self.filepath.name} │ {orig_w}x{orig_h} px │ {self._img_format} ({self._img_mode}) │ {file_size_str} │ Zoom: {zoom_pct}%"
@@ -150,7 +220,7 @@ class ImageViewerWidget(ScrollView):
 
                 # 3. Footer Instruction Bar
                 strips.append(Strip.blank(1))
-                hints = "[v/Enter]: Open with System Viewer  │  [+/-/0]: Zoom In/Out/Reset  │  [↑↓←→ / jkdf]: Pan Image"
+                hints = "[+ / = / z]: 放大 (Zoom In)  │  [- / Z]: 縮小 (Zoom Out)  │  [0]: 重設 (100%)  │  [v / Enter]: 系統看圖  │  [↑↓←→ / jkdf]: 平移"
                 strips.append(Strip([Segment(hints, Style(color="bright_black", italic=True))]))
 
                 self._strips = strips
@@ -197,20 +267,34 @@ class ImageViewerWidget(ScrollView):
 
     def action_zoom_in(self) -> None:
         """Zoom in image preview (+20%)."""
-        if self.zoom < 4.0:
+        if self.zoom < 5.0:
             self.zoom = round(self.zoom + 0.2, 1)
             self._load_and_render()
+            pct = int(round(self.zoom * 100))
+            try:
+                self.notify(f"放大圖片：{pct}%", title="圖片縮放 (+)", timeout=1.0)
+            except Exception:
+                pass
 
     def action_zoom_out(self) -> None:
         """Zoom out image preview (-20%)."""
-        if self.zoom > 0.3:
+        if self.zoom > 0.2:
             self.zoom = round(self.zoom - 0.2, 1)
             self._load_and_render()
+            pct = int(round(self.zoom * 100))
+            try:
+                self.notify(f"縮小圖片：{pct}%", title="圖片縮放 (-)", timeout=1.0)
+            except Exception:
+                pass
 
     def action_reset_zoom(self) -> None:
         """Reset zoom to standard 100%."""
         self.zoom = 1.0
         self._load_and_render()
+        try:
+            self.notify("重設圖片縮放比例：100%", title="圖片縮放 (0)", timeout=1.0)
+        except Exception:
+            pass
 
     def action_open_external(self) -> None:
         """Open the image with the operating system default image viewer."""

@@ -327,7 +327,7 @@ class PaneWidget(Vertical):
 
             for f in sorted_files:
                 fname_lower = f.name.lower()
-                if fname_lower.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif")):
+                if fname_lower.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif", ".svg")):
                     icon = "🖼️ "
                 elif fname_lower.endswith((".html", ".htm", ".xhtml")):
                     icon = "🌐"
