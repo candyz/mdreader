@@ -119,6 +119,111 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 
 ---
 
+## ⚙️ Custom Keybindings (`~/.config/mdreader/config.json`)
+
+`mdreader` allows complete customization of all keyboard shortcuts through `~/.config/mdreader/config.json`.
+
+### 1. Configuration Example
+
+```json
+{
+  "theme": "github-dark",
+  "keybindings": {
+    "quit": ["q", "escape"],
+    "open_file_picker": "o",
+    "toggle_toc": "O",
+    "open_commander": "ctrl+o",
+    "toggle_wrap": ["w", "alt+z"],
+    "edit_in_editor": ["v", "f4"],
+    "toggle_theme": "t",
+    "open_help": ["h", "?", "f1"],
+    "open_search": "/",
+    "open_goto_line": ":",
+    "page_down": ["pagedown", "d", "ctrl+f"],
+    "page_up": ["pageup", "u", "ctrl+b"],
+    "scroll_down": ["down", "j"],
+    "scroll_up": ["up", "k"],
+    "zoom_in": ["+", "=", "z"],
+    "zoom_out": ["-", "Z"],
+    "reset_zoom": "0"
+  }
+}
+```
+
+### 2. Common Keymap Presets
+
+#### 🅰️ Vim-centric Preset
+```json
+{
+  "keybindings": {
+    "page_down": ["ctrl+f", "ctrl+d", "pagedown"],
+    "page_up": ["ctrl+b", "ctrl+u", "pageup"],
+    "scroll_down": ["j", "down"],
+    "scroll_up": ["k", "up"],
+    "scroll_left": ["h", "left"],
+    "scroll_right": ["l", "right"],
+    "scroll_end": "G",
+    "open_search": "/",
+    "open_goto_line": ":"
+  }
+}
+```
+
+#### 🅱️ Emacs-centric Preset
+```json
+{
+  "keybindings": {
+    "page_down": ["ctrl+v", "pagedown"],
+    "page_up": ["alt+v", "pageup"],
+    "scroll_down": ["ctrl+n", "down"],
+    "scroll_up": ["ctrl+p", "up"],
+    "scroll_left": ["ctrl+b", "left"],
+    "scroll_right": ["ctrl+f", "right"],
+    "open_file_picker": "ctrl+x ctrl+f",
+    "quit": ["ctrl+x ctrl+c", "q"]
+  }
+}
+```
+
+### 3. Configurable Action Reference
+
+| Action Identifier | Default Key(s) | Description |
+| :--- | :--- | :--- |
+| `quit` | `q` | Exit application |
+| `open_file_picker` | `o` | Open fuzzy file picker |
+| `toggle_toc` | `O` | Table of contents outline |
+| `open_commander` | `ctrl+o` | Midnight Commander dual-pane manager |
+| `toggle_wrap` | `w`, `alt+z` | Toggle soft line wrap |
+| `edit_in_editor` | `v`, `f4` | Edit in external editor / viewer |
+| `toggle_theme` | `t` | Cycle color themes |
+| `open_help` | `h`, `?`, `f1` | Open help shortcuts dialog |
+| `handle_escape` | `escape` | Cancel / Dismiss modal |
+| `open_search` | `/` | In-document search |
+| `open_goto_line` | `:` | Jump to line number |
+| `search_next` | `n` | Next search match |
+| `search_prev` | `N` | Previous search match |
+| `page_up` | `j` | Scroll page up |
+| `page_down` | `k` | Scroll page down |
+| `scroll_up` | `up` | Scroll line up |
+| `scroll_down` | `down` | Scroll line down |
+| `scroll_left` | `left`, `d` | Scroll left (image / nowrap) |
+| `scroll_right` | `right`, `f` | Scroll right (image / nowrap) |
+| `scroll_end` | `G` | Jump to bottom of document |
+| `zoom_in` | `=`, `+`, `z` | Zoom in reading width / image |
+| `zoom_out` | `-`, `Z` | Zoom out reading width / image |
+| `reset_zoom` | `0` | Reset zoom to 100% |
+| `export_document` | `e` | Export document (HTML / Text / MD) |
+| `copy_code_block` | `Y`, `ctrl+k` | Extract and copy code blocks |
+| `copy_selected_text`| `y`, `c`, `ctrl+c`, `ctrl+y` | Copy selection or full text |
+| `toggle_mouse_mode` | `m` | Toggle mouse selection mode |
+| `toggle_cmd_prompt` | `T` | Toggle terminal prompt bar |
+| `open_in_terminal` | `ctrl+t` | Open terminal shell in file dir |
+| `reveal_in_finder` | `ctrl+shift+o` | Reveal in Finder / file manager |
+| `toggle_line_numbers`| `L`, `alt+l` | Toggle line number column |
+| `reload_file` | `r` | Reload file from disk |
+
+---
+
 ## 📊 Mermaid Diagram Support
 
 `mdreader` automatically parses ```` ```mermaid ```` code blocks in Markdown and converts them into ASCII/Unicode diagram trees:

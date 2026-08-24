@@ -121,6 +121,111 @@ echo -e "# 測試標題\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 
 ---
 
+## ⚙️ 自訂鍵盤快速鍵 (`~/.config/mdreader/config.json`)
+
+mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由定義與覆蓋所有鍵盤快速鍵。
+
+### 1. 設定檔格式範例
+
+```json
+{
+  "theme": "github-dark",
+  "keybindings": {
+    "quit": ["q", "escape"],
+    "open_file_picker": "o",
+    "toggle_toc": "O",
+    "open_commander": "ctrl+o",
+    "toggle_wrap": ["w", "alt+z"],
+    "edit_in_editor": ["v", "f4"],
+    "toggle_theme": "t",
+    "open_help": ["h", "?", "f1"],
+    "open_search": "/",
+    "open_goto_line": ":",
+    "page_down": ["pagedown", "d", "ctrl+f"],
+    "page_up": ["pageup", "u", "ctrl+b"],
+    "scroll_down": ["down", "j"],
+    "scroll_up": ["up", "k"],
+    "zoom_in": ["+", "=", "z"],
+    "zoom_out": ["-", "Z"],
+    "reset_zoom": "0"
+  }
+}
+```
+
+### 2. 常用操作風格預設範例
+
+#### 🅰️ Vim 重度使用者風格 (Vim-centric)
+```json
+{
+  "keybindings": {
+    "page_down": ["ctrl+f", "ctrl+d", "pagedown"],
+    "page_up": ["ctrl+b", "ctrl+u", "pageup"],
+    "scroll_down": ["j", "down"],
+    "scroll_up": ["k", "up"],
+    "scroll_left": ["h", "left"],
+    "scroll_right": ["l", "right"],
+    "scroll_end": "G",
+    "open_search": "/",
+    "open_goto_line": ":"
+  }
+}
+```
+
+#### 🅱️ Emacs 使用者風格 (Emacs-centric)
+```json
+{
+  "keybindings": {
+    "page_down": ["ctrl+v", "pagedown"],
+    "page_up": ["alt+v", "pageup"],
+    "scroll_down": ["ctrl+n", "down"],
+    "scroll_up": ["ctrl+p", "up"],
+    "scroll_left": ["ctrl+b", "left"],
+    "scroll_right": ["ctrl+f", "right"],
+    "open_file_picker": "ctrl+x ctrl+f",
+    "quit": ["ctrl+x ctrl+c", "q"]
+  }
+}
+```
+
+### 3. 可設定之 Action 動作名稱完整一覽
+
+| Action 動作識別碼 | 預設按鍵 | 說明 |
+| :--- | :--- | :--- |
+| `quit` | `q` | 離開閱讀器 |
+| `open_file_picker` | `o` | 開啟檔案選擇器 |
+| `toggle_toc` | `O` | 章節大綱目錄 (TOC) |
+| `open_commander` | `ctrl+o` | Midnight Commander 雙欄檔案總管 |
+| `toggle_wrap` | `w`, `alt+z` | 切換自動折行 |
+| `edit_in_editor` | `v`, `f4` | 呼叫外部編輯器 / 系統看圖軟體 |
+| `toggle_theme` | `t` | 切換色彩主題 |
+| `open_help` | `h`, `?`, `f1` | 開啟說明視窗 |
+| `handle_escape` | `escape` | 取消 / 關閉浮動視窗 |
+| `open_search` | `/` | 文件內搜尋 |
+| `open_goto_line` | `:` | 跳轉指定行號 |
+| `search_next` | `n` | 下一處搜尋結果 |
+| `search_prev` | `N` | 上一處搜尋結果 |
+| `page_up` | `j` | 整頁向上翻頁 |
+| `page_down` | `k` | 整頁向下翻頁 |
+| `scroll_up` | `up` | 向上捲動 |
+| `scroll_down` | `down` | 向下捲動 |
+| `scroll_left` | `left`, `d` | 向左水平捲動 (看圖或關閉折行) |
+| `scroll_right` | `right`, `f` | 向右水平捲動 |
+| `scroll_end` | `G` | 跳至文件底部 |
+| `zoom_in` | `=`, `+`, `z` | 放大閱讀版面 / 圖片 |
+| `zoom_out` | `-`, `Z` | 縮小閱讀版面 / 圖片 |
+| `reset_zoom` | `0` | 重設縮放比例為 100% |
+| `export_document` | `e` | 匯出文件 (HTML/Text/Markdown) |
+| `copy_code_block` | `Y`, `ctrl+k` | 複製程式碼區塊 |
+| `copy_selected_text`| `y`, `c`, `ctrl+c`, `ctrl+y` | 複製選取文字或全文 |
+| `toggle_mouse_mode` | `m` | 切換滑鼠選取模式 |
+| `toggle_cmd_prompt` | `T` | 切換終端命令提示列 |
+| `open_in_terminal` | `ctrl+t` | 開啟終端機 Shell |
+| `reveal_in_finder` | `ctrl+shift+o` | 系統檔案管理員中定位 |
+| `toggle_line_numbers`| `L`, `alt+l` | 切換行號欄顯示 |
+| `reload_file` | `r` | 手動重新載入檔案 |
+
+---
+
 ## 📊 Mermaid 流程圖支援說明
 
 mdreader 會自動掃描 Markdown 中的 ```` ```mermaid ```` 區塊並透過 ASCII/Unicode 演算法轉譯為字元圖表：

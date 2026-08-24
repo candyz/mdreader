@@ -112,6 +112,90 @@ curl -s https://example.com | mdreader
 | `k` / `Page Down` | 下一頁 |
 | `gg` / `Home` | 回到文件最上方 |
 | `G` / `End` | 跳至文件最下方 |
-| `y` / `c` / `Ctrl+C` | 複製滑鼠框選文字或全文至系統剪貼簿 |
 | `m` | **切換滑鼠攔截模式**：關閉時完全恢復終端原生滑鼠框選操作 |
 | `-` / `=` | 調整閱讀版面寬度 |
+| `+` / `=` / `z` | **放大圖片**：提升圖片縮放比例 (+20% Zoom In) |
+| `-` / `Z` | **縮小圖片**：降低圖片縮放比例 (-20% Zoom Out) |
+| `0` | **重設圖片縮放**：將圖片縮放比例重設為 100% (Reset Zoom) |
+| `↑` / `↓` / `←` / `→` / `jkdf` | **平移檢視大圖**：在視窗中平移移動圖片 (Pan Image) |
+
+---
+
+## ⚙️ 自訂鍵盤快速鍵 (`~/.config/mdreader/config.json`)
+
+您可以在 `~/.config/mdreader/config.json` 中加入 `"keybindings"` 區塊自訂任何快速鍵。每個動作可綁定單一字串或多個按鍵別名陣列：
+
+```json
+{
+  "theme": "github-dark",
+  "keybindings": {
+    "quit": ["q", "escape"],
+    "open_file_picker": "o",
+    "toggle_toc": "O",
+    "open_commander": "ctrl+o",
+    "toggle_wrap": ["w", "alt+z"],
+    "edit_in_editor": ["v", "f4"],
+    "toggle_theme": "t",
+    "open_help": ["h", "?", "f1"],
+    "open_search": "/",
+    "open_goto_line": ":",
+    "page_down": ["pagedown", "d", "ctrl+f"],
+    "page_up": ["pageup", "u", "ctrl+b"],
+    "scroll_down": ["down", "j"],
+    "scroll_up": ["up", "k"],
+    "zoom_in": ["+", "=", "z"],
+    "zoom_out": ["-", "Z"],
+    "reset_zoom": "0"
+  }
+}
+```
+
+### 支援之 Action 動作名稱一覽表
+
+| Action 動作名稱 | 預設快捷鍵 | 功能說明 |
+| :--- | :--- | :--- |
+| `quit` | `q` | 離開閱讀器 |
+| `open_file_picker` | `o` | 開啟模糊搜尋檔案選擇器 |
+| `toggle_toc` | `O` | 開啟章節大綱目錄 (TOC) |
+| `open_commander` | `ctrl+o` | 開啟 Midnight Commander 雙欄檔案總管 |
+| `toggle_wrap` | `w`, `alt+z` | 切換自動折行 |
+| `edit_in_editor` | `v`, `f4` | 呼叫外部編輯器 / 看圖軟體 |
+| `toggle_theme` | `t` | 切換色彩主題 |
+| `open_help` | `h`, `?`, `f1` | 開啟說明視窗 |
+| `handle_escape` | `escape` | 取消 / 關閉浮動視窗 |
+| `open_search` | `/` | 文件內全文搜尋 |
+| `open_goto_line` | `:` | 跳轉至指定行號 |
+| `search_next` | `n` | 跳至下一處搜尋結果 |
+| `search_prev` | `N` | 跳至上一處搜尋結果 |
+| `page_up` | `j` | 整頁向上翻頁 |
+| `page_down` | `k` | 整頁向下翻頁 |
+| `scroll_up` | `up` | 向上捲動 |
+| `scroll_down` | `down` | 向下捲動 |
+| `scroll_left` | `left`, `d` | 向左水平捲動 (看圖或關閉折行時) |
+| `scroll_right` | `right`, `f` | 向右水平捲動 |
+| `scroll_end` | `G` | 跳至文件最底部 |
+| `zoom_in` | `=`, `+`, `z` | 放大閱讀版面 / 圖片 |
+| `zoom_out` | `-`, `Z` | 縮小閱讀版面 / 圖片 |
+| `reset_zoom` | `0` | 重設縮放比例為 100% |
+| `export_document` | `e` | 匯出文件 (HTML/Text/Markdown) |
+| `copy_code_block` | `Y`, `ctrl+k` | 複製程式碼區塊 |
+| `copy_selected_text`| `y`, `c`, `ctrl+c`, `ctrl+y` | 複製選取文字或全文 |
+| `toggle_mouse_mode` | `m` | 切換滑鼠選取模式 |
+| `toggle_cmd_prompt` | `T` | 切換終端命令提示列 |
+| `open_in_terminal` | `ctrl+t` | 開啟終端機 Shell |
+| `reveal_in_finder` | `ctrl+shift+o` | 系統檔案管理員中定位 |
+| `toggle_line_numbers`| `L`, `alt+l` | 切換行號欄顯示 |
+| `reload_file` | `r` | 手動重新載入檔案 |
+
+---
+
+## 📚 相關文件
+- [使用者手冊 (繁體中文)](docs/user_manual_zh-TW.md) | [User Manual (English)](docs/user_manual.md)
+- [部署安裝指南 (繁體中文)](docs/deployment_guide_zh-TW.md) | [Deployment Guide (English)](docs/deployment_guide.md)
+- [實作規劃書 (繁體中文)](docs/implementation_plan_zh-TW.md) | [Implementation Plan (English)](docs/implementation_plan.md)
+
+---
+
+## 📄 開源授權 (License)
+
+本專案採用 [MIT License](LICENSE) 授權開源。

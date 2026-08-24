@@ -135,6 +135,78 @@ curl -s https://example.com | mdreader
 | `y` / `c` / `Ctrl+C` | Copy mouse selection or entire document to system clipboard |
 | `m` | **Toggle Mouse Mode**: Switch between TUI mouse capture and native terminal selection |
 | `-` / `=` | Adjust reading column width |
+| `+` / `=` / `z` | **Zoom In Image**: Increase image display scale (+20%) |
+| `-` / `Z` | **Zoom Out Image**: Decrease image display scale (-20%) |
+| `0` | **Reset Image Zoom**: Reset image display scale to 100% |
+| `↑` / `↓` / `←` / `→` / `jkdf` | **Pan Image**: Scroll and pan image across viewport |
+
+---
+
+## ⚙️ Custom Keybindings (`~/.config/mdreader/config.json`)
+
+You can customize any keybinding by adding a `"keybindings"` section in `~/.config/mdreader/config.json`. Each action accepts a single key string or an array of key aliases:
+
+```json
+{
+  "theme": "github-dark",
+  "keybindings": {
+    "quit": ["q", "escape"],
+    "open_file_picker": "o",
+    "toggle_toc": "O",
+    "open_commander": "ctrl+o",
+    "toggle_wrap": ["w", "alt+z"],
+    "edit_in_editor": ["v", "f4"],
+    "toggle_theme": "t",
+    "open_help": ["h", "?", "f1"],
+    "open_search": "/",
+    "open_goto_line": ":",
+    "page_down": ["pagedown", "d", "ctrl+f"],
+    "page_up": ["pageup", "u", "ctrl+b"],
+    "scroll_down": ["down", "j"],
+    "scroll_up": ["up", "k"],
+    "zoom_in": ["+", "=", "z"],
+    "zoom_out": ["-", "Z"],
+    "reset_zoom": "0"
+  }
+}
+```
+
+### Configurable Action Identifiers
+
+| Action Name | Default Key(s) | Description |
+| :--- | :--- | :--- |
+| `quit` | `q` | Quit viewer / Exit app |
+| `open_file_picker` | `o` | Open interactive fuzzy file picker |
+| `toggle_toc` | `O` | Open table of contents outline |
+| `open_commander` | `ctrl+o` | Open Midnight Commander dual-pane manager |
+| `toggle_wrap` | `w`, `alt+z` | Toggle soft line wrap |
+| `edit_in_editor` | `v`, `f4` | Edit in external editor / viewer |
+| `toggle_theme` | `t` | Cycle color theme |
+| `open_help` | `h`, `?`, `f1` | Open help shortcut dialog |
+| `handle_escape` | `escape` | Cancel / Dismiss modal |
+| `open_search` | `/` | In-document search |
+| `open_goto_line` | `:` | Jump to line number |
+| `search_next` | `n` | Next search match |
+| `search_prev` | `N` | Previous search match |
+| `page_up` | `j` | Scroll page up |
+| `page_down` | `k` | Scroll page down |
+| `scroll_up` | `up` | Scroll line up |
+| `scroll_down` | `down` | Scroll line down |
+| `scroll_left` | `left`, `d` | Scroll left (image / nowrap) |
+| `scroll_right` | `right`, `f` | Scroll right (image / nowrap) |
+| `scroll_end` | `G` | Jump to bottom of document |
+| `zoom_in` | `=`, `+`, `z` | Zoom in reading width / image |
+| `zoom_out` | `-`, `Z` | Zoom out reading width / image |
+| `reset_zoom` | `0` | Reset zoom to 100% |
+| `export_document` | `e` | Export document (HTML / Text / MD) |
+| `copy_code_block` | `Y`, `ctrl+k` | Extract and copy code blocks |
+| `copy_selected_text`| `y`, `c`, `ctrl+c`, `ctrl+y` | Copy selection or full text |
+| `toggle_mouse_mode` | `m` | Toggle mouse selection mode |
+| `toggle_cmd_prompt` | `T` | Toggle terminal prompt bar |
+| `open_in_terminal` | `ctrl+t` | Open terminal shell in file dir |
+| `reveal_in_finder` | `ctrl+shift+o` | Reveal in Finder / file manager |
+| `toggle_line_numbers`| `L`, `alt+l` | Toggle line number column |
+| `reload_file` | `r` | Reload file from disk |
 
 ---
 
