@@ -12,6 +12,7 @@ from textual.binding import Binding
 from textual.widgets import Footer, Input, Label
 from textual.containers import Container, Vertical, Horizontal
 from textual.reactive import reactive
+from textual.theme import Theme
 from mdreader.widgets.markdown_view import MarkdownViewerWidget
 from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtual_viewer
 from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
@@ -23,6 +24,40 @@ from mdreader.widgets.commander import format_file_size
 from mdreader.widgets.export_modal import ExportModal
 from mdreader.widgets.code_block_modal import CodeBlockModal, extract_code_blocks
 from mdreader.widgets.help_modal import ReaderHelpModal
+
+
+# GitHub Dark & Light terminal color themes (https://terminalcolors.com/ / GitHub Primer)
+GITHUB_DARK_THEME = Theme(
+    name="github-dark",
+    primary="#58a6ff",
+    secondary="#8b949e",
+    warning="#d29922",
+    error="#f85149",
+    success="#3fb950",
+    accent="#1f6feb",
+    foreground="#c9d1d9",
+    background="#0d1117",
+    surface="#161b22",
+    panel="#21262d",
+    boost="#30363d",
+    dark=True,
+)
+
+GITHUB_LIGHT_THEME = Theme(
+    name="github-light",
+    primary="#0969da",
+    secondary="#57606a",
+    warning="#9a6700",
+    error="#cf222e",
+    success="#1a7f37",
+    accent="#218bff",
+    foreground="#24292f",
+    background="#ffffff",
+    surface="#f6f8fa",
+    panel="#eaeef2",
+    boost="#d0d7de",
+    dark=False,
+)
 
 
 class ClockLabel(Label):
@@ -87,6 +122,8 @@ class MDReaderApp(App):
     SUB_TITLE = "Terminal Markdown Viewer"
 
     THEME_LIST = [
+        "github-dark",
+        "github-light",
         "textual-dark",
         "textual-light",
         "tokyo-night",
@@ -257,6 +294,8 @@ class MDReaderApp(App):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.register_theme(GITHUB_DARK_THEME)
+        self.register_theme(GITHUB_LIGHT_THEME)
         self.filepath = Path(filepath) if filepath else None
         self.initial_line = initial_line
         self._mmap_buffer: MmapLineBuffer | None = None

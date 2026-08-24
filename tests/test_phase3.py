@@ -709,3 +709,27 @@ def test_markdown_and_virtual_soft_wrap():
     assert v_viewer.soft_wrap is True
     display_lines = getattr(v_viewer, "_display_lines", [])
     assert len(display_lines) >= 2
+
+
+def test_github_dark_and_light_themes():
+    from mdreader.app import MDReaderApp, GITHUB_DARK_THEME, GITHUB_LIGHT_THEME
+    import asyncio
+
+    assert GITHUB_DARK_THEME.name == "github-dark"
+    assert GITHUB_LIGHT_THEME.name == "github-light"
+    assert "github-dark" in MDReaderApp.THEME_LIST
+    assert "github-light" in MDReaderApp.THEME_LIST
+
+    async def run():
+        app = MDReaderApp(content="# Hello GitHub Theme", theme="github-dark")
+        async with app.run_test() as pilot:
+            assert app.theme == "github-dark"
+            assert "github-dark" in app.available_themes
+            assert "github-light" in app.available_themes
+
+            # Switch to github-light
+            app.theme = "github-light"
+            await pilot.pause()
+            assert app.theme == "github-light"
+
+    asyncio.run(run())

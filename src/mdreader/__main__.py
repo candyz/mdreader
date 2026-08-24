@@ -62,7 +62,7 @@ def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int |
         "-t", "--theme",
         type=str,
         default=None,
-        help="Set color theme (e.g. textual-dark, textual-light, tokyo-night, monokai, solarized-dark, dracula, nord)",
+        help="Set color theme (e.g. github-dark, github-light, textual-dark, textual-light, tokyo-night, monokai, solarized-dark, dracula, nord)",
     )
     parser.add_argument(
         "--list-themes",
