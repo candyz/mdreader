@@ -115,10 +115,10 @@ mdreader -s sh config.env
 | `q` / `Esc` | Quit viewer / Dismiss modal or search |
 | `h` / `?` / `F1` | **Help**: Open comprehensive keyboard shortcuts & feature guide dialog |
 | `o` | **Open Fuzzy File Picker**: Browse files, `Ctrl+R` recent, `Ctrl+D` bookmarks, `Ctrl+F` grep |
-| `O` | **Table of Contents (Outline)**: Navigate headings and press `Enter` to jump |
-| `Ctrl+O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `s` sort, `Ctrl+D` bookmarks, `Ctrl+F` grep) |
-| `w` / `Alt+Z` | **Toggle Soft Line Wrap**: Switch between automatic line wrapping and horizontal scrolling |
-| `L` / `Alt+L` | **Toggle Line Numbers**: Show/hide line numbers column in code & plain text files |
+| `Ctrl+O` | **Table of Contents (Outline)**: Navigate headings and press `Enter` to jump |
+| `O` | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` multi-select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `s` sort, `Ctrl+D` bookmarks, `Ctrl+F` grep) |
+| `w` | **Toggle Soft Line Wrap**: Switch between automatic line wrapping and horizontal scrolling |
+| `l` | **Toggle Line Numbers**: Show/hide line numbers column in code & plain text files |
 | `gx` | **Extract & Open Hyperlinks**: Extract web links and open in default browser |
 | `m` + `[a-z]` | **Set Bookmark (Mark)**: Set bookmark at current line |
 | `'` + `[a-z]` | **Jump to Bookmark**: Jump to previously saved bookmark line |
@@ -130,17 +130,19 @@ mdreader -s sh config.env
 | `Ctrl+T` | **Open Full Terminal Shell**: Launch interactive `$SHELL` in file directory |
 | `T` | **Toggle Terminal Prompt Bar**: Midnight Commander style inline shell prompt above status bar |
 | `Ctrl+Shift+O` | **Reveal File**: Reveal in macOS Finder or Linux file manager |
-| `t` | **Switch Color Theme**: Cycle through built-in color themes |
+| `t` | **Switch Color Theme**: Cycle through built-in color themes (e.g. `vim-dark`, `github-dark`, `monokai`) |
 | `/` | **Search**: Vim-style search overlay (`n` next, `N` prev) |
-| `j` / `Page Up` | Scroll page up |
-| `k` / `Page Down` | Scroll page down |
+| `Page Up` / `u` | Scroll page up |
+| `Page Down` / `i` | Scroll page down |
+| `↑` / `j` | Scroll line up |
+| `↓` / `k` | Scroll line down |
 | `gg` / `Home` | Jump to top of document |
 | `G` / `End` | Jump to bottom of document |
 | `y` / `c` / `Ctrl+C` | Copy mouse selection or entire document to system clipboard |
 | `m` | **Toggle Mouse Mode**: Switch between TUI mouse capture and native terminal selection |
-| `-` / `=` | Adjust reading column width |
-| `+` / `=` / `z` | **Zoom In Image**: Increase image display scale (+20%) |
-| `-` / `Z` | **Zoom Out Image**: Decrease image display scale (-20%) |
+| `-` / `=` / `+` | Adjust reading column width |
+| `=` / `+` | **Zoom In Image**: Increase image display scale (+20%) |
+| `-` | **Zoom Out Image**: Decrease image display scale (-20%) |
 | `0` | **Reset Image Zoom**: Reset image display scale to 100% |
 | `↑` / `↓` / `←` / `→` / `jkdf` | **Pan Image**: Scroll and pan image across viewport |
 
@@ -152,24 +154,25 @@ You can customize any keybinding by adding a `"keybindings"` section in `~/.conf
 
 ```json
 {
-  "theme": "github-dark",
+  "theme": "vim-dark",
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",
-    "toggle_toc": "O",
-    "open_commander": "ctrl+o",
-    "toggle_wrap": ["w", "alt+z"],
+    "toggle_toc": "ctrl+o",
+    "open_commander": "O",
+    "toggle_wrap": "w",
     "edit_in_editor": ["v", "f4"],
     "toggle_theme": "t",
     "open_help": ["h", "?", "f1"],
     "open_search": "/",
     "open_goto_line": ":",
-    "page_down": ["pagedown", "d", "ctrl+f"],
-    "page_up": ["pageup", "u", "ctrl+b"],
-    "scroll_down": ["down", "j"],
-    "scroll_up": ["up", "k"],
-    "zoom_in": ["+", "=", "z"],
-    "zoom_out": ["-", "Z"],
+    "page_down": ["pagedown", "i"],
+    "page_up": ["pageup", "u"],
+    "scroll_down": ["down", "k"],
+    "scroll_up": ["up", "j"],
+    "zoom_in": ["=", "+"],
+    "zoom_out": "-",
+    "toggle_line_numbers": "l",
     "reset_zoom": "0"
   }
 }
@@ -181,9 +184,9 @@ You can customize any keybinding by adding a `"keybindings"` section in `~/.conf
 | :--- | :--- | :--- |
 | `quit` | `q` | Quit viewer / Exit app |
 | `open_file_picker` | `o` | Open interactive fuzzy file picker |
-| `toggle_toc` | `O` | Open table of contents outline |
-| `open_commander` | `ctrl+o` | Open Midnight Commander dual-pane manager |
-| `toggle_wrap` | `w`, `alt+z` | Toggle soft line wrap |
+| `toggle_toc` | `ctrl+o` | Open table of contents outline |
+| `open_commander` | `O` | Open Midnight Commander dual-pane manager |
+| `toggle_wrap` | `w` | Toggle soft line wrap |
 | `edit_in_editor` | `v`, `f4` | Edit in external editor / viewer |
 | `toggle_theme` | `t` | Cycle color theme |
 | `open_help` | `h`, `?`, `f1` | Open help shortcut dialog |
@@ -192,15 +195,15 @@ You can customize any keybinding by adding a `"keybindings"` section in `~/.conf
 | `open_goto_line` | `:` | Jump to line number |
 | `search_next` | `n` | Next search match |
 | `search_prev` | `N` | Previous search match |
-| `page_up` | `j` | Scroll page up |
-| `page_down` | `k` | Scroll page down |
-| `scroll_up` | `up` | Scroll line up |
-| `scroll_down` | `down` | Scroll line down |
+| `page_up` | `pageup`, `u` | Scroll page up |
+| `page_down` | `pagedown`, `i` | Scroll page down |
+| `scroll_up` | `up`, `j` | Scroll line up |
+| `scroll_down` | `down`, `k` | Scroll line down |
 | `scroll_left` | `left`, `d` | Scroll left (image / nowrap) |
 | `scroll_right` | `right`, `f` | Scroll right (image / nowrap) |
 | `scroll_end` | `G` | Jump to bottom of document |
-| `zoom_in` | `=`, `+`, `z` | Zoom in reading width / image |
-| `zoom_out` | `-`, `Z` | Zoom out reading width / image |
+| `zoom_in` | `=`, `+` | Zoom in reading width / image |
+| `zoom_out` | `-` | Zoom out reading width / image |
 | `reset_zoom` | `0` | Reset zoom to 100% |
 | `export_document` | `e` | Export document (HTML / Text / MD) |
 | `copy_code_block` | `Y`, `ctrl+k` | Extract and copy code blocks |
@@ -209,7 +212,7 @@ You can customize any keybinding by adding a `"keybindings"` section in `~/.conf
 | `toggle_cmd_prompt` | `T` | Toggle terminal prompt bar |
 | `open_in_terminal` | `ctrl+t` | Open terminal shell in file dir |
 | `reveal_in_finder` | `ctrl+shift+o` | Reveal in Finder / file manager |
-| `toggle_line_numbers`| `L`, `alt+l` | Toggle line number column |
+| `toggle_line_numbers`| `l` | Toggle line number column |
 | `reload_file` | `r` | Reload file from disk |
 
 ---

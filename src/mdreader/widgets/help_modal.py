@@ -22,9 +22,9 @@ def get_help_sections() -> list[tuple[str, list[tuple[str, str]]]]:
         (
             "📖 核心閱讀與翻頁導航 (Navigation)",
             [
-                (f"{k('page_up', 'j')} / Page Up", "整頁向上翻頁 (Page Up)"),
-                (f"{k('page_down', 'k')} / Page Down", "整頁向下翻頁 (Page Down)"),
-                (f"{k('scroll_up', '↑')} / {k('scroll_down', '↓')}", "逐行向上 / 向下垂直平滑捲動"),
+                (k("page_up", "PageUp / u"), "整頁向上翻頁 (Page Up)"),
+                (k("page_down", "PageDown / i"), "整頁向下翻頁 (Page Down)"),
+                (f"{k('scroll_up', '↑ / j')} / {k('scroll_down', '↓ / k')}", "逐行向上 / 向下垂直平滑捲動"),
                 (f"{k('scroll_left', '← / d')} / {k('scroll_right', '→ / f')}", "向左 / 向右水平捲動 (關閉折行時使用)"),
                 ("gg / Home", "快速回到文件最上方 (Jump to Top)"),
                 (f"{k('scroll_end', 'G')} / End", "快速跳至文件最下方 (Jump to Bottom)"),
@@ -34,11 +34,11 @@ def get_help_sections() -> list[tuple[str, list[tuple[str, str]]]]:
         (
             "📑 檢視、排版與大綱 (View & Outline)",
             [
-                (k("toggle_toc", "O"), "章節大綱目錄 (TOC Outline，按 Enter 即時跳轉)"),
-                (k("toggle_wrap", "w / Alt+Z"), "切換自動折行 (Toggle Soft Line Wrap)"),
-                (k("toggle_line_numbers", "L / Alt+L"), "切換行號欄顯示 (Toggle Line Numbers, 程式碼/純文字)"),
+                (k("toggle_toc", "Ctrl+O"), "章節大綱目錄 (TOC Outline，按 Enter 即時跳轉)"),
+                (k("toggle_wrap", "w"), "切換自動折行 (Toggle Soft Line Wrap)"),
+                (k("toggle_line_numbers", "l"), "切換行號欄顯示 (Toggle Line Numbers, 程式碼/純文字)"),
                 (k("toggle_theme", "t"), "切換色彩主題 (Cycle Theme, 10+ 款主題持久化記憶)"),
-                (f"{k('zoom_out', '-')} / {k('zoom_in', '=')}", "縮放閱讀版面寬度 (Adjust Reading Width)"),
+                (f"{k('zoom_out', '-')} / {k('zoom_in', '= / +')}", "縮放閱讀版面寬度 (Adjust Reading Width)"),
             ],
         ),
         (
@@ -56,7 +56,7 @@ def get_help_sections() -> list[tuple[str, list[tuple[str, str]]]]:
             "📁 檔案總管與檢索 (File Discovery)",
             [
                 (k("open_file_picker", "o"), "檔案選擇器 (File Picker, Ctrl+R 最近檔案, Ctrl+H 隱藏檔)"),
-                (k("open_commander", "Ctrl+O"), "Midnight Commander 雙欄檔案總管 (MC Mode)"),
+                (k("open_commander", "O"), "Midnight Commander 雙欄檔案總管 (MC Mode)"),
                 ("Ctrl+D", "目錄書籤與快速路徑跳轉 (~, CWD, Downloads, Desktop)"),
                 ("Ctrl+F", "資料夾全文關鍵字檢索 (Ripgrep Accelerated Search)"),
             ],

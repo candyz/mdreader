@@ -50,10 +50,10 @@ mdreader README.md --export-txt output.txt
 | **`q`** / **`Esc`** | 退出 mdreader 閱讀器 / 關閉目前浮動視窗 |
 | **`h`** / **`?`** / **`F1`** | **快速鍵與功能說明 (Help)**：開啟完整快速鍵指南對話框 |
 | **`o`** | **開啟檔案選擇器 (File Picker)**：`Ctrl+R` 最近檔案、`Ctrl+D` 目錄書籤、`Ctrl+F` 全文搜尋 |
-| **`O`** | **開啟大綱模式 (TOC Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
-| **`Ctrl+O`** | **Midnight Commander 雙欄檔案總管**：左右雙欄 (`Tab`)、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
-| **`w`** / **`Alt+Z`** | **切換自動折行 (Toggle Soft Wrap)**：在自動折行與水平捲動模式之間切換 |
-| **`L`** / **`Alt+L`** | **切換行號顯示 (Toggle Line Numbers)**：在原始碼與純文字檔案中顯示/隱藏左側行號欄 |
+| **`Ctrl+O`** | **開啟大綱模式 (TOC Outline)**：進入章節瀏覽視窗，以 ↑/↓/j/k 選擇，按 Enter 跳轉至該章節 |
+| **`O`** | **Midnight Commander 雙欄檔案總管**：左右雙欄 (`Tab`)、`Ins`/`Space` 批次多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
+| **`w`** | **切換自動折行 (Toggle Soft Wrap)**：在自動折行與水平捲動模式之間切換 |
+| **`l`** | **切換行號顯示 (Toggle Line Numbers)**：在原始碼與純文字檔案中顯示/隱藏左側行號欄 |
 | **`gx`** | **擷取超連結 (Open Links)**：列出文件中的網址並於預設瀏覽器中開啟 |
 | **`M` + `[a-z]`** | **建立書籤 (Set Mark)**：在當前行建立以指定英文字母命名的書籤 |
 | **`'` + `[a-z]`** | **跳轉書籤 (Jump to Mark)**：立即跳轉至先前儲存的書籤行號 |
@@ -65,12 +65,13 @@ mdreader README.md --export-txt output.txt
 | **`Ctrl+T`** | **開啟終端機 (Terminal)**：在當前檔案所在目錄開啟原生 `$SHELL` 終端機環境 |
 | **`T`** | **終端命令提示列 (Toggle Terminal Prompt)**：在狀態列上方展開/收合 Midnight Commander 風格的 Shell Prompt 輸入列，直接輸入指令執行 |
 | **`Ctrl+Shift+O`** | **檔案管理員定位 (Reveal in Finder)**：在系統檔案管理員（Finder / xdg-open）中開啟所在位置 |
-| **`t`** | **循環切換主題色彩**（Dark, Light, Tokyo Night, Monokai, Solarized, Dracula 等，自動持久化記憶） |
-| **`j`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
-| **`k`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
+| **`t`** | **循環切換主題色彩**（`vim-dark`, `github-dark`, `monokai`, `dracula` 等，自動持久化記憶） |
+| **`u`** / **`Page Up`** | **整頁向上翻頁 (Page Up)** |
+| **`i`** / **`Page Down`** | **整頁向下翻頁 (Page Down)** |
 | **`gg`** / **`Home`** | **回到文件最上方 (Jump to Top)** |
 | **`G`** / **`End`** | **跳至文件最下方 (Jump to Bottom)** |
-| **`↓`** / **`↑`** | 逐行平滑向上 / 向下垂直捲動 |
+| **`↑`** / **`j`** | 向上捲動一行 |
+| **`↓`** / **`k`** | 向下捲動一行 |
 | **`←`** / **`→`** / **`d`** / **`f`** | **向左 / 向右水平捲動**（`d` 向左、`f` 向右，當關閉折行時使用） |
 | **`/`** | **開啟文件內搜尋欄**（輸入 `/關鍵字` 後按 Enter 立即開始搜尋） |
 | **`n`** | **跳至下一處搜尋結果 (Next Match)** |
@@ -141,12 +142,13 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
     "open_help": ["h", "?", "f1"],
     "open_search": "/",
     "open_goto_line": ":",
-    "page_down": ["pagedown", "d", "ctrl+f"],
-    "page_up": ["pageup", "u", "ctrl+b"],
-    "scroll_down": ["down", "j"],
-    "scroll_up": ["up", "k"],
-    "zoom_in": ["+", "=", "z"],
-    "zoom_out": ["-", "Z"],
+    "page_down": ["pagedown", "i"],
+    "page_up": ["pageup", "u"],
+    "scroll_down": ["down", "k"],
+    "scroll_up": ["up", "j"],
+    "zoom_in": ["=", "+"],
+    "zoom_out": "-",
+    "toggle_line_numbers": "l",
     "reset_zoom": "0"
   }
 }
@@ -158,10 +160,10 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
 ```json
 {
   "keybindings": {
-    "page_down": ["ctrl+f", "ctrl+d", "pagedown"],
-    "page_up": ["ctrl+b", "ctrl+u", "pageup"],
-    "scroll_down": ["j", "down"],
-    "scroll_up": ["k", "up"],
+    "page_down": ["ctrl+f", "ctrl+d", "pagedown", "i"],
+    "page_up": ["ctrl+b", "ctrl+u", "pageup", "u"],
+    "scroll_down": ["j", "down", "k"],
+    "scroll_up": ["k", "up", "j"],
     "scroll_left": ["h", "left"],
     "scroll_right": ["l", "right"],
     "scroll_end": "G",
@@ -193,9 +195,9 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
 | :--- | :--- | :--- |
 | `quit` | `q` | 離開閱讀器 |
 | `open_file_picker` | `o` | 開啟檔案選擇器 |
-| `toggle_toc` | `O` | 章節大綱目錄 (TOC) |
-| `open_commander` | `ctrl+o` | Midnight Commander 雙欄檔案總管 |
-| `toggle_wrap` | `w`, `alt+z` | 切換自動折行 |
+| `toggle_toc` | `ctrl+o` | 章節大綱目錄 (TOC) |
+| `open_commander` | `O` | Midnight Commander 雙欄檔案總管 |
+| `toggle_wrap` | `w` | 切換自動折行 |
 | `edit_in_editor` | `v`, `f4` | 呼叫外部編輯器 / 系統看圖軟體 |
 | `toggle_theme` | `t` | 切換色彩主題 |
 | `open_help` | `h`, `?`, `f1` | 開啟說明視窗 |
@@ -204,15 +206,15 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
 | `open_goto_line` | `:` | 跳轉指定行號 |
 | `search_next` | `n` | 下一處搜尋結果 |
 | `search_prev` | `N` | 上一處搜尋結果 |
-| `page_up` | `j` | 整頁向上翻頁 |
-| `page_down` | `k` | 整頁向下翻頁 |
-| `scroll_up` | `up` | 向上捲動 |
-| `scroll_down` | `down` | 向下捲動 |
+| `page_up` | `pageup`, `u` | 整頁向上翻頁 |
+| `page_down` | `pagedown`, `i` | 整頁向下翻頁 |
+| `scroll_up` | `up`, `j` | 向上捲動 |
+| `scroll_down` | `down`, `k` | 向下捲動 |
 | `scroll_left` | `left`, `d` | 向左水平捲動 (看圖或關閉折行) |
 | `scroll_right` | `right`, `f` | 向右水平捲動 |
 | `scroll_end` | `G` | 跳至文件底部 |
-| `zoom_in` | `=`, `+`, `z` | 放大閱讀版面 / 圖片 |
-| `zoom_out` | `-`, `Z` | 縮小閱讀版面 / 圖片 |
+| `zoom_in` | `=`, `+` | 放大閱讀版面 / 圖片 |
+| `zoom_out` | `-` | 縮小閱讀版面 / 圖片 |
 | `reset_zoom` | `0` | 重設縮放比例為 100% |
 | `export_document` | `e` | 匯出文件 (HTML/Text/Markdown) |
 | `copy_code_block` | `Y`, `ctrl+k` | 複製程式碼區塊 |
@@ -221,7 +223,7 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
 | `toggle_cmd_prompt` | `T` | 切換終端命令提示列 |
 | `open_in_terminal` | `ctrl+t` | 開啟終端機 Shell |
 | `reveal_in_finder` | `ctrl+shift+o` | 系統檔案管理員中定位 |
-| `toggle_line_numbers`| `L`, `alt+l` | 切換行號欄顯示 |
+| `toggle_line_numbers`| `l` | 切換行號欄顯示 |
 | `reload_file` | `r` | 手動重新載入檔案 |
 
 ---

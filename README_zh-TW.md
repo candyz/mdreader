@@ -95,10 +95,10 @@ mdreader -s sh config.env
 | `q` / `Esc` | 離開程式 / 關閉彈出視窗或搜尋列 |
 | `h` / `?` / `F1` | **快速鍵說明視窗 (Help)**：列出所有快速鍵功能指南 |
 | `o` | **開啟檔案選擇器**：瀏覽檔案、`Ctrl+R` 最近檔案、`Ctrl+D` 目錄書籤、`Ctrl+F` 全文搜尋 |
-| `O` | **章節大綱目錄 (TOC)**：瀏覽文件標題大綱，按 Enter 即時跳轉 |
-| `Ctrl+O` | **Midnight Commander 雙欄檔案總管**：`Tab` 切換雙欄、`Ins`/`Space` 多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
-| `w` / `Alt+Z` | **切換自動折行**：在自動換行與水平捲動模式之間切換 |
-| `L` / `Alt+L` | **切換行號顯示**：在原始碼與純文字檔案中顯示/隱藏左側行號欄 |
+| `Ctrl+O` | **章節大綱目錄 (TOC)**：瀏覽文件標題大綱，按 Enter 即時跳轉 |
+| `O` | **Midnight Commander 雙欄檔案總管**：`Tab` 切換雙欄、`Ins`/`Space` 多選、`F3` 檢視、`F4` 編輯、`F5` 複製、`F6` 移動、`F7` 建立目錄、`F8` 刪除、`s` 排序、`Ctrl+D` 書籤、`Ctrl+F` 全文搜尋 |
+| `w` | **切換自動折行**：在自動換行與水平捲動模式之間切換 |
+| `l` | **切換行號顯示**：在原始碼與純文字檔案中顯示/隱藏左側行號欄 |
 | `gx` | **擷取並開啟超連結**：擷取文件中的超連結並於預設瀏覽器中開啟 |
 | `m` + `[a-z]` | **設定書籤**：在當前行建立指定代號的書籤 |
 | `'` + `[a-z]` | **跳轉書籤**：跳轉至先前建立的指定書籤行 |
@@ -110,16 +110,18 @@ mdreader -s sh config.env
 | `Ctrl+T` | **開啟終端機 Shell**：在當前檔案目錄開啟互動式終端機 |
 | `T` | **切換終端命令提示列**：在狀態列上方顯示 Midnight Commander 風格之 Shell Prompt 輸入列 |
 | `Ctrl+Shift+O` | **檔案管理員中顯示**：在系統檔案管理員（Finder / xdg-open）中開啟所在位置 |
-| `t` | **切換色彩主題**：循環切換內建配色主題 |
+| `t` | **切換色彩主題**：循環切換內建配色主題 (包含全新 `vim-dark`、`github-dark`、`monokai` 等) |
 | `/` | **文件搜尋**：Vim 風格關鍵字搜尋（`n` 下一處、`N` 上一處） |
-| `j` / `Page Up` | 上一頁 |
-| `k` / `Page Down` | 下一頁 |
+| `Page Up` / `u` | 上一頁 |
+| `Page Down` / `i` | 下一頁 |
+| `↑` / `j` | 向上捲動一行 |
+| `↓` / `k` | 向下捲動一行 |
 | `gg` / `Home` | 回到文件最上方 |
 | `G` / `End` | 跳至文件最下方 |
 | `m` | **切換滑鼠攔截模式**：關閉時完全恢復終端原生滑鼠框選操作 |
-| `-` / `=` | 調整閱讀版面寬度 |
-| `+` / `=` / `z` | **放大圖片**：提升圖片縮放比例 (+20% Zoom In) |
-| `-` / `Z` | **縮小圖片**：降低圖片縮放比例 (-20% Zoom Out) |
+| `-` / `=` / `+` | 調整閱讀版面寬度 |
+| `=` / `+` | **放大圖片**：提升圖片縮放比例 (+20% Zoom In) |
+| `-` | **縮小圖片**：降低圖片縮放比例 (-20% Zoom Out) |
 | `0` | **重設圖片縮放**：將圖片縮放比例重設為 100% (Reset Zoom) |
 | `↑` / `↓` / `←` / `→` / `jkdf` | **平移檢視大圖**：在視窗中平移移動圖片 (Pan Image) |
 
@@ -131,24 +133,25 @@ mdreader -s sh config.env
 
 ```json
 {
-  "theme": "github-dark",
+  "theme": "vim-dark",
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",
-    "toggle_toc": "O",
-    "open_commander": "ctrl+o",
-    "toggle_wrap": ["w", "alt+z"],
+    "toggle_toc": "ctrl+o",
+    "open_commander": "O",
+    "toggle_wrap": "w",
     "edit_in_editor": ["v", "f4"],
     "toggle_theme": "t",
     "open_help": ["h", "?", "f1"],
     "open_search": "/",
     "open_goto_line": ":",
-    "page_down": ["pagedown", "d", "ctrl+f"],
-    "page_up": ["pageup", "u", "ctrl+b"],
-    "scroll_down": ["down", "j"],
-    "scroll_up": ["up", "k"],
-    "zoom_in": ["+", "=", "z"],
-    "zoom_out": ["-", "Z"],
+    "page_down": ["pagedown", "i"],
+    "page_up": ["pageup", "u"],
+    "scroll_down": ["down", "k"],
+    "scroll_up": ["up", "j"],
+    "zoom_in": ["=", "+"],
+    "zoom_out": "-",
+    "toggle_line_numbers": "l",
     "reset_zoom": "0"
   }
 }
@@ -160,9 +163,9 @@ mdreader -s sh config.env
 | :--- | :--- | :--- |
 | `quit` | `q` | 離開閱讀器 |
 | `open_file_picker` | `o` | 開啟模糊搜尋檔案選擇器 |
-| `toggle_toc` | `O` | 開啟章節大綱目錄 (TOC) |
-| `open_commander` | `ctrl+o` | 開啟 Midnight Commander 雙欄檔案總管 |
-| `toggle_wrap` | `w`, `alt+z` | 切換自動折行 |
+| `toggle_toc` | `ctrl+o` | 開啟章節大綱目錄 (TOC) |
+| `open_commander` | `O` | 開啟 Midnight Commander 雙欄檔案總管 |
+| `toggle_wrap` | `w` | 切換自動折行 |
 | `edit_in_editor` | `v`, `f4` | 呼叫外部編輯器 / 看圖軟體 |
 | `toggle_theme` | `t` | 切換色彩主題 |
 | `open_help` | `h`, `?`, `f1` | 開啟說明視窗 |
@@ -171,15 +174,15 @@ mdreader -s sh config.env
 | `open_goto_line` | `:` | 跳轉至指定行號 |
 | `search_next` | `n` | 跳至下一處搜尋結果 |
 | `search_prev` | `N` | 跳至上一處搜尋結果 |
-| `page_up` | `j` | 整頁向上翻頁 |
-| `page_down` | `k` | 整頁向下翻頁 |
-| `scroll_up` | `up` | 向上捲動 |
-| `scroll_down` | `down` | 向下捲動 |
+| `page_up` | `pageup`, `u` | 整頁向上翻頁 |
+| `page_down` | `pagedown`, `i` | 整頁向下翻頁 |
+| `scroll_up` | `up`, `j` | 向上捲動 |
+| `scroll_down` | `down`, `k` | 向下捲動 |
 | `scroll_left` | `left`, `d` | 向左水平捲動 (看圖或關閉折行時) |
 | `scroll_right` | `right`, `f` | 向右水平捲動 |
 | `scroll_end` | `G` | 跳至文件最底部 |
-| `zoom_in` | `=`, `+`, `z` | 放大閱讀版面 / 圖片 |
-| `zoom_out` | `-`, `Z` | 縮小閱讀版面 / 圖片 |
+| `zoom_in` | `=`, `+` | 放大閱讀版面 / 圖片 |
+| `zoom_out` | `-` | 縮小閱讀版面 / 圖片 |
 | `reset_zoom` | `0` | 重設縮放比例為 100% |
 | `export_document` | `e` | 匯出文件 (HTML/Text/Markdown) |
 | `copy_code_block` | `Y`, `ctrl+k` | 複製程式碼區塊 |
@@ -188,7 +191,7 @@ mdreader -s sh config.env
 | `toggle_cmd_prompt` | `T` | 切換終端命令提示列 |
 | `open_in_terminal` | `ctrl+t` | 開啟終端機 Shell |
 | `reveal_in_finder` | `ctrl+shift+o` | 系統檔案管理員中定位 |
-| `toggle_line_numbers`| `L`, `alt+l` | 切換行號欄顯示 |
+| `toggle_line_numbers`| `l` | 切換行號欄顯示 |
 | `reload_file` | `r` | 手動重新載入檔案 |
 
 ---

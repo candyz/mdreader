@@ -976,3 +976,36 @@ def test_vim_dark_theme_and_blue_comments():
     # 3. Check MarkdownFence highlight theme for vim-dark
     assert VimDarkHighlightTheme.STYLES[Token.Comment] == "#5f87ff"
     assert "yellow" in VimDarkHighlightTheme.STYLES[Token.Keyword].lower() or "ffff00" in VimDarkHighlightTheme.STYLES[Token.Keyword].lower()
+
+
+def test_updated_default_keybindings():
+    from mdreader.utils.config import DEFAULT_KEYBINDINGS, build_app_bindings
+    from mdreader.widgets.help_modal import get_help_sections
+    from mdreader.app import MDReaderApp
+
+    # Verify requested defaults
+    assert DEFAULT_KEYBINDINGS["page_up"] == ["pageup", "u"]
+    assert DEFAULT_KEYBINDINGS["page_down"] == ["pagedown", "i"]
+    assert DEFAULT_KEYBINDINGS["scroll_up"] == ["up", "j"]
+    assert DEFAULT_KEYBINDINGS["scroll_down"] == ["down", "k"]
+    assert DEFAULT_KEYBINDINGS["toggle_line_numbers"] == ["l"]
+    assert DEFAULT_KEYBINDINGS["open_commander"] == ["O"]
+    assert DEFAULT_KEYBINDINGS["toggle_toc"] == ["ctrl+o"]
+    assert DEFAULT_KEYBINDINGS["zoom_in"] == ["=", "+"]
+    assert DEFAULT_KEYBINDINGS["zoom_out"] == ["-"]
+    assert DEFAULT_KEYBINDINGS["toggle_wrap"] == ["w"]
+
+    # Verify dynamic app bindings
+    bindings = build_app_bindings()
+    binding_keys = [b.key for b in bindings]
+    assert "u" in binding_keys
+    assert "i" in binding_keys
+    assert "j" in binding_keys
+    assert "k" in binding_keys
+    assert "l" in binding_keys
+    assert "O" in binding_keys
+    assert "ctrl+o" in binding_keys
+    assert "equals_sign" in binding_keys
+    assert "plus" in binding_keys
+    assert "minus" in binding_keys
+    assert "w" in binding_keys

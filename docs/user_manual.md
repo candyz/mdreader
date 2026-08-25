@@ -46,11 +46,12 @@ Navigate effortlessly inside the interactive TUI with the following shortcuts:
 | **`Ctrl+O`** | **Midnight Commander Mode**: Dual-pane file manager (`Tab` switch pane, `Ins`/`Space` select, `F3` view, `F4` edit, `F5` copy, `F6` ren/mov, `F7` mkdir, `F8` delete, `Ctrl+O`/`Esc` return) |
 | **`v`** | **Edit in External Editor (Vim / $EDITOR)**: Suspends TUI, opens editor, and auto-reloads upon saving & exiting |
 | **`t`** | **Cycle Color Themes** (Dark, Light, Tokyo Night, Monokai, Solarized, Dracula, etc. - automatically remembered) |
-| **`j`** / **`Page Up`** | **Page Up** (scroll one page up) |
-| **`k`** / **`Page Down`** | **Page Down** (scroll one page down) |
+| **`u`** / **`Page Up`** | **Page Up** (scroll one page up) |
+| **`i`** / **`Page Down`** | **Page Down** (scroll one page down) |
 | **`gg`** / **`Home`** | **Jump to Top of document** |
 | **`G`** / **`End`** | **Jump to Bottom of document** |
-| **`↓`** / **`↑`** | Smooth vertical scroll line-by-line |
+| **`↑`** / **`j`** | Scroll line up |
+| **`↓`** / **`k`** | Scroll line down |
 | **`←`** / **`→`** / **`d`** / **`f`** | **Horizontal scroll** (`d`: left, `f`: right, useful for wide tables, code blocks, and charts) |
 | **`/`** | **Open In-document Search**: Type `/keyword` and press `Enter` to start searching |
 | **`n`** | **Jump to Next Search Match** |
@@ -60,8 +61,8 @@ Navigate effortlessly inside the interactive TUI with the following shortcuts:
 | **`m`** | **Toggle Mouse Mode**: One-key switch to disable TUI mouse tracking and restore native terminal mouse behavior |
 | **`Right Click`** | **Context Menu**: Pop up floating context modal to select Copy / Search / Select All |
 | **`y`** / **`c`** / **`Ctrl+C`** | **Copy Selection**: Manually copy selected text to system clipboard |
-| **`-`** | **Narrow Column Width** (-10 columns per press, minimum 40 columns) |
-| **`=`** / **`+`** | **Widen Column Width** (+10 columns per press, up to 100% full width) |
+| **`-`** | **Narrow Column Width / Zoom Out** (-10 columns per press, minimum 40 columns) |
+| **`=`** / **`+`** | **Widen Column Width / Zoom In** (+10 columns per press, up to 100% full width) |
 | **`Cmd +`** / **`Cmd -`** | **Terminal Font Zoom** (handled natively by your terminal emulator) |
 | **Mouse Wheel** | Scroll content smoothly |
 
@@ -80,11 +81,11 @@ While browsing a document, press **`v`** at any time to open your preferred term
 ### 1. Specify Interface Color Theme (`-t` / `--theme`)
 Specify color schemes directly from the command line:
 ```bash
+mdreader -t vim-dark README.md
 mdreader -t tokyo-night README.md
 mdreader -t solarized-dark README.md
-mdreader -t textual-light README.md
 ```
-> Supported themes: `textual-dark`, `textual-light`, `tokyo-night`, `monokai`, `solarized-dark`, `solarized-light`, `catppuccin-frappe`, `catppuccin-latte`, `dracula`, `nord`.
+> Supported themes: `vim-dark`, `github-dark`, `github-light`, `textual-dark`, `textual-light`, `tokyo-night`, `monokai`, `solarized-dark`, `solarized-light`, `catppuccin-frappe`, `catppuccin-latte`, `dracula`, `nord`.
 
 ### 2. Restrict Maximum Reading Width (`--width`)
 On ultra-wide or high-resolution monitors, restrict the text column width to enhance readability:
@@ -92,10 +93,10 @@ On ultra-wide or high-resolution monitors, restrict the text column width to enh
 mdreader --width 100 README.md
 ```
 
-### 3. Display TOC Sidebar on Startup (`--toc`)
-By default, `mdreader` opens in full-page mode. Use `--toc` to open with the Table of Contents outline sidebar immediately visible:
+### 3. File Watcher Mode (`-w` / `--watch`)
+Auto-detect modifications on disk and perform instant live reloads:
 ```bash
-mdreader --toc README.md
+mdreader -w notes.md
 ```
 
 ### 4. Non-Interactive Inline Mode (`--inline`)
@@ -127,24 +128,25 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 
 ```json
 {
-  "theme": "github-dark",
+  "theme": "vim-dark",
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",
-    "toggle_toc": "O",
-    "open_commander": "ctrl+o",
-    "toggle_wrap": ["w", "alt+z"],
+    "toggle_toc": "ctrl+o",
+    "open_commander": "O",
+    "toggle_wrap": "w",
     "edit_in_editor": ["v", "f4"],
     "toggle_theme": "t",
     "open_help": ["h", "?", "f1"],
     "open_search": "/",
     "open_goto_line": ":",
-    "page_down": ["pagedown", "d", "ctrl+f"],
-    "page_up": ["pageup", "u", "ctrl+b"],
-    "scroll_down": ["down", "j"],
-    "scroll_up": ["up", "k"],
-    "zoom_in": ["+", "=", "z"],
-    "zoom_out": ["-", "Z"],
+    "page_down": ["pagedown", "i"],
+    "page_up": ["pageup", "u"],
+    "scroll_down": ["down", "k"],
+    "scroll_up": ["up", "j"],
+    "zoom_in": ["=", "+"],
+    "zoom_out": "-",
+    "toggle_line_numbers": "l",
     "reset_zoom": "0"
   }
 }
@@ -156,10 +158,10 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 ```json
 {
   "keybindings": {
-    "page_down": ["ctrl+f", "ctrl+d", "pagedown"],
-    "page_up": ["ctrl+b", "ctrl+u", "pageup"],
-    "scroll_down": ["j", "down"],
-    "scroll_up": ["k", "up"],
+    "page_down": ["ctrl+f", "ctrl+d", "pagedown", "i"],
+    "page_up": ["ctrl+b", "ctrl+u", "pageup", "u"],
+    "scroll_down": ["j", "down", "k"],
+    "scroll_up": ["k", "up", "j"],
     "scroll_left": ["h", "left"],
     "scroll_right": ["l", "right"],
     "scroll_end": "G",
@@ -191,9 +193,9 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 | :--- | :--- | :--- |
 | `quit` | `q` | Exit application |
 | `open_file_picker` | `o` | Open fuzzy file picker |
-| `toggle_toc` | `O` | Table of contents outline |
-| `open_commander` | `ctrl+o` | Midnight Commander dual-pane manager |
-| `toggle_wrap` | `w`, `alt+z` | Toggle soft line wrap |
+| `toggle_toc` | `ctrl+o` | Table of contents outline |
+| `open_commander` | `O` | Midnight Commander dual-pane manager |
+| `toggle_wrap` | `w` | Toggle soft line wrap |
 | `edit_in_editor` | `v`, `f4` | Edit in external editor / viewer |
 | `toggle_theme` | `t` | Cycle color themes |
 | `open_help` | `h`, `?`, `f1` | Open help shortcuts dialog |
@@ -202,15 +204,15 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 | `open_goto_line` | `:` | Jump to line number |
 | `search_next` | `n` | Next search match |
 | `search_prev` | `N` | Previous search match |
-| `page_up` | `j` | Scroll page up |
-| `page_down` | `k` | Scroll page down |
-| `scroll_up` | `up` | Scroll line up |
-| `scroll_down` | `down` | Scroll line down |
+| `page_up` | `pageup`, `u` | Scroll page up |
+| `page_down` | `pagedown`, `i` | Scroll page down |
+| `scroll_up` | `up`, `j` | Scroll line up |
+| `scroll_down` | `down`, `k` | Scroll line down |
 | `scroll_left` | `left`, `d` | Scroll left (image / nowrap) |
 | `scroll_right` | `right`, `f` | Scroll right (image / nowrap) |
 | `scroll_end` | `G` | Jump to bottom of document |
-| `zoom_in` | `=`, `+`, `z` | Zoom in reading width / image |
-| `zoom_out` | `-`, `Z` | Zoom out reading width / image |
+| `zoom_in` | `=`, `+` | Zoom in reading width / image |
+| `zoom_out` | `-` | Zoom out reading width / image |
 | `reset_zoom` | `0` | Reset zoom to 100% |
 | `export_document` | `e` | Export document (HTML / Text / MD) |
 | `copy_code_block` | `Y`, `ctrl+k` | Extract and copy code blocks |
@@ -219,7 +221,7 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 | `toggle_cmd_prompt` | `T` | Toggle terminal prompt bar |
 | `open_in_terminal` | `ctrl+t` | Open terminal shell in file dir |
 | `reveal_in_finder` | `ctrl+shift+o` | Reveal in Finder / file manager |
-| `toggle_line_numbers`| `L`, `alt+l` | Toggle line number column |
+| `toggle_line_numbers`| `l` | Toggle line number column |
 | `reload_file` | `r` | Reload file from disk |
 
 ---
