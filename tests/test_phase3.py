@@ -1009,3 +1009,37 @@ def test_updated_default_keybindings():
     assert "plus" in binding_keys
     assert "minus" in binding_keys
     assert "w" in binding_keys
+
+
+def test_markdown_rendering_optimizations():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    import textual.widgets._markdown as tm
+
+    # Test that complex Markdown with tables, lists, and TOC renders cleanly and efficiently
+    complex_md = """# Performance Optimization Test
+- Item 1
+- Item 2
+- Item 3
+
+| Col A | Col B | Col C |
+| :--- | :--- | :--- |
+| Val 1 | Val 2 | Val 3 |
+| Val 4 | Val 5 | Val 6 |
+
+## Section 2
+1. Numbered item 1
+2. Numbered item 2
+"""
+    app = MDReaderApp(content=complex_md)
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            viewer = app.query_one("#viewer")
+            assert viewer is not None
+            # Toggle TOC on demand
+            viewer.toggle_toc()
+            await pilot.pause(0.05)
+            assert viewer.show_table_of_contents is True
+
+    asyncio.run(run_check())

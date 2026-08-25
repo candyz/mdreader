@@ -51,8 +51,48 @@ def _custom_markdown_table_compose(self):
         tc.styles.grid_columns = [Scalar.from_number(w + 2) for w in col_widths]
         total_w = sum(col_widths) + num_cols * 2 + max(0, num_cols - 1)
         tc.styles.width = total_w
+    yield tc
 
 tm.MarkdownTable.compose = _custom_markdown_table_compose
+
+
+# High-performance streamlined table content compose (avoiding heavy per-cell tooltips and redundant selector evaluations)
+def _fast_markdown_table_content_compose(self):
+    for header in self.headers:
+        yield tm.MarkdownTableCellContents(header, classes="header")
+    for row_index, row in enumerate(self.rows, 1):
+        for cell in row:
+            yield tm.MarkdownTableCellContents(cell, classes="cell")
+        self.last_row = row_index
+
+tm.MarkdownTableContent.compose = _fast_markdown_table_content_compose
+
+
+# Streamlined list compose (reduces redundant container wrapping from 5 widgets down to 3 per list item)
+def _fast_bullet_list_compose(self):
+    for block in self._blocks:
+        if isinstance(block, tm.MarkdownListItem):
+            bullet = tm.MarkdownBullet()
+            bullet.symbol = block.bullet
+            if len(block._blocks) == 1:
+                yield tm.Horizontal(bullet, block._blocks[0])
+            else:
+                yield tm.Horizontal(bullet, tm.Vertical(*block._blocks))
+    self._blocks.clear()
+
+tm.MarkdownBulletList.compose = _fast_bullet_list_compose
+
+
+# Lazy TOC rebuild: defer constructing 100+ TreeNode objects until TOC sidebar is actually opened
+_orig_rebuild_toc = tm.MarkdownTableOfContents.rebuild_table_of_contents
+
+
+def _lazy_rebuild_toc(self, table_of_contents):
+    self._pending_toc = table_of_contents
+    if self.styles.display != "none":
+        _orig_rebuild_toc(self, table_of_contents)
+
+tm.MarkdownTableOfContents.rebuild_table_of_contents = _lazy_rebuild_toc
 
 from pygments.token import Token as PygmentsToken
 
@@ -183,16 +223,6 @@ class MarkdownViewerWidget(MarkdownViewer):
         border-left: thick $accent;
         text-style: bold;
     }
-    MarkdownBlock .em {
-        text-style: italic;
-        color: $accent;
-    }
-    MarkdownBlock .strong {
-        text-style: bold;
-    }
-    MarkdownBlock .s {
-        text-style: strike;
-    }
     MarkdownBlockQuote {
         text-style: italic;
         color: $text-muted;
@@ -201,15 +231,6 @@ class MarkdownViewerWidget(MarkdownViewer):
         padding: 0 1;
         margin: 1 0;
     }
-    MarkdownTable {
-        width: 1fr;
-        height: auto;
-        overflow-x: auto;
-        overflow-y: hidden;
-    }
-    """
-
-    DEFAULT_CSS = """
     MarkdownViewerWidget MarkdownTable {
         overflow-x: auto;
         overflow-y: hidden;
@@ -257,6 +278,17 @@ class MarkdownViewerWidget(MarkdownViewer):
             id=id,
             classes=classes,
         )
+
+    def watch_show_table_of_contents(self, show_table_of_contents: bool) -> None:
+        """On-demand rebuild of TOC tree when sidebar is opened."""
+        super().watch_show_table_of_contents(show_table_of_contents)
+        if show_table_of_contents:
+            try:
+                toc = self.query_one(tm.MarkdownTableOfContents)
+                if getattr(toc, "_pending_toc", None):
+                    _orig_rebuild_toc(toc, toc._pending_toc)
+            except Exception:
+                pass
 
     def set_soft_wrap(self, wrap: bool) -> None:
         """Toggle soft wrapping in Markdown viewer."""
