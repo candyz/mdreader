@@ -6,6 +6,12 @@ from html.parser import HTMLParser
 from html import unescape
 
 
+VOID_ELEMENTS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr"
+}
+
+
 class HTMLToMarkdownParser(HTMLParser):
     """Clean and lightweight HTML to Markdown parser."""
 
@@ -24,7 +30,8 @@ class HTMLToMarkdownParser(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attr_dict = {k.lower(): v for k, v in attrs if v is not None}
         t = tag.lower()
-        self.tag_stack.append(t)
+        if t not in VOID_ELEMENTS:
+            self.tag_stack.append(t)
 
         if t in ("h1", "h2", "h3", "h4", "h5", "h6"):
             level = int(t[1])
@@ -35,6 +42,8 @@ class HTMLToMarkdownParser(HTMLParser):
             self.output.write("\n")
         elif t == "hr":
             self.output.write("\n\n---\n\n")
+        elif t in ("div", "section", "article", "header", "footer", "nav", "aside", "main", "button"):
+            self.output.write("\n")
         elif t in ("strong", "b"):
             self.output.write("**")
         elif t in ("em", "i"):
@@ -89,13 +98,18 @@ class HTMLToMarkdownParser(HTMLParser):
 
     def handle_endtag(self, tag: str) -> None:
         t = tag.lower()
-        if self.tag_stack and self.tag_stack[-1] == t:
-            self.tag_stack.pop()
+        if t in self.tag_stack:
+            while self.tag_stack:
+                popped = self.tag_stack.pop()
+                if popped == t:
+                    break
 
         if t in ("h1", "h2", "h3", "h4", "h5", "h6"):
             self.output.write("\n\n")
         elif t == "p":
             self.output.write("\n\n")
+        elif t in ("div", "section", "article", "header", "footer", "nav", "aside", "main", "button"):
+            self.output.write("\n")
         elif t in ("strong", "b"):
             self.output.write("**")
         elif t in ("em", "i"):
@@ -151,7 +165,7 @@ class HTMLToMarkdownParser(HTMLParser):
         self.output.write("\n\n")
 
     def handle_data(self, data: str) -> None:
-        if self.tag_stack and self.tag_stack[-1] in ("script", "style", "head", "title", "meta"):
+        if self.tag_stack and any(tag in self.tag_stack for tag in ("script", "style", "head", "title", "meta", "noscript", "svg")):
             return
 
         text = unescape(data)

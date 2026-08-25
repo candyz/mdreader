@@ -1043,3 +1043,41 @@ def test_markdown_rendering_optimizations():
             assert viewer.show_table_of_contents is True
 
     asyncio.run(run_check())
+
+
+def test_html_with_large_style_scripts_rendering():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    from mdreader.widgets.virtual_viewer import should_use_virtual_viewer
+
+    # HTML with massive CSS style block (5,000 lines) but concise body content
+    css_lines = "\n".join(f"  .rule-{i} {{ color: red; margin: {i}px; }}" for i in range(5000))
+    html_doc = f"""<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <style>
+{css_lines}
+  </style>
+</head>
+<body>
+  <h1>Motion Sensing Dashboard</h1>
+  <div><button>Status</button></div>
+  <p>Sensors are active and operational.</p>
+</body>
+</html>
+"""
+    # Verify should_use_virtual_viewer returns False for this HTML
+    assert should_use_virtual_viewer(html_doc, "dashboard.html") is False
+
+    # Verify MDReaderApp creates MarkdownViewerWidget
+    app = MDReaderApp(content=html_doc, filepath="dashboard.html")
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            viewer = app.query_one("#viewer")
+            assert isinstance(viewer, MarkdownViewerWidget)
+            assert "Motion Sensing Dashboard" in viewer.raw_markdown
+
+    asyncio.run(run_check())

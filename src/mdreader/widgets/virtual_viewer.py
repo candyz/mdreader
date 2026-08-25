@@ -9,7 +9,7 @@ from rich.style import Style
 import pygments
 from pygments.lexers import get_lexer_by_name
 from pygments.token import Token
-from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language
+from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language, html_to_markdown
 
 LARGE_FILE_LINE_THRESHOLD = 3000
 
@@ -65,6 +65,10 @@ def should_use_virtual_viewer(content: str, filename: str | None) -> bool:
     # Non-markdown code/text files use virtual viewer for instant responsiveness
     if filename and not is_markdown_file(filename) and not is_html_content(content, filename):
         return True
+    # For HTML files/content, check the converted markdown line count (styles/scripts stripped)
+    if is_html_content(content, filename):
+        converted = html_to_markdown(content)
+        return (converted.count("\n") + 1) > LARGE_FILE_LINE_THRESHOLD
     # Markdown files exceeding threshold use virtual viewer to prevent DOM tree freeze
     line_count = content.count("\n") + 1
     if line_count > LARGE_FILE_LINE_THRESHOLD:
