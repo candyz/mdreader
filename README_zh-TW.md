@@ -134,6 +134,7 @@ mdreader -s sh config.env
 ```json
 {
   "theme": "vim-dark",
+  "show_line_numbers": true,
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",

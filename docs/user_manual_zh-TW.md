@@ -130,7 +130,8 @@ mdreader 支援透過使用者設定檔 `~/.config/mdreader/config.json` 自由�
 
 ```json
 {
-  "theme": "github-dark",
+  "theme": "vim-dark",
+  "show_line_numbers": true,
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",

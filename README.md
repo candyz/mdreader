@@ -155,6 +155,7 @@ You can customize any keybinding by adding a `"keybindings"` section in `~/.conf
 ```json
 {
   "theme": "vim-dark",
+  "show_line_numbers": true,
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",

@@ -923,14 +923,15 @@ class MDReaderApp(App):
         self.notify(f"自動折行：{status_text}", title="自動換行 (w)", timeout=1.5)
 
     def action_toggle_line_numbers(self) -> None:
-        """Toggle line numbers visibility in VirtualTextViewer (L / Alt+L)."""
+        """Toggle line numbers visibility in VirtualTextViewer (l)."""
         viewer = self.query_one("#viewer")
         if hasattr(viewer, "toggle_line_numbers"):
             state = viewer.toggle_line_numbers()
+            set_config_value("show_line_numbers", state)
             msg = "已顯示行號 (Line Numbers On)" if state else "已隱藏行號 (Line Numbers Off)"
-            self.notify(msg, title="行號切換 (L)", timeout=1.5)
+            self.notify(msg, title="行號切換 (l)", timeout=1.5)
         else:
-            self.notify("Markdown 渲染模式不支援行號切換（僅純文字/原始碼模式支援）", title="行號切換 (L)", timeout=2.0)
+            self.notify("Markdown 渲染模式不支援行號切換（僅純文字/原始碼模式支援）", title="行號切換 (l)", timeout=2.0)
 
     def action_open_help(self) -> None:
         """Open full keyboard shortcuts & help guide modal (h / ? / F1)."""

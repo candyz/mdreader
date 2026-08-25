@@ -129,6 +129,7 @@ echo -e "# Test Title\n\`\`\`mermaid\ngraph LR\nA --> B\n\`\`\`" | mdreader
 ```json
 {
   "theme": "vim-dark",
+  "show_line_numbers": true,
   "keybindings": {
     "quit": ["q", "escape"],
     "open_file_picker": "o",

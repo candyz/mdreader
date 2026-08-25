@@ -1081,3 +1081,42 @@ def test_html_with_large_style_scripts_rendering():
             assert "Motion Sensing Dashboard" in viewer.raw_markdown
 
     asyncio.run(run_check())
+
+
+def test_toggle_line_numbers_persisted_to_config(tmp_path, monkeypatch):
+    import asyncio
+    from mdreader.utils import config
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    fake_config_file = tmp_path / "config.json"
+    monkeypatch.setattr(config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(config, "CONFIG_FILE", fake_config_file)
+
+    # Initial state: default show_line_numbers is True
+    viewer = VirtualTextViewer(raw_text="Line 1\nLine 2\nLine 3", filename="test.py")
+    assert viewer.show_line_numbers is True
+
+    # Toggle off
+    state1 = viewer.toggle_line_numbers()
+    assert state1 is False
+    assert viewer.show_line_numbers is False
+    assert config.get_config_value("show_line_numbers") is False
+
+    # Create a new viewer: should load False from persisted config
+    viewer2 = VirtualTextViewer(raw_text="Line 1\nLine 2", filename="test.py")
+    assert viewer2.show_line_numbers is False
+
+    # Test via MDReaderApp action_toggle_line_numbers
+    app = MDReaderApp(content="echo hello", filepath="script.sh")
+
+    async def run_app():
+        async with app.run_test(size=(120, 40)) as pilot:
+            v = app.query_one(VirtualTextViewer)
+            assert v.show_line_numbers is False
+            app.action_toggle_line_numbers()
+            await pilot.pause(0.05)
+            assert v.show_line_numbers is True
+            assert config.get_config_value("show_line_numbers") is True
+
+    asyncio.run(run_app())

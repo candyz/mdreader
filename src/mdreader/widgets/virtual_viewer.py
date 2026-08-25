@@ -10,6 +10,7 @@ import pygments
 from pygments.lexers import get_lexer_by_name
 from pygments.token import Token
 from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language, html_to_markdown
+from mdreader.utils.config import get_config_value, set_config_value
 
 LARGE_FILE_LINE_THRESHOLD = 3000
 
@@ -115,7 +116,7 @@ class VirtualTextViewer(ScrollView):
             self.lines = raw_text.splitlines() if raw_text else []
         self._highlighted_line: int | None = None
         self._search_query: str = ""
-        self.show_line_numbers: bool = True
+        self.show_line_numbers: bool = get_config_value("show_line_numbers", True)
         self.soft_wrap: bool = False
         self.document = self  # Duck-type compatibility with MarkdownViewerWidget
         self._lexer = None
@@ -123,8 +124,9 @@ class VirtualTextViewer(ScrollView):
         self._update_virtual_size()
 
     def toggle_line_numbers(self) -> bool:
-        """Toggle display of line number column."""
+        """Toggle display of line number column and persist to config."""
         self.show_line_numbers = not self.show_line_numbers
+        set_config_value("show_line_numbers", self.show_line_numbers)
         self._update_virtual_size()
         self.refresh()
         return self.show_line_numbers
