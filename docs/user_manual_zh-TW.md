@@ -97,8 +97,8 @@ mdreader -l 100 README.md
 # 列出所有支援的配色主題
 mdreader --list-themes
 
-# 啟動時套用指定主題
-mdreader -t tokyo-night README.md
+# 啟動時套用 Vim 經典深色高亮主題（亮藍註解、黃色關鍵字、青色變數）
+mdreader -t vim-dark README.md
 ```
 
 ### 3. 非互動輸出模式 (`--inline`)

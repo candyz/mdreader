@@ -13,7 +13,7 @@ from mdreader.renderer.html import is_markdown_file, is_html_content, detect_cod
 
 LARGE_FILE_LINE_THRESHOLD = 3000
 
-TOKEN_STYLES = {
+DEFAULT_TOKEN_STYLES = {
     Token.Keyword: Style(color="magenta", bold=True),
     Token.Keyword.Constant: Style(color="magenta", bold=True),
     Token.Keyword.Type: Style(color="bright_cyan"),
@@ -29,11 +29,31 @@ TOKEN_STYLES = {
     Token.Punctuation: Style(color="grey70"),
 }
 
+# Classic Vim Dark syntax token styles with blue comments, yellow keywords, cyan variables, green strings
+VIM_DARK_TOKEN_STYLES = {
+    Token.Keyword: Style(color="bright_yellow", bold=True),
+    Token.Keyword.Constant: Style(color="bright_yellow", bold=True),
+    Token.Keyword.Type: Style(color="bright_cyan", bold=True),
+    Token.Name.Function: Style(color="bright_cyan", bold=True),
+    Token.Name.Class: Style(color="bright_cyan", bold=True),
+    Token.Name.Builtin: Style(color="bright_cyan"),
+    Token.Name.Variable: Style(color="bright_cyan"),
+    Token.String: Style(color="green"),
+    Token.String.Doc: Style(color="bright_blue", italic=True),
+    Token.Number: Style(color="bright_magenta"),
+    Token.Comment: Style(color="bright_blue"),          # Classic Vim Blue Comments!
+    Token.Operator: Style(color="bright_yellow"),
+    Token.Punctuation: Style(color="white"),
+}
 
-def get_style_for_token(ttype: Token) -> Style | None:
+TOKEN_STYLES = DEFAULT_TOKEN_STYLES
+
+
+def get_style_for_token(ttype: Token, theme_name: str | None = None) -> Style | None:
+    styles_table = VIM_DARK_TOKEN_STYLES if theme_name == "vim-dark" else TOKEN_STYLES
     while ttype:
-        if ttype in TOKEN_STYLES:
-            return TOKEN_STYLES[ttype]
+        if ttype in styles_table:
+            return styles_table[ttype]
         ttype = ttype.parent
     return None
 
@@ -243,11 +263,12 @@ class VirtualTextViewer(ScrollView):
         # On-demand syntax highlighting via Pygments
         if self._lexer:
             try:
+                theme_name = getattr(getattr(self.app, "current_theme", None), "name", None) or getattr(self.app, "theme", None) if self.is_mounted else None
                 for ttype, val in pygments.lex(line_str, self._lexer):
                     val = val.rstrip("\r\n")
                     if not val:
                         continue
-                    style = get_style_for_token(ttype)
+                    style = get_style_for_token(ttype, theme_name=theme_name)
                     segments.append(Segment(val, style))
                 strip = Strip(segments)
                 return strip.adjust_cell_length(width, Style()) if width > 0 else strip

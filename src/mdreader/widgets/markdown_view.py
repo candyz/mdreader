@@ -52,9 +52,58 @@ def _custom_markdown_table_compose(self):
         total_w = sum(col_widths) + num_cols * 2 + max(0, num_cols - 1)
         tc.styles.width = total_w
 
-    yield tc
-
 tm.MarkdownTable.compose = _custom_markdown_table_compose
+
+from pygments.token import Token as PygmentsToken
+
+
+class VimDarkHighlightTheme:
+    """Classic Vim Dark Syntax Highlight Theme with bright blue comments."""
+    STYLES: dict[PygmentsToken, str] = {
+        PygmentsToken.Comment: "#5f87ff",                  # Classic Vim Blue Comments!
+        PygmentsToken.Comment.Single: "#5f87ff",
+        PygmentsToken.Comment.Multiline: "#5f87ff",
+        PygmentsToken.Keyword: "#ffff00 bold",             # Classic Vim Yellow Keywords!
+        PygmentsToken.Keyword.Constant: "#ffff00 bold",
+        PygmentsToken.Keyword.Namespace: "#ffff00 bold",
+        PygmentsToken.Keyword.Type: "#00ffff bold",        # Vim Cyan Type
+        PygmentsToken.Literal.Number: "#ff55ff",           # Magenta
+        PygmentsToken.Literal.String: "#55ff55",           # Green
+        PygmentsToken.Literal.String.Doc: "#5f87ff italic",
+        PygmentsToken.Literal.String.Double: "#55ff55",
+        PygmentsToken.Literal.String.Single: "#55ff55",
+        PygmentsToken.Name: "#ffffff",
+        PygmentsToken.Name.Attribute: "#5fd7ff",
+        PygmentsToken.Name.Builtin: "#00ffff",             # Cyan
+        PygmentsToken.Name.Class: "#00ffff bold",
+        PygmentsToken.Name.Constant: "#ff5555",
+        PygmentsToken.Name.Function: "#00ffff bold",
+        PygmentsToken.Name.Variable: "#00ffff",            # Cyan ($VAR)
+        PygmentsToken.Number: "#ff55ff",
+        PygmentsToken.Operator: "#ffff00",
+        PygmentsToken.Operator.Word: "#ffff00 bold",
+        PygmentsToken.String: "#55ff55",
+        PygmentsToken.Punctuation: "#ffffff",
+        PygmentsToken.Whitespace: "",
+    }
+
+
+_orig_markdown_fence_highlight = MarkdownFence.highlight
+
+
+def _custom_markdown_fence_highlight(cls, code: str, language: str, ansi: bool = False, dark: bool = False) -> Content:
+    try:
+        from textual._context import active_app
+        app = active_app.get()
+        if app and (getattr(app, "theme", None) == "vim-dark" or getattr(getattr(app, "current_theme", None), "name", None) == "vim-dark"):
+            from textual.widgets._markdown import highlight
+            return highlight(code, language=language or None, theme=VimDarkHighlightTheme)
+    except Exception:
+        pass
+    return _orig_markdown_fence_highlight(code, language, ansi=ansi, dark=dark)
+
+
+MarkdownFence.highlight = classmethod(_custom_markdown_fence_highlight)
 
 
 # Monkey-patch Textual's MarkdownBlock._token_to_content to preserve soft linebreaks

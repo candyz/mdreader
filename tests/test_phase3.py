@@ -951,3 +951,28 @@ def test_default_syntax_fallback_and_override():
     # 5. MarkdownViewerWidget with syntax override
     md_viewer = MarkdownViewerWidget(raw_markdown="print('hello')", filename="test.txt", syntax="python")
     assert "```python" in md_viewer.raw_markdown or "```python" in md_viewer._preprocess("print('hello')", "test.txt")
+
+
+def test_vim_dark_theme_and_blue_comments():
+    from mdreader.app import MDReaderApp, VIM_DARK_THEME
+    from mdreader.widgets.virtual_viewer import get_style_for_token, VIM_DARK_TOKEN_STYLES
+    from mdreader.widgets.markdown_view import VimDarkHighlightTheme
+    from pygments.token import Token
+
+    # 1. Check VIM_DARK_THEME properties
+    assert VIM_DARK_THEME.name == "vim-dark"
+    assert VIM_DARK_THEME.primary == "#5f87ff"  # Vim Blue
+    assert "vim-dark" in MDReaderApp.THEME_LIST
+
+    # 2. Check VirtualTextViewer token styles for vim-dark
+    comment_style = get_style_for_token(Token.Comment, theme_name="vim-dark")
+    assert comment_style is not None
+    assert "blue" in str(comment_style.color).lower()
+
+    kw_style = get_style_for_token(Token.Keyword, theme_name="vim-dark")
+    assert kw_style is not None
+    assert "yellow" in str(kw_style.color).lower()
+
+    # 3. Check MarkdownFence highlight theme for vim-dark
+    assert VimDarkHighlightTheme.STYLES[Token.Comment] == "#5f87ff"
+    assert "yellow" in VimDarkHighlightTheme.STYLES[Token.Keyword].lower() or "ffff00" in VimDarkHighlightTheme.STYLES[Token.Keyword].lower()

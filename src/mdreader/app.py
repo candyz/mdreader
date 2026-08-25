@@ -27,6 +27,23 @@ from mdreader.widgets.code_block_modal import CodeBlockModal, extract_code_block
 from mdreader.widgets.help_modal import ReaderHelpModal
 
 
+# Vim Dark Theme with classic blue comments, yellow keywords, cyan variables, and green strings
+VIM_DARK_THEME = Theme(
+    name="vim-dark",
+    primary="#5f87ff",      # Classic Vim Blue (Comments & Focus)
+    secondary="#00ffff",    # Classic Vim Cyan (Identifiers, Variables, Types)
+    warning="#ffff00",      # Classic Vim Yellow (Statements, Keywords)
+    error="#ff5555",        # Classic Vim Red (Errors / Special)
+    success="#55ff55",      # Classic Vim Green (Strings)
+    accent="#ffff00",       # Classic Vim Yellow
+    foreground="#ffffff",   # High-contrast White Text
+    background="#000000",   # Pure Terminal Black Background
+    surface="#0a0a0a",      # Deep Black Surface
+    panel="#141414",        # Subdued Dark Panel
+    boost="#202020",        # Dark Row Boost
+    dark=True,
+)
+
 # GitHub Dark & Light terminal color themes (https://terminalcolors.com/ / GitHub Primer)
 GITHUB_DARK_THEME = Theme(
     name="github-dark",
@@ -123,6 +140,7 @@ class MDReaderApp(App):
     SUB_TITLE = "Terminal Markdown Viewer"
 
     THEME_LIST = [
+        "vim-dark",
         "github-dark",
         "github-light",
         "textual-dark",
@@ -254,6 +272,7 @@ class MDReaderApp(App):
         dynamic_bindings = build_app_bindings()
         self.BINDINGS = dynamic_bindings
         self._bindings = BindingsMap(dynamic_bindings)
+        self.register_theme(VIM_DARK_THEME)
         self.register_theme(GITHUB_DARK_THEME)
         self.register_theme(GITHUB_LIGHT_THEME)
         self.filepath = Path(filepath) if filepath else None
