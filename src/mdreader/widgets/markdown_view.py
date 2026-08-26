@@ -14,9 +14,8 @@ from textual.style import Style
 from markdown_it.token import Token
 
 
-# Monkey-patch Textual's MarkdownTable.compose so table columns are proportioned,
-# compact columns get fixed neat widths, and wide descriptive text columns (e.g. 說明)
-# get 1fr to wrap text across multiple lines and fit within the viewport width (matching leaf/GFM).
+# Monkey-patch Textual's MarkdownTable.compose so table columns are evenly and naturally proportioned
+# based on content width, extending horizontally when wide and scrollable via left/right keys.
 def _custom_markdown_table_compose(self):
     headers, rows = self._get_headers_and_rows()
     self._headers = headers
@@ -35,22 +34,12 @@ def _custom_markdown_table_compose(self):
             if idx < num_cols:
                 col_widths[idx] = max(col_widths[idx], cell_len(cell.plain))
 
-    max_w = max(col_widths)
-    if num_cols <= 8 and max_w > 20:
-        grid_cols = []
-        for w in col_widths:
-            if w == max_w:
-                grid_cols.append(Scalar.parse("1fr"))
-            else:
-                grid_cols.append(Scalar.from_number(w + 2))
-        tc.styles.grid_size_columns = num_cols
-        tc.styles.grid_columns = grid_cols
-        tc.styles.width = Scalar.parse("100%")
-    else:
-        tc.styles.grid_size_columns = num_cols
-        tc.styles.grid_columns = [Scalar.from_number(w + 2) for w in col_widths]
-        total_w = sum(col_widths) + num_cols * 2 + max(0, num_cols - 1)
-        tc.styles.width = total_w
+    # Evenly proportion every column based on content width with padding
+    grid_cols = [Scalar.from_number(max(4, w + 2)) for w in col_widths]
+    total_w = sum(max(4, w + 2) for w in col_widths) + max(0, num_cols - 1)
+    tc.styles.grid_size_columns = num_cols
+    tc.styles.grid_columns = grid_cols
+    tc.styles.width = total_w
     yield tc
 
 tm.MarkdownTable.compose = _custom_markdown_table_compose

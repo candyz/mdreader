@@ -1174,3 +1174,39 @@ def test_streamlined_footer_bindings_display():
         ("q", "Quit"),
         ("h", "Help"),
     ]
+
+
+def test_table_even_column_proportioning_and_scroll():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    import textual.widgets._markdown as tm
+
+    # Multi-column table with wide text columns
+    md_content = """# Wide Table Test
+| | 方案 A：BOT 輪詢 `/Status/` | 方案 B：ACS 落地事件 + NBI 讀取 | 方案 C：ACS 主動 push |
+|---|---|---|---|
+| ACS 程式改動 | **無** | `class.tr069.php` 加約 20 行 + 新表 + `Request.php` 端點 | 同 B，另加 HTTP 外呼 |
+| BOT 改動 | 新檔 `csi_monitor.py` + i18n | 同 A，改讀新端點 | 同 A，改成 HTTP 監聽 |
+| 延遲 | 15–30s | 5s | < 1s |
+"""
+    app = MDReaderApp(content=md_content)
+
+    async def run_check():
+        async with app.run_test(size=(100, 40)) as pilot:
+            viewer = app.query_one("#viewer")
+            tbl = viewer.query_one(tm.MarkdownTable)
+            tc = tbl.query_one(tm.MarkdownTableContent)
+
+            # All 4 columns should have positive width in grid_columns
+            cols = tc.styles.grid_columns
+            assert len(cols) == 4
+            for col in cols:
+                assert col.value > 10.0  # None of the columns should be squeezed to 0 or 1fr
+
+            # Table should be scrollable horizontally
+            assert tbl.max_scroll_x > 0
+            app.action_scroll_right()
+            await pilot.pause(0.05)
+            assert tbl.scroll_x > 0
+
+    asyncio.run(run_check())
