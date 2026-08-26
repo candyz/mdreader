@@ -5,7 +5,7 @@ from typing import List, Optional
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
-from textual.widgets import Input, OptionList, Label, Checkbox
+from textual.widgets import Input, OptionList, Label
 from textual.widgets.option_list import Option
 from textual.binding import Binding
 from mdreader.utils.config import get_config_value, set_config_value, get_recent_files
@@ -47,7 +47,7 @@ from mdreader.widgets.grep_modal import GrepSearchModal
 
 
 class FilePickerScreen(ModalScreen[object]):
-    """Maximized modal screen for browsing directories and selecting Markdown/HTML/Text files."""
+    """Full-screen modal for browsing directories and selecting Markdown/HTML/Text files."""
 
     BINDINGS = [
         Binding("tab", "dismiss_modal", "Dismiss", priority=True),
@@ -63,23 +63,22 @@ class FilePickerScreen(ModalScreen[object]):
 
     CSS = """
     FilePickerScreen {
-        align: center middle;
-        background: rgba(0, 0, 0, 0.75);
+        background: $surface;
+        layout: vertical;
     }
 
     #picker-dialog {
-        width: 96%;
-        height: 94%;
+        width: 100%;
+        height: 100%;
         background: $surface;
-        border: thick $primary;
-        padding: 0 1;
+        border: none;
+        padding: 0;
     }
 
     #picker-header {
         height: 1;
         width: 100%;
-        margin-top: 0;
-        margin-bottom: 0;
+        margin: 0;
         background: $primary-darken-2;
         padding: 0 1;
     }
@@ -92,36 +91,32 @@ class FilePickerScreen(ModalScreen[object]):
 
     #file-list {
         height: 1fr;
-        border: solid $panel;
+        border: none;
         background: $panel;
         margin: 0;
     }
 
     #picker-bottom-bar {
-        height: auto;
+        height: 1;
         width: 100%;
         margin: 0;
-        padding: 0;
+        padding: 0 1;
+        background: $surface-darken-1;
     }
 
     #filter-input {
-        width: 1fr;
-        margin: 0;
-    }
-
-    #all-files-checkbox {
-        width: auto;
+        width: 100%;
         height: 1;
-        margin: 0 1 0 1;
-        background: transparent;
         border: none;
-        padding: 0 1;
+        padding: 0;
+        background: transparent;
+        color: $text;
     }
 
     #picker-footer {
         height: 1;
         width: 100%;
-        margin-top: 0;
+        margin: 0;
         background: $footer-background;
         padding: 0 1;
     }
@@ -220,12 +215,11 @@ class FilePickerScreen(ModalScreen[object]):
             with Horizontal(id="picker-bottom-bar"):
                 yield Input(
                     value=self.initial_query,
-                    placeholder="🔍 Fuzzy filter... (e.g. sapp -> app.py, Ctrl+R: Recent, Ctrl+A: All)",
+                    placeholder="🔍 Fuzzy filter... (e.g. sapp -> app.py | Ctrl+R: Recent | Ctrl+A: All files | Esc: Close)",
                     id="filter-input",
                 )
-                yield Checkbox("Show all files (Ctrl+A)", value=self.show_all_files, id="all-files-checkbox")
             with Horizontal(id="picker-footer"):
-                yield Label("💡 Enter: Open / Enter folder | Ctrl+R: Recent files | Ctrl+A: All files | Esc: Close", id="picker-hint")
+                yield Label("💡 Enter: Open / Enter folder | Ctrl+R: Recent files | Ctrl+A: All files | Ctrl+D: Bookmarks | Ctrl+F: Grep | Esc: Close", id="picker-hint")
 
     def on_mount(self) -> None:
         self._refresh_view(self.initial_query)
@@ -265,13 +259,6 @@ class FilePickerScreen(ModalScreen[object]):
 
         if option_list.option_count > 0:
             option_list.highlighted = 0
-
-    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
-        if event.checkbox.id == "all-files-checkbox":
-            self.show_all_files = event.value
-            set_config_value("show_all_files", event.value)
-            filter_input = self.query_one("#filter-input", Input)
-            self._refresh_view(filter_input.value)
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "filter-input":
@@ -335,9 +322,13 @@ class FilePickerScreen(ModalScreen[object]):
             self.dismiss(result)
 
     def action_toggle_all_files(self) -> None:
-        """Toggle Show All Files checkbox via Ctrl+A."""
-        cb = self.query_one("#all-files-checkbox", Checkbox)
-        cb.value = not cb.value
+        """Toggle Show All Files via Ctrl+A / Ctrl+H."""
+        self.show_all_files = not self.show_all_files
+        set_config_value("show_all_files", self.show_all_files)
+        filter_input = self.query_one("#filter-input", Input)
+        self._refresh_view(filter_input.value)
+        msg = "已顯示所有檔案 (All Files On)" if self.show_all_files else "僅顯示支援格式 (Filtered Files)"
+        self.notify(msg, title="All Files (Ctrl+A)", timeout=1.2)
 
     def action_toggle_recent_files(self) -> None:
         """Toggle between Recent Files and Current Directory via Ctrl+R."""

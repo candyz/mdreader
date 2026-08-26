@@ -1120,3 +1120,41 @@ def test_toggle_line_numbers_persisted_to_config(tmp_path, monkeypatch):
             assert config.get_config_value("show_line_numbers") is True
 
     asyncio.run(run_app())
+
+
+def test_file_picker_fullscreen_and_bottom_search_bar():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.file_picker import FilePickerScreen
+    from textual.widgets import Input, OptionList
+
+    app = MDReaderApp()
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = FilePickerScreen()
+            await app.push_screen(screen)
+            await pilot.pause(0.05)
+
+            dlg = screen.query_one("#picker-dialog")
+            inp = screen.query_one("#filter-input", Input)
+            lst = screen.query_one("#file-list", OptionList)
+            bar = screen.query_one("#picker-bottom-bar")
+            footer = screen.query_one("#picker-footer")
+
+            # Verify full-screen dimensions
+            assert dlg.size.width == 120
+            assert dlg.size.height == 40
+
+            # Verify 1-row height search bar positioned above status bar
+            assert bar.size.height == 1
+            assert inp.size.height == 1
+            assert footer.size.height == 1
+            assert lst.size.height >= 35
+
+            # Verify Ctrl+A toggle still works cleanly without checkbox widget
+            prev_state = screen.show_all_files
+            screen.action_toggle_all_files()
+            assert screen.show_all_files is not prev_state
+
+    asyncio.run(run_check())
