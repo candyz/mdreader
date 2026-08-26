@@ -34,9 +34,11 @@ def _custom_markdown_table_compose(self):
             if idx < num_cols:
                 col_widths[idx] = max(col_widths[idx], cell_len(cell.plain))
 
-    # Evenly proportion every column based on content width with padding
-    grid_cols = [Scalar.from_number(max(4, w + 2)) for w in col_widths]
-    total_w = sum(max(4, w + 2) for w in col_widths) + max(0, num_cols - 1)
+    # Cell width needed for each column: text length w + 2 (padding) + 1 (safety margin)
+    col_sizes = [max(4, w + 3) for w in col_widths]
+    grid_cols = [Scalar.from_number(s) for s in col_sizes]
+    # Total table width = sum of column sizes + gutters between columns + table borders (2)
+    total_w = sum(col_sizes) + max(0, num_cols - 1) + 2
     tc.styles.grid_size_columns = num_cols
     tc.styles.grid_columns = grid_cols
     tc.styles.width = total_w

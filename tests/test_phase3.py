@@ -1210,3 +1210,25 @@ def test_table_even_column_proportioning_and_scroll():
             assert tbl.scroll_x > 0
 
     asyncio.run(run_check())
+
+    # Test single-line cell without breaking
+    md_content_nav = """# Nav
+| 功能 | 快速鍵 |
+| :--- | :--- |
+| 跳到行數 | :123 123G 50gg |
+"""
+    app_nav = MDReaderApp(content=md_content_nav)
+
+    async def run_check_nav():
+        async with app_nav.run_test(size=(120, 40)) as pilot:
+            viewer = app_nav.query_one("#viewer")
+            tbl = viewer.query_one(tm.MarkdownTable)
+            tc = tbl.query_one(tm.MarkdownTableContent)
+            for c in tc.query(tm.MarkdownTableCellContents):
+                lines = [c.render_line(y) for y in range(c.size.height)]
+                texts = ["".join(s.text for s in line).strip() for line in lines]
+                if any(":123" in t for t in texts):
+                    assert c.size.height == 1
+                    assert texts == [":123 123G 50gg"]
+
+    asyncio.run(run_check_nav())
