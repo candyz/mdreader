@@ -1158,3 +1158,19 @@ def test_file_picker_fullscreen_and_bottom_search_bar():
             assert screen.show_all_files is not prev_state
 
     asyncio.run(run_check())
+
+
+def test_streamlined_footer_bindings_display():
+    from mdreader.utils.config import build_app_bindings
+
+    bindings = build_app_bindings()
+    visible_bindings = [(b.key, b.description) for b in bindings if b.show]
+
+    # Verify only the 5 essential shortcuts are displayed on the bottom footer bar
+    assert visible_bindings == [
+        ("o", "Open"),
+        ("O", "Commander"),
+        ("v", "Edit"),
+        ("q", "Quit"),
+        ("h", "Help"),
+    ]

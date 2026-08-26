@@ -69,13 +69,13 @@ def add_recent_file(filepath: Path | str | None) -> None:
 
 DEFAULT_KEYBINDINGS: dict[str, list[str]] = {
     "open_file_picker": ["o"],
-    "toggle_toc": ["ctrl+o"],
     "open_commander": ["O"],
-    "toggle_wrap": ["w"],
     "edit_in_editor": ["v", "f4"],
-    "toggle_theme": ["t"],
     "quit": ["q"],
     "open_help": ["h", "?", "f1"],
+    "toggle_toc": ["ctrl+o"],
+    "toggle_wrap": ["w"],
+    "toggle_theme": ["t"],
     "handle_escape": ["escape"],
     "open_search": ["/"],
     "open_goto_line": [":"],
@@ -106,13 +106,13 @@ DEFAULT_KEYBINDINGS: dict[str, list[str]] = {
 
 ACTION_DESCRIPTIONS: dict[str, tuple[str, bool]] = {
     "open_file_picker": ("Open", True),
-    "toggle_toc": ("Outline", True),
     "open_commander": ("Commander", True),
-    "toggle_wrap": ("Wrap", True),
     "edit_in_editor": ("Edit", True),
-    "toggle_theme": ("Theme", True),
     "quit": ("Quit", True),
     "open_help": ("Help", True),
+    "toggle_toc": ("Outline", False),
+    "toggle_wrap": ("Wrap", False),
+    "toggle_theme": ("Theme", False),
     "handle_escape": ("Cancel/Back", False),
     "open_search": ("Search (/)", False),
     "open_goto_line": ("Go to Line (:)", False),
