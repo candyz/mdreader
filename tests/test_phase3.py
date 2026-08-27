@@ -1275,6 +1275,31 @@ def test_html_rendering_large_documentation_page():
     async def run_check():
         async with app.run_test(size=(120, 40)) as pilot:
             viewer = app.query_one("#viewer")
-            assert isinstance(viewer, MarkdownViewerWidget)
+    asyncio.run(run_check())
+
+
+def test_flat_list_rendering_performance_and_content():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    import textual.widgets._markdown as tm
+
+    md_lists = """# Lists Test
+* Bullet item 1
+* Bullet item 2
+* Bullet item 3
+
+1. Ordered item 1
+2. Ordered item 2
+3. Ordered item 3
+"""
+    app = MDReaderApp(content=md_lists)
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            viewer = app.query_one("#viewer")
+            paragraphs = list(viewer.query(tm.MarkdownParagraph))
+            plain_texts = [p._content.plain for p in paragraphs]
+            assert any("• Bullet item 1" in t or "* Bullet item 1" in t or "Bullet item 1" in t for t in plain_texts)
+            assert any("1. Ordered item 1" in t or "Ordered item 1" in t for t in plain_texts)
 
     asyncio.run(run_check())

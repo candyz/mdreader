@@ -59,19 +59,58 @@ def _fast_markdown_table_content_compose(self):
 tm.MarkdownTableContent.compose = _fast_markdown_table_content_compose
 
 
-# Streamlined list compose (reduces redundant container wrapping from 5 widgets down to 3 per list item)
+# Ultra-fast flat list compose (reduces widget tree from 5 nested widgets down to 1 per list item)
 def _fast_bullet_list_compose(self):
     for block in self._blocks:
         if isinstance(block, tm.MarkdownListItem):
-            bullet = tm.MarkdownBullet()
-            bullet.symbol = block.bullet
-            if len(block._blocks) == 1:
-                yield tm.Horizontal(bullet, block._blocks[0])
-            else:
-                yield tm.Horizontal(bullet, tm.Vertical(*block._blocks))
+            bullet = getattr(block, "bullet", "•")
+            prefix = Content(f"{bullet} ")
+            if len(block._blocks) == 1 and isinstance(block._blocks[0], tm.MarkdownParagraph):
+                p = block._blocks[0]
+                p.set_content(prefix + p._content)
+                yield p
+            elif block._blocks:
+                for sub in block._blocks:
+                    if isinstance(sub, tm.MarkdownParagraph):
+                        sub.set_content(prefix + sub._content)
+                        yield sub
+                    else:
+                        yield sub
     self._blocks.clear()
 
+
+def _fast_ordered_list_compose(self):
+    suffix = ". "
+    start = 1
+    if self._blocks and isinstance(self._blocks[0], tm.MarkdownOrderedListItem):
+        try:
+            start = int(self._blocks[0].bullet)
+        except ValueError:
+            pass
+    symbol_size = max(
+        (len(f"{number}{suffix}") for number, block in enumerate(self._blocks, start) if isinstance(block, tm.MarkdownListItem)),
+        default=3,
+    )
+    for number, block in enumerate(self._blocks, start):
+        if isinstance(block, tm.MarkdownListItem):
+            bullet = f"{number}{suffix}".rjust(symbol_size + 1)
+            prefix = Content(f"{bullet} ")
+            if len(block._blocks) == 1 and isinstance(block._blocks[0], tm.MarkdownParagraph):
+                p = block._blocks[0]
+                p.set_content(prefix + p._content)
+                yield p
+            elif block._blocks:
+                for sub in block._blocks:
+                    if isinstance(sub, tm.MarkdownParagraph):
+                        sub.set_content(prefix + sub._content)
+                        yield sub
+                    else:
+                        yield sub
+    self._blocks.clear()
+
+
 tm.MarkdownBulletList.compose = _fast_bullet_list_compose
+tm.MarkdownOrderedList.compose = _fast_ordered_list_compose
 
 
 # Lazy TOC rebuild: defer constructing 100+ TreeNode objects until TOC sidebar is actually opened
