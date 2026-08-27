@@ -147,7 +147,7 @@ def test_virtual_text_viewer():
     assert should_use_virtual_viewer("hello", "file.txt") is True
     assert should_use_virtual_viewer("hello", "script.py") is True
     assert should_use_virtual_viewer("# Heading", "doc.md") is False
-    assert should_use_virtual_viewer("line\n" * 4000, "large.md") is True
+    assert should_use_virtual_viewer("line\n" * 6000, "large.md") is True
 
     # Test VirtualTextViewer operations
     content = "Line 1\n# Heading 1\nLine 3\n## Sub heading\nLine 5"
@@ -1232,3 +1232,49 @@ def test_table_even_column_proportioning_and_scroll():
                     assert texts == [":123 123G 50gg"]
 
     asyncio.run(run_check_nav())
+
+
+def test_html_rendering_large_documentation_page():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    from mdreader.renderer.html import html_to_markdown, is_html_content
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    from mdreader.widgets.virtual_viewer import should_use_virtual_viewer
+
+    # Construct an HTML document with multiple sections, tables, and nav lists
+    html_sample = """<!DOCTYPE html>
+<html>
+<head><title>Test API</title><style>body { color: red; }</style></head>
+<body>
+<h1>API Documentation</h1>
+<p>Introductory description paragraph.</p>
+<ul>
+  <li><a href="#endpoint-1">GET /api/v1/users</a></li>
+  <li><a href="#endpoint-2">POST /api/v1/users</a></li>
+</ul>
+<h2>Endpoints</h2>
+<h3>GET /api/v1/users</h3>
+<table>
+  <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody><tr><td>id</td><td>integer</td><td>User identifier</td></tr></tbody>
+</table>
+<pre><code class="language-json">{"status": "ok"}</code></pre>
+</body>
+</html>"""
+
+    assert is_html_content(html_sample, "api.html") is True
+    assert should_use_virtual_viewer(html_sample, "api.html") is False
+
+    converted = html_to_markdown(html_sample)
+    assert "# API Documentation" in converted
+    assert "GET /api/v1/users" in converted
+    assert "```json" in converted
+
+    app = MDReaderApp(content=html_sample, filepath="api.html")
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            viewer = app.query_one("#viewer")
+            assert isinstance(viewer, MarkdownViewerWidget)
+
+    asyncio.run(run_check())

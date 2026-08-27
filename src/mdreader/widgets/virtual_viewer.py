@@ -12,7 +12,7 @@ from pygments.token import Token
 from mdreader.renderer.html import is_markdown_file, is_html_content, detect_code_language, html_to_markdown
 from mdreader.utils.config import get_config_value, set_config_value
 
-LARGE_FILE_LINE_THRESHOLD = 3000
+LARGE_FILE_LINE_THRESHOLD = 5000
 
 DEFAULT_TOKEN_STYLES = {
     Token.Keyword: Style(color="magenta", bold=True),

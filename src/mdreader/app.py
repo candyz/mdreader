@@ -18,6 +18,7 @@ from mdreader.widgets.virtual_viewer import VirtualTextViewer, should_use_virtua
 from mdreader.widgets.image_viewer import ImageViewerWidget, is_image_file
 from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
 from mdreader.widgets.marks_modal import MarksModal
+from mdreader.renderer.html import is_html_content, html_to_markdown
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file, build_app_bindings
 from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
@@ -321,9 +322,10 @@ class MDReaderApp(App):
         if is_image_file(target_path) or is_image_file(filename):
             return ImageViewerWidget(filepath=target_path, id="viewer")
         if should_use_virtual_viewer(content, filename):
+            display_text = html_to_markdown(content) if is_html_content(content, filename) else content
             if getattr(self, "_mmap_buffer", None) is not None:
                 return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, syntax=self.syntax, id="viewer")
-            return VirtualTextViewer(raw_text=content, filename=filename, syntax=self.syntax, id="viewer")
+            return VirtualTextViewer(raw_text=display_text, filename=filename, syntax=self.syntax, id="viewer")
         return MarkdownViewerWidget(
             raw_markdown=content,
             show_toc=self.show_toc,
@@ -546,7 +548,8 @@ class MDReaderApp(App):
                 is_currently_virtual = isinstance(viewer, VirtualTextViewer)
 
                 if use_virtual == is_currently_virtual:
-                    viewer.update_content(new_content, fname)
+                    display_text = html_to_markdown(new_content) if (is_currently_virtual and is_html_content(new_content, fname)) else new_content
+                    viewer.update_content(display_text, fname)
                 else:
                     reader_box = self.query_one("#reader-box", Container)
                     await reader_box.remove_children()
@@ -874,7 +877,8 @@ class MDReaderApp(App):
                 if is_large_mmap:
                     current_viewer.update_content(self._mmap_buffer, fname, syntax=self.syntax)
                 else:
-                    current_viewer.update_content(new_content, fname, syntax=self.syntax)
+                    display_text = html_to_markdown(new_content) if (is_currently_virtual and is_html_content(new_content, fname)) else new_content
+                    current_viewer.update_content(display_text, fname, syntax=self.syntax)
             else:
                 reader_box = self.query_one("#reader-box", Container)
                 await reader_box.remove_children()

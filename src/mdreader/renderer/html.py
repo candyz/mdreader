@@ -53,6 +53,15 @@ class HTMLToMarkdownParser(HTMLParser):
         elif t == "code":
             if not self.in_pre:
                 self.output.write("`")
+            else:
+                cls = attr_dict.get("class", "")
+                match = re.search(r"(?:language-|lang-)([a-zA-Z0-9_-]+)", cls)
+                if match:
+                    lang = match.group(1)
+                    val = self.output.getvalue()
+                    if val.endswith("```\n"):
+                        self.output = io.StringIO(val[:-4] + f"```{lang}\n")
+                        self.output.seek(0, io.SEEK_END)
         elif t == "pre":
             self.in_pre = True
             lang = ""
@@ -192,8 +201,8 @@ def html_to_markdown(html_content: str) -> str:
         parser.feed(html_content)
         parser.close()
         res = parser.output.getvalue()
-        # Clean up excessive newlines
-        res = re.sub(r"\n{3,}", "\n\n", res).strip()
+        # Clean up excessive newlines and whitespace-only blank lines
+        res = re.sub(r"\n\s*\n\s*\n+", "\n\n", res).strip()
         return res
     except Exception:
         return html_content
