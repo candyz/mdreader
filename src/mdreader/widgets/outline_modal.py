@@ -12,7 +12,7 @@ from textual.binding import Binding
 
 
 class OutlineModalScreen(ModalScreen[Optional[str]]):
-    """Modal screen displaying document outline (TOC) with quick navigation and search."""
+    """Full-screen modal displaying document outline (TOC) with quick navigation and bottom search."""
 
     BINDINGS = [
         Binding("tab", "dismiss_modal", "Dismiss", priority=True),
@@ -23,42 +23,67 @@ class OutlineModalScreen(ModalScreen[Optional[str]]):
 
     CSS = """
     OutlineModalScreen {
-        align: center middle;
-        background: rgba(0, 0, 0, 0.75);
+        background: $surface;
+        layout: vertical;
     }
 
     #outline-dialog {
-        width: 85%;
-        height: 85%;
+        width: 100%;
+        height: 100%;
         background: $surface;
-        border: thick $primary;
-        padding: 1 2;
+        border: none;
+        padding: 0;
     }
 
     #outline-header {
-        height: auto;
-        margin-bottom: 1;
+        height: 1;
+        width: 100%;
+        margin: 0;
+        background: $primary-darken-2;
+        padding: 0 1;
     }
 
     #outline-title {
         text-style: bold;
         color: $accent;
-    }
-
-    #outline-filter {
-        margin-bottom: 1;
+        width: 1fr;
     }
 
     #outline-list {
         height: 1fr;
-        border: solid $panel;
+        border: none;
         background: $panel;
+        margin: 0;
+    }
+
+    #outline-bottom-bar {
+        height: 1;
+        width: 100%;
+        margin: 0;
+        padding: 0 1;
+        background: $surface-darken-1;
+    }
+
+    #outline-filter {
+        width: 100%;
+        height: 1;
+        border: none;
+        padding: 0;
+        background: transparent;
+        color: $text;
     }
 
     #outline-footer {
-        height: auto;
-        margin-top: 1;
-        align: right middle;
+        height: 1;
+        width: 100%;
+        margin: 0;
+        background: $footer-background;
+        padding: 0 1;
+    }
+
+    #outline-hint {
+        color: $text-muted;
+        text-style: italic;
     }
     """
 
@@ -71,13 +96,14 @@ class OutlineModalScreen(ModalScreen[Optional[str]]):
         with Vertical(id="outline-dialog"):
             with Horizontal(id="outline-header"):
                 yield Label("📑 大綱模式 (Outline) — 選擇章節跳轉", id="outline-title")
-            yield Input(
-                placeholder="過濾章節名稱... (↑/↓/j/k 移動, Enter 跳轉, Tab/Esc 返回文章)",
-                id="outline-filter",
-            )
             yield OptionList(id="outline-list")
+            with Horizontal(id="outline-bottom-bar"):
+                yield Input(
+                    placeholder="🔍 過濾章節名稱... (↑/↓ 移動, Enter 跳轉, Tab/Esc 返回文章)",
+                    id="outline-filter",
+                )
             with Horizontal(id="outline-footer"):
-                yield Label("按 Enter 跳轉至該章節 | 按 Tab 或 Esc 返回文章", id="outline-hint")
+                yield Label("💡 Enter: 跳轉至該章節 | ↑/↓: 移動選取 | Tab/Esc: 返回文章", id="outline-hint")
 
     def on_mount(self) -> None:
         self._update_list("")

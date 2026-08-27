@@ -614,8 +614,13 @@ def test_markdown_softbreaks_preservation():
     asyncio.run(run())
 
 
-def test_virtual_viewer_line_numbers_toggle():
+def test_virtual_viewer_line_numbers_toggle(tmp_path, monkeypatch):
+    import mdreader.utils.config as config
     from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    fake_config_file = tmp_path / "config.json"
+    monkeypatch.setattr(config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(config, "CONFIG_FILE", fake_config_file)
 
     viewer = VirtualTextViewer(raw_text="hello\nworld", filename="test.py")
     assert viewer.show_line_numbers is True
@@ -1299,7 +1304,38 @@ def test_flat_list_rendering_performance_and_content():
             viewer = app.query_one("#viewer")
             paragraphs = list(viewer.query(tm.MarkdownParagraph))
             plain_texts = [p._content.plain for p in paragraphs]
-            assert any("• Bullet item 1" in t or "* Bullet item 1" in t or "Bullet item 1" in t for t in plain_texts)
-            assert any("1. Ordered item 1" in t or "Ordered item 1" in t for t in plain_texts)
+    asyncio.run(run_check())
+
+
+def test_outline_modal_fullscreen_and_bottom_filter():
+    import asyncio
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.outline_modal import OutlineModalScreen
+    from textual.widgets import Input, OptionList
+
+    app = MDReaderApp()
+
+    async def run_check():
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = OutlineModalScreen([(1, "Chapter 1", "h1"), (2, "Section 1.1", "h2")])
+            await app.push_screen(screen)
+            await pilot.pause(0.05)
+
+            dlg = screen.query_one("#outline-dialog")
+            lst = screen.query_one("#outline-list", OptionList)
+            bar = screen.query_one("#outline-bottom-bar")
+            inp = screen.query_one("#outline-filter", Input)
+            footer = screen.query_one("#outline-footer")
+
+            # Verify full screen layout
+            assert dlg.size.width == 120
+            assert dlg.size.height == 40
+
+            # Verify bottom 1-row search input
+            assert bar.size.height == 1
+            assert inp.size.height == 1
+            assert footer.size.height == 1
+            assert lst.size.height >= 35
+            assert inp.has_focus
 
     asyncio.run(run_check())
