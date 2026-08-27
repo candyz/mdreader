@@ -70,7 +70,7 @@ class DirBookmarksModal(ModalScreen[Optional[Path]]):
 
         desktop = home / "Desktop"
         if desktop.is_dir():
-            dests.append((f"🖥️ Desktop ({desktop})", desktop))
+            dests.append((f"💻 Desktop ({desktop})", desktop))
 
         documents = home / "Documents"
         if documents.is_dir():
@@ -88,7 +88,7 @@ class DirBookmarksModal(ModalScreen[Optional[Path]]):
                     break
 
         root = Path("/")
-        dests.append((f"💻 Root Filesystem (/)", root))
+        dests.append((f"💿 Root Filesystem (/)", root))
         self.destinations = dests
 
     def compose(self) -> ComposeResult:
