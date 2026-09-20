@@ -131,6 +131,7 @@ mdreader -s sh config.env
 | `T` | **Toggle Terminal Prompt Bar**: Midnight Commander style inline shell prompt above status bar |
 | `Ctrl+Shift+O` | **Reveal File**: Reveal in macOS Finder or Linux file manager |
 | `t` | **Switch Color Theme**: Cycle through built-in color themes (e.g. `vim-dark`, `github-dark`, `monokai`) |
+| `S` | **Toggle Scrollbars**: Show/hide slim vertical & horizontal scrollbars |
 | `/` | **Search**: Vim-style search overlay (`n` next, `N` prev) |
 | `Page Up` / `u` | Scroll page up |
 | `Page Down` / `i` | Scroll page down |

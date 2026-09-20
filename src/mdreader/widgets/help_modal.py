@@ -38,6 +38,7 @@ def get_help_sections() -> list[tuple[str, list[tuple[str, str]]]]:
                 (k("toggle_wrap", "w"), "切換自動折行 (Toggle Soft Line Wrap)"),
                 (k("toggle_line_numbers", "l"), "切換行號欄顯示 (Toggle Line Numbers, 程式碼/純文字)"),
                 (k("toggle_theme", "t"), "切換色彩主題 (Cycle Theme, 10+ 款主題持久化記憶)"),
+                (k("toggle_scrollbars", "S"), "切換捲軸顯示/隱藏 (Toggle Scrollbars, 纖細捲軸)"),
                 (f"{k('zoom_out', '-')} / {k('zoom_in', '= / +')}", "縮放閱讀版面寬度 (Adjust Reading Width)"),
             ],
         ),

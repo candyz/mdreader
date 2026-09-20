@@ -89,6 +89,20 @@ class VirtualTextViewer(ScrollView):
         height: 100%;
         background: $surface;
         color: $text;
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
+    }
+    VirtualTextViewer.-hide-scrollbars {
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
+    }
+    VirtualTextViewer.-hide-scrollbars * {
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
+    }
+    VirtualTextViewer * {
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
     }
     """
 

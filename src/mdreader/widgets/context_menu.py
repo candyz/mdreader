@@ -29,23 +29,27 @@ class ContextMenuModal(ModalScreen[Optional[str]]):
         Binding("q", "dismiss_menu", "Cancel", show=False),
     ]
 
-    def __init__(self, x: int, y: int, has_selection: bool = False, **kwargs):
+    def __init__(self, x: int, y: int, has_selection: bool = False, show_scrollbars: bool = True, **kwargs):
         super().__init__(**kwargs)
         self.menu_x = max(0, x)
         self.menu_y = max(0, y)
         self.has_selection = has_selection
+        self.show_scrollbars = show_scrollbars
 
     def compose(self) -> ComposeResult:
+        scrollbar_text = "🙈 Hide Scrollbars (隱藏捲軸)" if self.show_scrollbars else "👁️ Show Scrollbars (顯示捲軸)"
         if self.has_selection:
             options = [
                 "📋 Copy (複製選取文字)",
                 "🔍 Search (搜尋此文字)",
+                scrollbar_text,
                 "❌ Cancel (取消)",
             ]
         else:
             options = [
                 "📄 Select All (全選文字)",
                 "🔍 Search (開啟搜尋)",
+                scrollbar_text,
                 "❌ Cancel (取消)",
             ]
         yield OptionList(*options, id="context-menu-list")
@@ -56,8 +60,8 @@ class ContextMenuModal(ModalScreen[Optional[str]]):
         screen_h = self.app.size.height
         
         # Keep context menu within viewport bounds
-        menu_w = 32
-        menu_h = 6
+        menu_w = 34
+        menu_h = 7
         target_x = min(self.menu_x, max(0, screen_w - menu_w - 2))
         target_y = min(self.menu_y, max(0, screen_h - menu_h - 2))
         menu.styles.offset = (target_x, target_y)

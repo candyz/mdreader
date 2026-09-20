@@ -1339,3 +1339,46 @@ def test_outline_modal_fullscreen_and_bottom_filter():
             assert inp.has_focus
 
     asyncio.run(run_check())
+
+
+def test_toggle_scrollbars_and_slim_styling(tmp_path, monkeypatch):
+    import asyncio
+    import mdreader.utils.config as config
+    from mdreader.app import MDReaderApp
+    from mdreader.widgets.markdown_view import MarkdownViewerWidget
+    from mdreader.widgets.virtual_viewer import VirtualTextViewer
+
+    fake_config_file = tmp_path / "config.json"
+    monkeypatch.setattr(config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(config, "CONFIG_FILE", fake_config_file)
+
+    app = MDReaderApp(content="# Hello\n" + "\n\nline\n\n" * 100)
+
+    async def run_check():
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.pause(0.05)
+            viewer = app.query_one("#viewer", MarkdownViewerWidget)
+            reader_box = app.query_one("#reader-box")
+
+            # Verify slim scrollbars default to size 1
+            assert viewer.styles.scrollbar_size_vertical == 1
+            assert viewer.styles.scrollbar_size_horizontal == 1
+            assert not reader_box.has_class("-hide-scrollbars")
+
+            # Toggle off scrollbars
+            app.action_toggle_scrollbars()
+            await pilot.pause(0.05)
+            assert not app.show_scrollbars
+            assert reader_box.has_class("-hide-scrollbars")
+            assert viewer.has_class("-hide-scrollbars")
+            assert config.get_config_value("show_scrollbars") is False
+
+            # Toggle on scrollbars
+            app.action_toggle_scrollbars()
+            await pilot.pause(0.05)
+            assert app.show_scrollbars
+            assert not reader_box.has_class("-hide-scrollbars")
+            assert not viewer.has_class("-hide-scrollbars")
+            assert config.get_config_value("show_scrollbars") is True
+
+    asyncio.run(run_check())

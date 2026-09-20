@@ -247,6 +247,20 @@ class MarkdownViewerWidget(MarkdownViewer):
     MarkdownViewerWidget {
         width: 100%;
         height: 100%;
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
+    }
+    MarkdownViewerWidget.-hide-scrollbars {
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
+    }
+    MarkdownViewerWidget.-hide-scrollbars * {
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
+    }
+    MarkdownViewerWidget * {
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
     }
     .-search-match-active {
         background: #d19a66 35%;

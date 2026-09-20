@@ -100,6 +100,7 @@ DEFAULT_KEYBINDINGS: dict[str, list[str]] = {
     "open_in_terminal": ["ctrl+t"],
     "reveal_in_finder": ["ctrl+shift+o"],
     "toggle_line_numbers": ["l"],
+    "toggle_scrollbars": ["S"],
     "scroll_end": ["G"],
     "reload_file": ["r"],
 }
@@ -137,6 +138,7 @@ ACTION_DESCRIPTIONS: dict[str, tuple[str, bool]] = {
     "open_in_terminal": ("Terminal (Ctrl+T)", False),
     "reveal_in_finder": ("Reveal File", False),
     "toggle_line_numbers": ("Line No (L)", False),
+    "toggle_scrollbars": ("Scrollbars (S)", False),
     "scroll_end": ("Scroll End (Bottom)", False),
     "reload_file": ("Reload", False),
 }

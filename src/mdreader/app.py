@@ -170,6 +170,18 @@ class MDReaderApp(App):
     #reader-box {
         width: 100%;
         height: 100%;
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
+    }
+
+    #reader-box * {
+        scrollbar-size-vertical: 1;
+        scrollbar-size-horizontal: 1;
+    }
+
+    #reader-box.-hide-scrollbars * {
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
     }
 
     #bottom-area {
@@ -309,6 +321,7 @@ class MDReaderApp(App):
         self._digit_buffer: str = ""
         self._input_mode: str = "search"
         self._soft_wrap: bool = True
+        self.show_scrollbars: bool = get_config_value("show_scrollbars", True)
         self._marks: dict[str, int] = {}
         self._waiting_for_mark: bool = False
         self._waiting_for_jump_mark: bool = False
@@ -320,19 +333,24 @@ class MDReaderApp(App):
         """Create ImageViewerWidget, VirtualTextViewer, or MarkdownViewerWidget based on content and file type."""
         target_path = filepath or self.filepath
         if is_image_file(target_path) or is_image_file(filename):
-            return ImageViewerWidget(filepath=target_path, id="viewer")
-        if should_use_virtual_viewer(content, filename):
+            viewer = ImageViewerWidget(filepath=target_path, id="viewer")
+        elif should_use_virtual_viewer(content, filename):
             display_text = html_to_markdown(content) if is_html_content(content, filename) else content
             if getattr(self, "_mmap_buffer", None) is not None:
-                return VirtualTextViewer(lines=self._mmap_buffer, filename=filename, syntax=self.syntax, id="viewer")
-            return VirtualTextViewer(raw_text=display_text, filename=filename, syntax=self.syntax, id="viewer")
-        return MarkdownViewerWidget(
-            raw_markdown=content,
-            show_toc=self.show_toc,
-            filename=filename,
-            syntax=self.syntax,
-            id="viewer",
-        )
+                viewer = VirtualTextViewer(lines=self._mmap_buffer, filename=filename, syntax=self.syntax, id="viewer")
+            else:
+                viewer = VirtualTextViewer(raw_text=display_text, filename=filename, syntax=self.syntax, id="viewer")
+        else:
+            viewer = MarkdownViewerWidget(
+                raw_markdown=content,
+                show_toc=self.show_toc,
+                filename=filename,
+                syntax=self.syntax,
+                id="viewer",
+            )
+        if not getattr(self, "show_scrollbars", True):
+            viewer.add_class("-hide-scrollbars")
+        return viewer
 
     def compose(self) -> ComposeResult:
         with Container(id="main-container"):
@@ -400,6 +418,9 @@ class MDReaderApp(App):
         if self.max_width:
             reader_box = self.query_one("#reader-box")
             reader_box.styles.max_width = self.max_width
+
+        if not self.show_scrollbars:
+            self.query_one("#reader-box").add_class("-hide-scrollbars")
 
         if self._custom_theme:
             if self._custom_theme in self.available_themes:
@@ -634,6 +655,21 @@ class MDReaderApp(App):
         self.theme = new_theme
         set_config_value("theme", new_theme)
         self.notify(f"Theme switched to: {new_theme}", timeout=1.5)
+
+    def action_toggle_scrollbars(self) -> None:
+        """Toggle scrollbar visibility (S) and persist to config."""
+        self.show_scrollbars = not self.show_scrollbars
+        set_config_value("show_scrollbars", self.show_scrollbars)
+        reader_box = self.query_one("#reader-box")
+        viewer = self.query_one("#viewer")
+        if self.show_scrollbars:
+            reader_box.remove_class("-hide-scrollbars")
+            viewer.remove_class("-hide-scrollbars")
+            self.notify("捲軸顯示：開啟 (細版 1 列)", title="捲軸 (S)", timeout=1.5)
+        else:
+            reader_box.add_class("-hide-scrollbars")
+            viewer.add_class("-hide-scrollbars")
+            self.notify("捲軸顯示：隱藏 (關閉顯示)", title="捲軸 (S)", timeout=1.5)
 
     def action_open_search(self) -> None:
         """Open in-document search input in bottom footer bar."""
@@ -1328,7 +1364,12 @@ class MDReaderApp(App):
             selected_text = self.screen.get_selected_text()
             has_selection = bool(selected_text and selected_text.strip())
             self.push_screen(
-                ContextMenuModal(x=event.screen_x, y=event.screen_y, has_selection=has_selection),
+                ContextMenuModal(
+                    x=event.screen_x,
+                    y=event.screen_y,
+                    has_selection=has_selection,
+                    show_scrollbars=self.show_scrollbars,
+                ),
                 self._on_context_menu_selected,
             )
 
@@ -1348,6 +1389,8 @@ class MDReaderApp(App):
                 self.perform_search(selected_text.strip())
             else:
                 self.action_open_search()
+        elif "Scrollbars" in action or "捲軸" in action:
+            self.action_toggle_scrollbars()
 
     def action_toggle_mouse_mode(self) -> None:
         """Toggle mouse tracking mode (m key). When disabled, terminal native selection is restored."""
