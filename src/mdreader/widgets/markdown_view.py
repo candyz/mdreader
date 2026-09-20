@@ -251,12 +251,16 @@ class MarkdownViewerWidget(MarkdownViewer):
         scrollbar-size-horizontal: 1;
     }
     MarkdownViewerWidget.-hide-scrollbars {
+        scrollbar-visibility: hidden !important;
         scrollbar-size-vertical: 0 !important;
         scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
     }
     MarkdownViewerWidget.-hide-scrollbars * {
+        scrollbar-visibility: hidden !important;
         scrollbar-size-vertical: 0 !important;
         scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
     }
     MarkdownViewerWidget * {
         scrollbar-size-vertical: 1;

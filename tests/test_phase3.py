@@ -1372,6 +1372,10 @@ def test_toggle_scrollbars_and_slim_styling(tmp_path, monkeypatch):
             assert reader_box.has_class("-hide-scrollbars")
             assert viewer.has_class("-hide-scrollbars")
             assert config.get_config_value("show_scrollbars") is False
+            # Verify content does not collapse when scrollbars are hidden
+            md = viewer.query_one("Markdown")
+            assert md.region.width >= 70
+            assert md.region.height > 0
 
             # Toggle on scrollbars
             app.action_toggle_scrollbars()
@@ -1382,3 +1386,4 @@ def test_toggle_scrollbars_and_slim_styling(tmp_path, monkeypatch):
             assert config.get_config_value("show_scrollbars") is True
 
     asyncio.run(run_check())
+

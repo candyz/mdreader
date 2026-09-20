@@ -93,12 +93,16 @@ class VirtualTextViewer(ScrollView):
         scrollbar-size-horizontal: 1;
     }
     VirtualTextViewer.-hide-scrollbars {
+        scrollbar-visibility: hidden !important;
         scrollbar-size-vertical: 0 !important;
         scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
     }
     VirtualTextViewer.-hide-scrollbars * {
+        scrollbar-visibility: hidden !important;
         scrollbar-size-vertical: 0 !important;
         scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
     }
     VirtualTextViewer * {
         scrollbar-size-vertical: 1;

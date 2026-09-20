@@ -179,9 +179,18 @@ class MDReaderApp(App):
         scrollbar-size-horizontal: 1;
     }
 
-    #reader-box.-hide-scrollbars * {
+    #reader-box.-hide-scrollbars {
+        scrollbar-visibility: hidden !important;
         scrollbar-size-vertical: 0 !important;
         scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
+    }
+
+    #reader-box.-hide-scrollbars * {
+        scrollbar-visibility: hidden !important;
+        scrollbar-size-vertical: 0 !important;
+        scrollbar-size-horizontal: 0 !important;
+        scrollbar-gutter: auto !important;
     }
 
     #bottom-area {
