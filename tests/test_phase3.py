@@ -1387,3 +1387,51 @@ def test_toggle_scrollbars_and_slim_styling(tmp_path, monkeypatch):
 
     asyncio.run(run_check())
 
+
+def test_updater_and_cli_update_flag(monkeypatch):
+    from mdreader.__main__ import parse_args
+    from mdreader.utils.updater import parse_semver, is_newer_version, UpdateCheckResult, fetch_latest_version, perform_update
+
+    # 1. Test parse_semver
+    assert parse_semver("1.5.1") == (1, 5, 1)
+    assert parse_semver("v1.6.0") == (1, 6, 0)
+    assert parse_semver("invalid") == (0, 0, 0)
+
+    # 2. Test is_newer_version
+    assert is_newer_version("1.5.1", "1.5.2") is True
+    assert is_newer_version("1.5.1", "1.6.0") is True
+    assert is_newer_version("1.5.1", "2.0.0") is True
+    assert is_newer_version("1.5.1", "1.5.1") is False
+    assert is_newer_version("1.6.0", "1.5.1") is False
+
+    # 3. Test CLI argument parsing
+    args, initial_line = parse_args(["-u"])
+    assert args.update is True
+    args2, _ = parse_args(["--update"])
+    assert args2.update is True
+    args3, _ = parse_args([])
+    assert args3.update is False
+
+    # 4. Test fetch_latest_version mock
+    class DummyResponse:
+        status = 200
+        def read(self):
+            return b'[project]\nversion = "9.9.9"\n'
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *args, **kwargs: DummyResponse())
+    check = fetch_latest_version()
+    assert check.latest_version == "9.9.9"
+    assert check.has_update is True
+
+    # 5. Test perform_update when already up to date
+    monkeypatch.setattr(
+        "mdreader.utils.updater.fetch_latest_version",
+        lambda *a, **kw: UpdateCheckResult("1.5.1", "1.5.1", False)
+    )
+    assert perform_update() is True
+

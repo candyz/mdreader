@@ -84,6 +84,10 @@ curl -s https://example.com | mdreader
 # 9. 指定特定語法突顯（例如 sh, python, json 等，純文字預設為 sh）
 mdreader -s python snippet.dat
 mdreader -s sh config.env
+
+# 10. 檢查更新並自動升級最新版本
+mdreader -u
+mdreader --update
 ```
 
 ---

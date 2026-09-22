@@ -42,6 +42,11 @@ def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int |
         version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
+        "-u", "--update",
+        action="store_true",
+        help="Check for latest version and automatically update mdreader",
+    )
+    parser.add_argument(
         "-l", "--line",
         type=int,
         default=None,
@@ -106,6 +111,11 @@ def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int |
 
 def main() -> None:
     args, initial_line = parse_args()
+
+    if args.update:
+        from mdreader.utils.updater import perform_update
+        success = perform_update()
+        sys.exit(0 if success else 1)
 
     if args.list_themes:
         print(f"mdreader v{__version__} - Available Color Themes:")
