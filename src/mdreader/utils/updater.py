@@ -150,16 +150,18 @@ def perform_update(force: bool = False) -> bool:
         with console.status(f"[dim cyan]Updating mdreader to v{latest}...[/dim cyan]", spinner="dots"):
             if method == "git_repo":
                 root_dir = Path(__file__).resolve().parent.parent.parent
-                # 1. git pull
-                res_pull = subprocess.run(
-                    ["git", "pull", "origin", "main"],
+                # 1. git fetch & reset to origin/main
+                res_fetch = subprocess.run(
+                    ["git", "fetch", "origin", "main"],
                     cwd=str(root_dir),
                     capture_output=True,
                     text=True,
                 )
-                if res_pull.returncode != 0:
-                    console.print(f"[bold red]git pull failed:[/bold red] {res_pull.stderr.strip()}")
-                    return False
+                if res_fetch.returncode == 0:
+                    subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(root_dir), capture_output=True)
+                else:
+                    # fallback to pull
+                    subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=str(root_dir), capture_output=True)
 
                 # 2. reinstall
                 if shutil.which("pipx"):
@@ -187,7 +189,11 @@ def perform_update(force: bool = False) -> bool:
 
                 if local_dir and Path(local_dir).is_dir():
                     if (Path(local_dir) / ".git").is_dir():
-                        subprocess.run(["git", "pull", "origin", "main"], cwd=local_dir, capture_output=True)
+                        rf = subprocess.run(["git", "fetch", "origin", "main"], cwd=local_dir, capture_output=True)
+                        if rf.returncode == 0:
+                            subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=local_dir, capture_output=True)
+                        else:
+                            subprocess.run(["git", "pull", "origin", "main"], cwd=local_dir, capture_output=True)
                     cmd = ["uv", "tool", "install", "--force", "--reinstall", local_dir]
                 else:
                     cmd = ["uv", "tool", "install", "--force", "--reinstall", GITHUB_REPO_URL]
@@ -205,19 +211,29 @@ def perform_update(force: bool = False) -> bool:
                     return False
 
             elif method == "pipx":
-                # Check if local repo is where pipx was installed from
+                # Check if local repo exists and is valid
                 local_repo = Path.home() / "AI" / "agy" / "mdreader"
                 if not local_repo.is_dir():
                     local_repo = Path.home() / "AI" / "mdreader"
 
+                install_from_remote = True
                 if local_repo.is_dir() and (local_repo / ".git").is_dir():
-                    subprocess.run(["git", "pull", "origin", "main"], cwd=str(local_repo), capture_output=True)
+                    # Attempt git fetch & reset --hard origin/main to clean local working tree conflicts
+                    rf = subprocess.run(["git", "fetch", "origin", "main"], cwd=str(local_repo), capture_output=True)
+                    if rf.returncode == 0:
+                        rr = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(local_repo), capture_output=True)
+                        if rr.returncode == 0:
+                            install_from_remote = False
+
+                if not install_from_remote:
                     # Try pip backend fallback for environments without uv
                     res = subprocess.run(["pipx", "install", str(local_repo), "--force", "--backend", "pip"], capture_output=True, text=True)
                     if res.returncode != 0:
                         res = subprocess.run(["pipx", "install", str(local_repo), "--force"], capture_output=True, text=True)
                 else:
-                    res = subprocess.run(["pipx", "install", GITHUB_REPO_URL, "--force"], capture_output=True, text=True)
+                    res = subprocess.run(["pipx", "install", GITHUB_REPO_URL, "--force", "--backend", "pip"], capture_output=True, text=True)
+                    if res.returncode != 0:
+                        res = subprocess.run(["pipx", "install", GITHUB_REPO_URL, "--force"], capture_output=True, text=True)
 
                 if res.returncode != 0:
                     console.print(f"[bold red]pipx update failed:[/bold red] {res.stderr.strip()}")
