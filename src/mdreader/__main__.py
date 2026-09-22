@@ -104,6 +104,15 @@ def parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, int |
         action="store_true",
         help="Render Markdown directly to stdout without interactive TUI",
     )
+    parser.add_argument(
+        "--completion",
+        type=str,
+        nargs="?",
+        const="bash",
+        choices=["bash", "zsh"],
+        metavar="SHELL",
+        help="Generate shell completion script for bash or zsh (default: bash)",
+    )
     args = parser.parse_args(filtered_argv)
     initial_line = plus_line if plus_line is not None else args.line
     return args, initial_line
@@ -116,6 +125,11 @@ def main() -> None:
         from mdreader.utils.updater import perform_update
         success = perform_update()
         sys.exit(0 if success else 1)
+
+    if args.completion:
+        from mdreader.utils.completion import get_completion_script
+        print(get_completion_script(args.completion), end="")
+        return
 
     if args.list_themes:
         print(f"mdreader v{__version__} - Available Color Themes:")

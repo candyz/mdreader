@@ -1435,3 +1435,25 @@ def test_updater_and_cli_update_flag(monkeypatch):
     )
     assert perform_update() is True
 
+
+def test_completion_script():
+    from mdreader.__main__ import parse_args
+    from mdreader.utils.completion import get_completion_script, BASH_COMPLETION_SCRIPT, ZSH_COMPLETION_SCRIPT
+
+    # Test generation functions
+    assert get_completion_script("bash") == BASH_COMPLETION_SCRIPT
+    assert get_completion_script("zsh") == ZSH_COMPLETION_SCRIPT
+    assert get_completion_script("BASH") == BASH_COMPLETION_SCRIPT
+    assert get_completion_script("ZSH") == ZSH_COMPLETION_SCRIPT
+    assert "complete -F _mdreader_completion mdreader" in BASH_COMPLETION_SCRIPT
+    assert "#compdef mdreader" in ZSH_COMPLETION_SCRIPT
+
+    # Test CLI parsing
+    args, _ = parse_args(["--completion", "zsh"])
+    assert args.completion == "zsh"
+    args2, _ = parse_args(["--completion"])
+    assert args2.completion == "bash"
+    args3, _ = parse_args([])
+    assert args3.completion is None
+
+

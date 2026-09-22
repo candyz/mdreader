@@ -41,6 +41,16 @@ mdreader --update
 ```
 This queries the GitHub repository for new releases, parses semantic versions, and automatically upgrades using `pipx`, `uv`, or `git pull`.
 
+### 5. Shell Completion (Bash & Zsh)
+Generate tab completion for commands, flags, color themes, and syntax languages:
+```bash
+# Bash
+eval "$(mdreader --completion bash)"
+
+# Zsh
+eval "$(mdreader --completion zsh)"
+```
+
 ---
 
 ## ⌨️ Keyboard Navigation & Keybindings

@@ -88,6 +88,14 @@ mdreader -s sh config.env
 # 10. 檢查更新並自動升級最新版本
 mdreader -u
 mdreader --update
+
+# 11. 產生命令列自動補全腳本 (Bash / Zsh)
+mdreader --completion bash > ~/.bash_completion.d/mdreader
+# 或 Zsh
+mdreader --completion zsh > ~/.zsh/completion/_mdreader
+# 或直接在 ~/.bashrc 或 ~/.zshrc 中載入：
+eval "$(mdreader --completion bash)"
+eval "$(mdreader --completion zsh)"
 ```
 
 ---

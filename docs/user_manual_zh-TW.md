@@ -47,6 +47,16 @@ mdreader -u
 mdreader --update
 ```
 
+### 6. 命令列自動補全 (Shell Completion)
+產生 Bash 或 Zsh 的 Tab 補全腳本（支援選項、色彩主題與程式碼語法高亮補全）：
+```bash
+# Bash
+eval "$(mdreader --completion bash)"
+
+# Zsh
+eval "$(mdreader --completion zsh)"
+```
+
 ---
 
 ## ⌨️ 鍵盤操作與快捷鍵 (Keybindings)

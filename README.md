@@ -108,6 +108,14 @@ mdreader -s sh config.env
 # 10. Check for updates and auto-upgrade
 mdreader -u
 mdreader --update
+
+# 11. Generate Shell Completion (Bash / Zsh)
+mdreader --completion bash > ~/.bash_completion.d/mdreader
+# or for Zsh
+mdreader --completion zsh > ~/.zsh/completion/_mdreader
+# or source directly in ~/.bashrc or ~/.zshrc:
+eval "$(mdreader --completion bash)"
+eval "$(mdreader --completion zsh)"
 ```
 
 ---
