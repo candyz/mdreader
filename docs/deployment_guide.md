@@ -152,6 +152,17 @@ scp dist/mdreader user@remote-host:/usr/local/bin/
 ## 🔄 Upgrade & Uninstall
 
 ### Upgrading to the Latest Version
+
+#### Method A: Automatic In-place Upgrade (Recommended)
+Simply run:
+```bash
+mdreader -u
+# or
+mdreader --update
+```
+`mdreader` will check the remote repository for new versions, detect your installation environment (`pipx`, `uv tool`, `git repo`, or `pip`), and execute the upgrade automatically.
+
+#### Method B: Manual Upgrade
 ```bash
 cd mdreader
 git pull

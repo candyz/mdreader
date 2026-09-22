@@ -154,6 +154,17 @@ scp dist/mdreader user@remote-host:/usr/local/bin/
 ## 🔄 升級與移除 (Upgrade & Uninstall)
 
 ### 升級最新版本
+
+#### 方法一：一鍵自動升級（推薦）
+只需執行：
+```bash
+mdreader -u
+# 或
+mdreader --update
+```
+`mdreader` 會自動查詢遠端版本庫、辨識系統當前安裝環境（`pipx`、`uv tool`、`git repo` 或 `pip`），並自動執行安裝升級作業。
+
+#### 方法二：手動升級
 ```bash
 cd mdreader
 git pull

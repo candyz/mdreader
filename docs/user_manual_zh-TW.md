@@ -39,6 +39,14 @@ mdreader README.md --export-html output.html
 mdreader README.md --export-txt output.txt
 ```
 
+### 5. 自動版本檢查與線上升級 (Auto Update)
+執行以下指令可即時向遠端檢查最新發布版本，若有更新將自動執行下載與環境升級：
+```bash
+mdreader -u
+# 或
+mdreader --update
+```
+
 ---
 
 ## ⌨️ 鍵盤操作與快捷鍵 (Keybindings)

@@ -32,6 +32,15 @@ mdreader -w README.md
 mdreader --watch index.html
 ```
 
+### 4. Automatic Update Check & Upgrade
+Check for newer versions and automatically upgrade with a single command:
+```bash
+mdreader -u
+# or
+mdreader --update
+```
+This queries the GitHub repository for new releases, parses semantic versions, and automatically upgrades using `pipx`, `uv`, or `git pull`.
+
 ---
 
 ## ⌨️ Keyboard Navigation & Keybindings
