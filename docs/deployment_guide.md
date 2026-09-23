@@ -16,7 +16,22 @@ This guide provides instructions on installing and deploying **mdreader** (Termi
 
 ---
 
-## 🛠️ Method 1: Standard Installation via pipx (Recommended for Daily Use)
+## ⚡ Method 0: One-Line Quick Install (Fastest)
+
+Install or update `mdreader` instantly with our automated installer script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/candyz/mdreader/main/install.sh | bash
+```
+
+The script automatically:
+1. Validates Python 3.9+ and Git availability.
+2. Automatically detects and installs via `pipx` or `uv tool`.
+3. Verifies `mdreader --version` and checks PATH configuration.
+
+---
+
+## 🛠️ Method 1: Standard Installation via pipx (Recommended for Manual Setup)
 
 Using `pipx` installs CLI tools in completely isolated virtual environments while automatically adding the executable `mdreader` to your system `PATH`.
 

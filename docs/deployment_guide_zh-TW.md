@@ -14,7 +14,22 @@
 
 ---
 
-## 🛠️ 方式一：標準推薦安裝（pipx 獨立環境隔離，推薦日常使用）
+## ⚡ 方式零：一鍵快速安裝（最推薦、最快）
+
+使用自動化安裝腳本，只需一行指令即可完成安裝或更新：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/candyz/mdreader/main/install.sh | bash
+```
+
+腳本會自動執行以下流程：
+1. 檢查系統 Python 3.9+ 與 Git。
+2. 自動偵測並透過 `pipx` 或 `uv tool` 進行隔離安裝。
+3. 自動驗證 `mdreader --version` 與檢查系統 PATH 設定。
+
+---
+
+## 🛠️ 方式一：標準推薦安裝（pipx 獨立環境隔離，推薦手動建置）
 
 使用 `pipx` 可以將 CLI 工具安裝在完全隔離的虛擬環境中，且自動將可執行檔 `mdreader` 加入系統全域 `PATH`，無須手動啟動虛擬環境。
 

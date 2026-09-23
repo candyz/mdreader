@@ -43,7 +43,15 @@ An interactive terminal Markdown and HTML previewer with native **Mermaid flowch
 
 ## 🚀 Installation
 
-### Option 1: Standard Installation via pipx (Recommended)
+### Option 0: One-Line Installer (Recommended)
+
+Quick install or update with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/candyz/mdreader/main/install.sh | bash
+```
+
+### Option 1: Standard Installation via pipx
 
 ```bash
 # 1. Clone the repository

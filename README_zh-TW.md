@@ -39,8 +39,15 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 
 ## 🚀 安裝方式
 
+### 一鍵快速安裝（推薦）
+
+只需一行指令即可自動完成環境偵測與安裝：
+
 ```bash
-# 推薦使用 pipx 安裝（自動加入環境變數且獨立隔離）
+curl -fsSL https://raw.githubusercontent.com/candyz/mdreader/main/install.sh | bash
+```
+
+### 方式一：標準 pipx 安裝
 git clone https://github.com/candyz/mdreader.git
 cd mdreader
 pipx install .
