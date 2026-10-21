@@ -2,6 +2,7 @@
 from __future__ import annotations
 import textual.widgets._markdown as tm
 from textual.widgets import MarkdownViewer
+from textual.containers import Horizontal, Vertical
 from textual.widgets._markdown import MarkdownTable, MarkdownTableContent, MarkdownFence
 from textual.css.scalar import Scalar
 from rich.cells import cell_len
@@ -129,23 +130,30 @@ def _fast_markdown_table_content_compose(self):
 tm.MarkdownTableContent.compose = _fast_markdown_table_content_compose
 
 
-# Ultra-fast flat list compose (reduces widget tree from 5 nested widgets down to 1 per list item)
+# Lean list compose: one Horizontal(bullet, body) per item (instead of Textual's
+# Horizontal + Bullet + Vertical + blocks). The bullet column gives wrapped lines a
+# hanging indent, and nested lists sit inside the body so they indent under their parent.
+_LIST_BULLETS = ["•", "◦", "▪"]  # by nesting depth, like browsers (disc / circle / square)
+
+
+def _list_item_widget(symbol: str, block):
+    bullet = tm.MarkdownBullet()
+    bullet.symbol = symbol
+    blocks = list(block._blocks)
+    block._blocks.clear()
+    if len(blocks) == 1 and isinstance(blocks[0], tm.MarkdownParagraph):
+        body = blocks[0]
+    else:
+        body = Vertical(*blocks)
+    return Horizontal(bullet, body, classes="md-list-item")
+
+
 def _fast_bullet_list_compose(self):
+    depth = sum(1 for a in self.ancestors if isinstance(a, tm.MarkdownList))
+    symbol = _LIST_BULLETS[depth % len(_LIST_BULLETS)] + " "
     for block in self._blocks:
         if isinstance(block, tm.MarkdownListItem):
-            bullet = getattr(block, "bullet", "•")
-            prefix = Content(f"{bullet} ")
-            if len(block._blocks) == 1 and isinstance(block._blocks[0], tm.MarkdownParagraph):
-                p = block._blocks[0]
-                p.set_content(prefix + p._content)
-                yield p
-            elif block._blocks:
-                for sub in block._blocks:
-                    if isinstance(sub, tm.MarkdownParagraph):
-                        sub.set_content(prefix + sub._content)
-                        yield sub
-                    else:
-                        yield sub
+            yield _list_item_widget(symbol, block)
     self._blocks.clear()
 
 
@@ -163,19 +171,7 @@ def _fast_ordered_list_compose(self):
     )
     for number, block in enumerate(self._blocks, start):
         if isinstance(block, tm.MarkdownListItem):
-            bullet = f"{number}{suffix}".rjust(symbol_size + 1)
-            prefix = Content(f"{bullet} ")
-            if len(block._blocks) == 1 and isinstance(block._blocks[0], tm.MarkdownParagraph):
-                p = block._blocks[0]
-                p.set_content(prefix + p._content)
-                yield p
-            elif block._blocks:
-                for sub in block._blocks:
-                    if isinstance(sub, tm.MarkdownParagraph):
-                        sub.set_content(prefix + sub._content)
-                        yield sub
-                    else:
-                        yield sub
+            yield _list_item_widget(f"{number}{suffix}".rjust(symbol_size + 1), block)
     self._blocks.clear()
 
 

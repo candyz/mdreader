@@ -1511,3 +1511,35 @@ def test_wrap_mode_table_cells_wrap_without_truncation(tmp_path, monkeypatch):
             assert tc.size.height < wrapped_height
 
     asyncio.run(run_check())
+
+
+def test_nested_list_indent_and_hanging_wrap(tmp_path, monkeypatch):
+    """Nested list items must indent deeper than their parent, and wrapped lines of
+    an item must align under its text (hanging indent), not fall back to column 0."""
+    import asyncio
+    import mdreader.utils.config as config
+    from mdreader.app import MDReaderApp
+
+    monkeypatch.setattr(config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(config, "CONFIG_FILE", tmp_path / "config.json")
+    md = (
+        "1. 父項目\n"
+        "   - 子項目甲\n"
+        "2. " + "很長的項目內容" * 12 + "結尾\n"
+    )
+    app = MDReaderApp(content=md)
+
+    async def run_check():
+        async with app.run_test(size=(60, 24)) as pilot:
+            await pilot.pause(0.3)
+            lines = ["".join(s.text for s in strip).rstrip() for strip in app.screen._compositor.render_strips()]
+            parent = next(l for l in lines if "父項目" in l)
+            child = next(l for l in lines if "子項目甲" in l)
+            # Child bullet sits right under the parent's text column, not left of it
+            assert child.index("◦") == parent.index("父")
+            i = next(n for n, l in enumerate(lines) if "2." in l)
+            text_col = lines[i].index("很")
+            assert len(lines[i + 1]) - len(lines[i + 1].lstrip()) == text_col
+            assert "結尾" in "".join(lines)
+
+    asyncio.run(run_check())
