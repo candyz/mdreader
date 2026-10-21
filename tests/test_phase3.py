@@ -1202,17 +1202,21 @@ def test_table_even_column_proportioning_and_scroll():
             tbl = viewer.query_one(tm.MarkdownTable)
             tc = tbl.query_one(tm.MarkdownTableContent)
 
+            # Horizontal table scrolling applies in NOWRAP mode (WRAP mode fits the table to the viewport)
+            app.action_toggle_wrap()
+            await pilot.pause(0.1)
+
             # All 4 columns should have positive width in grid_columns
             cols = tc.styles.grid_columns
             assert len(cols) == 4
             for col in cols:
                 assert col.value > 10.0  # None of the columns should be squeezed to 0 or 1fr
 
-            # Table should be scrollable horizontally
-            assert tbl.max_scroll_x > 0
+            # Table content should be scrollable horizontally (viewer scrolls in NOWRAP mode)
+            assert max(tbl.max_scroll_x, viewer.max_scroll_x) > 0
             app.action_scroll_right()
             await pilot.pause(0.05)
-            assert tbl.scroll_x > 0
+            assert max(tbl.scroll_x, viewer.scroll_x) > 0
 
     asyncio.run(run_check())
 
@@ -1457,3 +1461,53 @@ def test_completion_script():
     assert args3.completion is None
 
 
+
+
+def test_fit_table_col_sizes_wrap_mode():
+    from mdreader.widgets.markdown_view import fit_table_col_sizes
+
+    # Fits already: natural sizes untouched (no needless wrapping)
+    assert fit_table_col_sizes([10, 20, 30], 100) == [10, 20, 30]
+
+    # Too wide: total must fit viewport (avail - gutters - borders) so no horizontal scroll
+    natural = [10, 84, 71]
+    sizes = fit_table_col_sizes(natural, 80)
+    assert sum(sizes) == 80 - 2 - 2
+    # Short label column keeps its natural width (stays on one line); long columns wrap
+    assert sizes[0] == 10
+    assert sizes[1] > sizes[2]
+
+
+def test_wrap_mode_table_cells_wrap_without_truncation(tmp_path, monkeypatch):
+    """With WRAP on, long table cells (incl. CJK runs without spaces) must wrap
+    inside the viewport instead of overflowing or being cut with an ellipsis."""
+    import asyncio
+    import mdreader.utils.config as config
+    from mdreader.app import MDReaderApp
+    from textual.widgets._markdown import MarkdownTableContent
+
+    monkeypatch.setattr(config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(config, "CONFIG_FILE", tmp_path / "config.json")
+    long_cjk = "單一機種可行多機種可行但需長期投入" * 3
+    md = f"| 項目 | 說明 |\n|---|---|\n| 可行性 | {long_cjk} |\n"
+    app = MDReaderApp(content=md)
+
+    async def run_check():
+        async with app.run_test(size=(60, 24)) as pilot:
+            await pilot.pause(0.3)
+            tc = app.screen.query(MarkdownTableContent).first()
+            assert tc.size.width <= 60
+            text = "\n".join(
+                "".join(s.text for s in strip) for strip in app.screen._compositor.render_strips()
+            )
+            assert "…" not in text
+            assert "長期投入" in text.replace("│", "").replace(" ", "")
+            wrapped_height = tc.size.height
+
+            # NOWRAP: natural widths, table scrolls horizontally on one line per row
+            app.action_toggle_wrap()
+            await pilot.pause(0.3)
+            assert tc.size.width > 60
+            assert tc.size.height < wrapped_height
+
+    asyncio.run(run_check())

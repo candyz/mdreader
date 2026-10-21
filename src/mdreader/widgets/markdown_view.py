@@ -36,15 +36,85 @@ def _custom_markdown_table_compose(self):
 
     # Cell width needed for each column: text length w + 2 (padding) + 1 (safety margin)
     col_sizes = [max(4, w + 3) for w in col_widths]
-    grid_cols = [Scalar.from_number(s) for s in col_sizes]
-    # Total table width = sum of column sizes + gutters between columns + table borders (2)
-    total_w = sum(col_sizes) + max(0, num_cols - 1) + 2
+    tc._natural_col_sizes = col_sizes
     tc.styles.grid_size_columns = num_cols
-    tc.styles.grid_columns = grid_cols
-    tc.styles.width = total_w
+    _apply_table_col_sizes(tc, col_sizes)
     yield tc
 
 tm.MarkdownTable.compose = _custom_markdown_table_compose
+
+
+_MIN_WRAP_COL = 8  # Narrowest a column may shrink to when fitting a table into the viewport
+
+
+def _apply_table_col_sizes(tc, col_sizes: list[int]) -> None:
+    # Total table width = sum of column sizes + gutters between columns + table borders (2)
+    total_w = sum(col_sizes) + max(0, len(col_sizes) - 1) + 2
+    tc.styles.grid_columns = [Scalar.from_number(s) for s in col_sizes]
+    tc.styles.width = total_w
+
+
+def fit_table_col_sizes(natural: list[int], avail: int) -> list[int]:
+    """Shrink natural column sizes so the table fits `avail` cells (wrap mode).
+
+    Columns narrower than their fair share keep their natural size; the remaining
+    space is split among wider columns in proportion to their natural size, so
+    long-text columns wrap while short label columns stay on one line.
+    """
+    n = len(natural)
+    budget = avail - max(0, n - 1) - 2  # minus gutters and borders
+    if n == 0 or sum(natural) <= budget:
+        return list(natural)
+    budget = max(budget, n * _MIN_WRAP_COL)
+    sizes: list[int | None] = [None] * n
+    remaining, rest = budget, list(range(n))
+    while rest:
+        fair = remaining / len(rest)
+        fixed = [i for i in rest if natural[i] <= fair]
+        if not fixed:
+            break
+        for i in fixed:
+            sizes[i] = natural[i]
+            remaining -= natural[i]
+        rest = [i for i in rest if i not in fixed]
+    if rest:
+        total_rest = sum(natural[i] for i in rest)
+        for i in rest:
+            sizes[i] = max(_MIN_WRAP_COL, remaining * natural[i] // total_rest)
+        # Hand out rounding leftovers to the widest columns
+        leftover = budget - sum(s for s in sizes if s is not None)
+        for i in sorted(rest, key=lambda i: -natural[i]):
+            if leftover <= 0:
+                break
+            sizes[i] += 1
+            leftover -= 1
+    return [s for s in sizes if s is not None]
+
+
+def relayout_markdown_table(table) -> None:
+    """Apply natural (no-wrap) or viewport-fitted (wrap) column sizes to a table."""
+    try:
+        tc = table.query_one(MarkdownTableContent)
+    except Exception:
+        return
+    natural = getattr(tc, "_natural_col_sizes", None)
+    if not natural:
+        return
+    no_wrap = any(a.has_class("-no-wrap") for a in table.ancestors_with_self)
+    avail = table.content_size.width
+    if no_wrap or avail <= 0:
+        sizes = natural
+    else:
+        sizes = fit_table_col_sizes(natural, avail)
+    if getattr(tc, "_applied_col_sizes", None) != sizes:
+        tc._applied_col_sizes = sizes
+        _apply_table_col_sizes(tc, sizes)
+
+
+def _markdown_table_on_resize(self, event) -> None:
+    relayout_markdown_table(self)
+
+tm.MarkdownTable.on_resize = _markdown_table_on_resize
 
 
 # High-performance streamlined table content compose (avoiding heavy per-cell tooltips and redundant selector evaluations)
@@ -283,6 +353,10 @@ class MarkdownViewerWidget(MarkdownViewer):
         overflow-x: auto;
         overflow-y: hidden;
     }
+    MarkdownViewerWidget MarkdownTableContent > .cell,
+    MarkdownViewerWidget MarkdownTableContent > .header {
+        text-overflow: fold;
+    }
     MarkdownViewerWidget MarkdownFence {
         overflow-x: auto;
         overflow-y: hidden;
@@ -348,6 +422,8 @@ class MarkdownViewerWidget(MarkdownViewer):
             self.add_class("-no-wrap")
         try:
             if self.is_mounted and hasattr(self, "document"):
+                for table in self.document.query(MarkdownTable):
+                    relayout_markdown_table(table)
                 self.document.refresh()
         except Exception:
             pass
