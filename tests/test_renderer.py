@@ -199,3 +199,18 @@ def test_align_box_drawings_cjk_right_border():
     box_lines = [l for l in processed.splitlines() if l.startswith(("┌", "│", "└"))]
     widths = {cell_len(l) for l in box_lines}
     assert widths == {63}
+
+
+def test_python39_no_backslash_in_fstring_expressions():
+    """Python < 3.12 raises SyntaxError if an f-string expression {...} contains a backslash."""
+    import ast
+    from pathlib import Path
+
+    src_root = Path(__file__).resolve().parent.parent / "src" / "mdreader"
+    for py_file in src_root.rglob("*.py"):
+        source = py_file.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(py_file))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FormattedValue):
+                expr_seg = ast.get_source_segment(source, node.value) or ""
+                assert "\\" not in expr_seg, f"Backslash in f-string expression in {py_file}:{node.lineno}"

@@ -145,7 +145,8 @@ def render_mermaid_block(mermaid_code: str) -> str:
     try:
         rendered_art = termaid.render(clean_code)
         if rendered_art and rendered_art.strip():
-            return f"```text\n{rendered_art.strip('\r\n')}\n```"
+            cleaned_art = rendered_art.strip("\r\n")
+            return f"```text\n{cleaned_art}\n```"
         # If termaid returned empty output on non-empty input
         return (
             f"```text\n"
