@@ -8,7 +8,7 @@
 
 ## 🎯 Quick Start
 
-### 1. Open Markdown or HTML Files
+### 1. Open Markdown, HTML, Office, or PDF Files
 ```bash
 # Open Markdown document
 mdreader README.md
@@ -17,6 +17,12 @@ mdreader docs/implementation_plan.md
 # Open HTML web document (auto-converted while preserving outline & formatting)
 mdreader index.html
 mdreader docs/api_reference.html
+
+# Open Word (.docx), PowerPoint (.pptx), Excel (.xlsx / .csv), or PDF (.pdf) documents
+mdreader report.docx
+mdreader slides.pptx
+mdreader revenue.xlsx
+mdreader manual.pdf
 ```
 
 ### 2. Launch Without Arguments (Fuzzy File Picker)

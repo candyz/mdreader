@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
-from office_samples import make_docx, make_pptx, make_xlsx  # noqa: E402
+from office_samples import make_docx, make_pptx, make_xlsx, make_pdf  # noqa: E402
 
 from mdreader.renderer.office import (  # noqa: E402
     office_to_markdown,
@@ -19,11 +19,13 @@ from mdreader.renderer.office import (  # noqa: E402
 
 def test_office_file_detection():
     assert is_office_file("a.DOCX") and is_office_file(Path("x/b.pptx")) and is_office_file("c.xlsx")
-    assert is_office_file("d.csv") and is_office_file("legacy.doc")
+    assert is_office_file("d.csv") and is_office_file("legacy.doc") and is_office_file("doc.PDF")
     assert not is_office_file("readme.md") and not is_office_file(None)
     assert get_office_type_label("a.docx") == "Word"
     assert get_office_type_label("a.pptx") == "PowerPoint"
     assert get_office_type_label("a.xlsx") == "Excel"
+    assert get_office_type_label("a.pdf") == "PDF"
+    assert get_office_type_label(".pdf") == "PDF"
     assert get_office_type_label("a.md") is None
 
 
@@ -83,6 +85,19 @@ def test_legacy_binary_format_shows_hint(tmp_path):
     assert ".docx" in read_document_text(p)
 
 
+def test_pdf_pages_become_outline_sections_and_extract_text(tmp_path):
+    """Each PDF page must become a level-2 heading for outline jumping, and
+    document metadata + page text must be extracted."""
+    pdf_p = make_pdf(tmp_path / "spec.pdf")
+    md = office_to_markdown(pdf_p)
+    assert "**Title:** Architecture Spec" in md
+    assert "**Author:** SW Team" in md
+    assert "## Page 1 / 2" in md
+    assert "First page content hello world" in md
+    assert "## Page 2 / 2" in md
+    assert "Second page content phase two" in md
+
+
 def test_tui_opens_office_files_as_markdown(tmp_path, monkeypatch):
     """Opening .docx/.pptx/.xlsx must not crash on binary bytes, must render through the
     Markdown viewer (not as a code block), expose slides/sheets in the outline and
@@ -117,6 +132,13 @@ def test_tui_opens_office_files_as_markdown(tmp_path, monkeypatch):
             await pilot.pause(0.3)
             headings = [h[1] if isinstance(h, tuple) else h for h in app.query_one("#viewer").get_headings()]
             assert any("Sheet: 營收" in str(h) for h in headings)
+
+            pdf_p = make_pdf(tmp_path / "d.pdf")
+            await app.open_file(pdf_p)
+            await pilot.pause(0.3)
+            headings = [h[1] if isinstance(h, tuple) else h for h in app.query_one("#viewer").get_headings()]
+            assert any("Page 2 / 2" in str(h) for h in headings)
+            assert "PDF" in str(app.query_one("#position-label").render())
 
     asyncio.run(run_check())
 

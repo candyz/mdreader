@@ -9,7 +9,7 @@ An interactive terminal Markdown and HTML previewer with native **Mermaid flowch
 ## ✨ Features
 
 - 📑 **Rich Markdown & Mermaid Flowcharts**: Headers, tables, lists, blockquotes, syntax-highlighted code blocks, and native ```` ```mermaid ```` ASCII/Unicode flowchart rendering.
-- 📘 **Office Document & Spreadsheet Preview**: Native terminal viewing for Word (`.docx`), PowerPoint (`.pptx`), Excel (`.xlsx`, `.xlsm`), and CSV/TSV files—with wrapped tables and slide/sheet outline navigation.
+- 📘 **Office, PDF & Spreadsheet Preview**: Native terminal viewing for Word (`.docx`), PowerPoint (`.pptx`), Excel (`.xlsx`, `.xlsm`), CSV/TSV, and PDF (`.pdf`) files—with wrapped tables and slide/sheet/page outline navigation.
 - ⚡ **Gigabyte-level Extreme Large File Performance**: Built-in zero-copy `mmap` lazy line buffer and uint line indexing. Opens 100,000+ line files in 30ms with < 10MB constant RAM and sub-millisecond byte searching.
 - 💻 **Vim-like Navigation & Line Jumping**:
   - Soft wrap toggle (`w` / `Alt+Z`)

@@ -62,6 +62,13 @@
 - **Empty Boundary Trimming**: Automatically strips trailing empty rows and columns.
 - **Large Sheet Safeguard**: Caps GFM table rendering at 500 rows per sheet by default (with a summary footer), and routes files exceeding `LARGE_FILE_LINE_THRESHOLD (5000)` to `VirtualTextViewer`.
 
+### 3.4 PDF (`.pdf`)
+- **Library**: `pypdf>=4.0.0` (100% pure-Python, compatible with Python 3.9 ~ 3.14+).
+- **Conversion Rules**:
+  - Gracefully detects password-protected PDFs.
+  - Extracts Title and Author metadata header when available.
+  - Converts each page into a level-2 heading (`## Page N / Total`) separated by `---`, enabling direct page jumping from the Outline modal.
+
 ---
 
 ## 4. Surgical Codebase Integration Points

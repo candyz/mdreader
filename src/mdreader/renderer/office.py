@@ -13,9 +13,17 @@ WORD_EXTENSIONS = (".docx",)
 POWERPOINT_EXTENSIONS = (".pptx",)
 EXCEL_EXTENSIONS = (".xlsx", ".xlsm")
 CSV_EXTENSIONS = (".csv", ".tsv")
+PDF_EXTENSIONS = (".pdf",)
 # Legacy binary formats: recognised so we show a conversion hint instead of garbled bytes
 LEGACY_EXTENSIONS = (".doc", ".ppt", ".xls")
-OFFICE_EXTENSIONS = WORD_EXTENSIONS + POWERPOINT_EXTENSIONS + EXCEL_EXTENSIONS + CSV_EXTENSIONS + LEGACY_EXTENSIONS
+OFFICE_EXTENSIONS = (
+    WORD_EXTENSIONS
+    + POWERPOINT_EXTENSIONS
+    + EXCEL_EXTENSIONS
+    + CSV_EXTENSIONS
+    + PDF_EXTENSIONS
+    + LEGACY_EXTENSIONS
+)
 
 DEFAULT_MAX_SHEET_ROWS = 500
 
@@ -40,7 +48,7 @@ def is_text_office_file(filepath_or_name: Path | str | None) -> bool:
 
 
 def get_office_type_label(filepath_or_name: Path | str | None) -> str | None:
-    """Return a status bar label ("Word" / "PowerPoint" / "Excel" / "CSV") or None."""
+    """Return a status bar label ("Word" / "PowerPoint" / "Excel" / "CSV" / "PDF") or None."""
     ext = _suffix(filepath_or_name)
     if ext in (".docx", ".doc"):
         return "Word"
@@ -50,6 +58,8 @@ def get_office_type_label(filepath_or_name: Path | str | None) -> str | None:
         return "Excel"
     if ext in CSV_EXTENSIONS:
         return "CSV"
+    if ext in PDF_EXTENSIONS:
+        return "PDF"
     return None
 
 
@@ -61,7 +71,7 @@ def read_document_text(filepath: Path) -> str:
 
 
 def office_to_markdown(filepath: Path, max_sheet_rows: int = DEFAULT_MAX_SHEET_ROWS) -> str:
-    """Convert an Office document to GFM Markdown."""
+    """Convert an Office or PDF document to GFM Markdown."""
     filepath = Path(filepath)
     ext = filepath.suffix.lower()
     if ext in WORD_EXTENSIONS:
@@ -72,6 +82,8 @@ def office_to_markdown(filepath: Path, max_sheet_rows: int = DEFAULT_MAX_SHEET_R
         return _xlsx_to_markdown(filepath, max_sheet_rows)
     if ext in CSV_EXTENSIONS:
         return _csv_to_markdown(filepath, max_sheet_rows)
+    if ext in PDF_EXTENSIONS:
+        return _pdf_to_markdown(filepath)
     if ext in LEGACY_EXTENSIONS:
         new_ext = {".doc": ".docx", ".ppt": ".pptx", ".xls": ".xlsx"}[ext]
         return (
@@ -344,3 +356,53 @@ def _csv_to_markdown(filepath: Path, max_rows: int) -> str:
         text = filepath.read_text(encoding="cp950", errors="replace")
     rows = csv.reader(text.splitlines(), delimiter=delimiter)
     return _table_section(f"## {filepath.name}", rows, max_rows) + "\n"
+
+
+# ---------------------------------------------------------------- PDF
+
+def _pdf_to_markdown(filepath: Path) -> str:
+    import re
+    import pypdf
+
+    reader = pypdf.PdfReader(str(filepath))
+    if reader.is_encrypted:
+        try:
+            reader.decrypt("")
+        except Exception:
+            pass
+        if reader.is_encrypted:
+            return (
+                f"# {filepath.name}\n\n"
+                f"> 🔒 此 PDF 檔案受密碼保護，無法直接預覽（Password-protected PDF）。\n"
+            )
+
+    total_pages = len(reader.pages)
+    if total_pages == 0:
+        return f"# {filepath.name}\n\n_(empty PDF document)_\n"
+
+    sections: list[str] = []
+    meta = reader.metadata
+    if meta:
+        title = getattr(meta, "title", None)
+        author = getattr(meta, "author", None)
+        meta_parts = []
+        if title and str(title).strip():
+            meta_parts.append(f"**Title:** {str(title).strip()}")
+        if author and str(author).strip():
+            meta_parts.append(f"**Author:** {str(author).strip()}")
+        if meta_parts:
+            sections.append(f"# {filepath.name}\n\n> " + " │ ".join(meta_parts))
+
+    for index, page in enumerate(reader.pages, 1):
+        heading = f"## Page {index} / {total_pages}"
+        try:
+            raw_text = (page.extract_text() or "").strip()
+        except Exception:
+            raw_text = ""
+        if not raw_text:
+            sections.append(f"{heading}\n\n_(no extractable text on this page)_")
+            continue
+        cleaned = re.sub(r"\n{3,}", "\n\n", raw_text)
+        sections.append(f"{heading}\n\n{cleaned}")
+
+    return "\n\n---\n\n".join(sections) + "\n"

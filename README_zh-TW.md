@@ -5,7 +5,7 @@ An interactive terminal Markdown previewer with native **Mermaid flowchart rende
 ## ✨ 功能特色
 
 - 📑 **豐富的 Markdown 與 Mermaid 流程圖渲染**：標題、表格、列表、引用區塊、語法高亮程式碼區塊，以及原生的 ```` ```mermaid ```` ASCII/Unicode 流程圖繪製。
-- 📘 **Office 文件與試算表直接預覽**：原生支援預覽 Word (`.docx`)、PowerPoint (`.pptx`)、Excel (`.xlsx`、`.xlsm`) 與 CSV/TSV 檔案，自動轉為美化表格並支援大綱跳轉投影片與工作表。
+- 📘 **Office、PDF 與試算表直接預覽**：原生支援預覽 Word (`.docx`)、PowerPoint (`.pptx`)、Excel (`.xlsx`、`xlsm`)、CSV/TSV 與 PDF (`.pdf`) 檔案，自動轉為美化表格並支援大綱跳轉投影片、工作表與頁碼。
 - ⚡ **GB 級超大檔案極限讀取架構**：內建 Zero-copy `mmap` 記憶體映射與二進位行索引，10 萬行超大檔案 30ms 極速載入，RAM 佔用低於 10MB，並具備次毫秒級二進位搜尋。
 - 💻 **Vim 風格導航與行號跳轉**：
   - 自動折行切換（`w` / `Alt+Z`）

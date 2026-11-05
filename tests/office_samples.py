@@ -66,3 +66,27 @@ def make_xlsx(path: Path, big_rows: int = 0) -> Path:
         ws3.append([i, f"row{i}"])
     wb.save(str(path))
     return path
+
+
+def make_pdf(path: Path) -> Path:
+    import pypdf
+    from pypdf.generic import NameObject, DictionaryObject, DecodedStreamObject
+
+    writer = pypdf.PdfWriter()
+    writer.add_metadata({"/Title": "Architecture Spec", "/Author": "SW Team"})
+    for text in ("First page content hello world", "Second page content phase two"):
+        page = writer.add_blank_page(width=612, height=792)
+        font = DictionaryObject({
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        })
+        page[NameObject("/Resources")] = DictionaryObject({
+            NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})
+        })
+        stream = DecodedStreamObject()
+        stream.set_data(f"BT /F1 14 Tf 72 720 Td ({text}) Tj ET".encode("ascii"))
+        page[NameObject("/Contents")] = writer._add_object(stream)
+    with open(path, "wb") as f:
+        writer.write(f)
+    return path

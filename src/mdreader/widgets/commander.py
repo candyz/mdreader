@@ -286,7 +286,7 @@ class PaneWidget(Vertical):
         """Scan directory items and clean up orphaned selections."""
         items: List[Tuple[str, str, Path]] = []
         excluded_dirs = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
-        supported_exts = (".md", ".markdown", ".html", ".htm", ".xhtml", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xlsm", ".xls", ".csv", ".tsv")
+        supported_exts = (".md", ".markdown", ".html", ".htm", ".xhtml", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xlsm", ".xls", ".csv", ".tsv", ".pdf")
 
         # Parent directory
         if self.current_dir.parent != self.current_dir:
@@ -339,6 +339,8 @@ class PaneWidget(Vertical):
                     icon = "📙"
                 elif fname_lower.endswith((".xlsx", ".xlsm", ".xls", ".csv", ".tsv")):
                     icon = "📗"
+                elif fname_lower.endswith(".pdf"):
+                    icon = "📕"
                 elif fname_lower.endswith((".py", ".sh", ".bash", ".zsh", ".js", ".ts", ".json", ".toml", ".yaml", ".yml", ".c", ".cpp", ".rs", ".go")):
                     icon = "📜"
                 else:

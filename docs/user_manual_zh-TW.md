@@ -6,7 +6,7 @@
 
 ## 🎯 快速開始 (Quick Start)
 
-### 1. 開啟 Markdown、HTML 或原始碼檔案
+### 1. 開啟 Markdown、HTML、Office、PDF 或原始碼檔案
 ```bash
 # 開啟 Markdown 文件並直接跳轉至第 50 行
 mdreader +50 README.md
@@ -14,6 +14,12 @@ mdreader -l 50 README.md
 
 # 開啟 HTML 網頁文件（自動轉譯並保留大綱與排版）
 mdreader index.html
+
+# 開啟 Word (.docx)、PowerPoint (.pptx)、Excel (.xlsx / .csv) 或 PDF (.pdf) 檔案
+mdreader report.docx
+mdreader slides.pptx
+mdreader revenue.xlsx
+mdreader manual.pdf
 
 # 開啟巨量純文字或 Log 資料檔（自動啟用 mmap 極速隨選讀取）
 mdreader gigantic_data.log
