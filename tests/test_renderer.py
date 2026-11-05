@@ -159,3 +159,43 @@ def test_code_and_plain_text_preprocessing():
     md_content = "# Header\nHello world"
     res_md = widget._preprocess(md_content, filename="readme.md")
     assert res_md.startswith("# Header")
+
+
+def test_mermaid_indented_first_line_top_left_aligned():
+    """Top border of an indented first node in a Mermaid diagram must keep its
+    leading spaces so its top-left corner aligns with its side and bottom borders."""
+    code = """graph TD
+    User([使用者指令 / Telegram / Web / CLI]) --> Dispatcher[多模型分發器 Multi-Model Dispatcher]
+    subgraph Agenvoy 核心引擎
+        Dispatcher --> Planner[意圖分析與任務規劃]
+        Planner -->|既有工具| ToolExec[工具執行器]
+        Planner -->|能力缺口 Gap| ToolBuilder[動態工具自製器 Auto Tool Builder]
+    end
+    """
+    res = render_mermaid_block(code)
+    body_lines = res.splitlines()[1:-1]
+    assert body_lines[0].index("╭") == body_lines[1].index("│") == body_lines[5].index("╰")
+
+
+def test_align_box_drawings_cjk_right_border():
+    """Unicode box diagrams with CJK text in fenced code blocks must have their
+    right borders aligned to the same cell width as the top and bottom borders."""
+    from rich.cells import cell_len
+
+    md = (
+        "```\n"
+        "┌─────────────────────────────────────────────────────────────┐\n"
+        "│ Phase 1: 安全防護與經驗記憶庫 (Safety & Error Memory)         │\n"
+        "│ • 建立 macOS sandbox-exec 沙盒執行框架                       │\n"
+        "└──────────────────────────────┬──────────────────────────────┘\n"
+        "                               │\n"
+        "┌──────────────────────────────▼──────────────────────────────┐\n"
+        "│ Phase 2: 動態工具自製與沙盒測試鏈 (Capability Gap Filler)      │\n"
+        "│ 預期交付: 可以在 Telegram 輸入「幫我做一個查台幣匯率的工具」 │\n"
+        "└─────────────────────────────────────────────────────────────┘\n"
+        "```\n"
+    )
+    processed = preprocess_mermaid(md)
+    box_lines = [l for l in processed.splitlines() if l.startswith(("┌", "│", "└"))]
+    widths = {cell_len(l) for l in box_lines}
+    assert widths == {63}
