@@ -209,11 +209,15 @@ def html_to_markdown(html_content: str) -> str:
 
 
 def is_markdown_file(filename: str | None = None) -> bool:
-    """Check if filename has a markdown extension."""
+    """Check if filename should be rendered as Markdown.
+
+    Office documents count too: they are converted to Markdown at load time.
+    """
     if not filename:
         return False
     fn = filename.lower()
-    return fn.endswith((".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdwn", ".mdtxt", ".mdtext"))
+    from mdreader.renderer.office import OFFICE_EXTENSIONS
+    return fn.endswith((".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdwn", ".mdtxt", ".mdtext") + OFFICE_EXTENSIONS)
 
 
 def detect_code_language(filename: str | None = None, default_syntax: str | None = None) -> str:

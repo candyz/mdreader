@@ -159,6 +159,7 @@ class FilePickerScreen(ModalScreen[object]):
         excluded_dirs = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
         supported_exts = (
             ".md", ".markdown", ".html", ".htm", ".xhtml",
+            ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xlsm", ".xls", ".csv", ".tsv",
             ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".tiff", ".tif", ".svg",
         )
 
@@ -196,6 +197,12 @@ class FilePickerScreen(ModalScreen[object]):
                     ext_icon = "🌐"
                 elif fname_lower.endswith((".md", ".markdown")):
                     ext_icon = "📄"
+                elif fname_lower.endswith((".docx", ".doc")):
+                    ext_icon = "📘"
+                elif fname_lower.endswith((".pptx", ".ppt")):
+                    ext_icon = "📙"
+                elif fname_lower.endswith((".xlsx", ".xlsm", ".xls", ".csv", ".tsv")):
+                    ext_icon = "📗"
                 elif fname_lower.endswith((".py", ".sh", ".bash", ".zsh", ".js", ".ts", ".json", ".toml", ".yaml", ".yml", ".c", ".cpp", ".rs", ".go")):
                     ext_icon = "📜"
                 else:

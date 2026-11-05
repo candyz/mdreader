@@ -7,6 +7,7 @@ from mdreader import __version__
 from mdreader.app import MDReaderApp
 from mdreader.renderer.mermaid import preprocess_mermaid
 from mdreader.renderer.html import html_to_markdown, is_html_content, is_markdown_file, detect_code_language
+from mdreader.renderer.office import read_document_text
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -147,7 +148,7 @@ def main() -> None:
             sys.exit(1)
         filepath = path
         try:
-            content = path.read_text(encoding="utf-8")
+            content = read_document_text(path)
         except Exception as e:
             print(f"Error reading file '{args.file}': {e}", file=sys.stderr)
             sys.exit(1)

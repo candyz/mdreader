@@ -19,6 +19,7 @@ from mdreader.widgets.image_viewer import ImageViewerWidget, is_image_file
 from mdreader.widgets.link_picker import LinkPickerModal, extract_links_from_text
 from mdreader.widgets.marks_modal import MarksModal
 from mdreader.renderer.html import is_html_content, html_to_markdown
+from mdreader.renderer.office import read_document_text, is_office_file, is_text_office_file, get_office_type_label
 from mdreader.utils.file_watcher import FileWatcher
 from mdreader.utils.config import get_config_value, set_config_value, add_recent_file, build_app_bindings
 from mdreader.utils.mmap_buffer import MmapLineBuffer, MMAP_THRESHOLD_BYTES
@@ -311,7 +312,7 @@ class MDReaderApp(App):
                         self._mmap_buffer = MmapLineBuffer(self.filepath)
                         self.content = ""
                     else:
-                        self.content = self.filepath.read_text(encoding="utf-8")
+                        self.content = read_document_text(self.filepath)
                 except Exception:
                     self.content = content
         else:
@@ -504,6 +505,8 @@ class MDReaderApp(App):
                         file_type = f"Image ({ext.lstrip('.').upper()})"
                     elif ext in (".md", ".markdown"):
                         file_type = "Markdown"
+                    elif get_office_type_label(ext):
+                        file_type = get_office_type_label(ext)
                     elif ext in (".py",):
                         file_type = "Python"
                     elif ext in (".rs",):
@@ -573,7 +576,7 @@ class MDReaderApp(App):
                     self.notify(f"Image reloaded: {fname}", title="Auto-Reload", timeout=2)
                     return
 
-                new_content = self.filepath.read_text(encoding="utf-8")
+                new_content = read_document_text(self.filepath)
                 use_virtual = should_use_virtual_viewer(new_content, fname)
                 is_currently_virtual = isinstance(viewer, VirtualTextViewer)
 
@@ -614,6 +617,22 @@ class MDReaderApp(App):
                 self.notify(f"已呼叫系統檢視器開啟圖片：{self.filepath.name}", title="開啟圖片", timeout=2.0)
             return
 
+        if is_office_file(self.filepath) and not is_text_office_file(self.filepath):
+            # Binary Office files can't be edited in a text editor: hand off to the OS default app
+            target = str(self.filepath.resolve())
+            try:
+                if sys.platform == "darwin":
+                    subprocess.Popen(["open", target])
+                elif sys.platform.startswith("linux") and shutil.which("xdg-open"):
+                    subprocess.Popen(["xdg-open", target])
+                else:
+                    self.notify("Office 檔案無法以文字編輯器編輯，且找不到系統預設開啟程式", title="Edit", severity="warning")
+                    return
+                self.notify(f"已呼叫系統預設程式開啟：{self.filepath.name}", title="Edit", timeout=2.0)
+            except Exception as e:
+                self.notify(f"Error opening file: {e}", title="Error", severity="error")
+            return
+
         editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vim"
         editor_path = shutil.which(editor) or shutil.which("vim") or shutil.which("vi") or shutil.which("nano")
         if not editor_path:
@@ -626,7 +645,7 @@ class MDReaderApp(App):
             
             # Reload file content after returning from editor
             if self.filepath.exists():
-                new_content = self.filepath.read_text(encoding="utf-8")
+                new_content = read_document_text(self.filepath)
                 viewer = self.query_one("#viewer")
                 viewer.update_content(new_content, str(self.filepath.name))
                 self.notify(f"Reloaded after editing: {self.filepath.name}", title="Edit", timeout=2)
@@ -911,7 +930,7 @@ class MDReaderApp(App):
                 if hasattr(self, "_mmap_buffer") and self._mmap_buffer:
                     self._mmap_buffer.close()
                     self._mmap_buffer = None
-                new_content = filepath.read_text(encoding="utf-8")
+                new_content = read_document_text(filepath)
 
             self.content = new_content
             use_virtual = is_large_mmap or should_use_virtual_viewer(new_content, fname)
